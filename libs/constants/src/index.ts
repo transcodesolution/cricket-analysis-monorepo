@@ -10,3 +10,4 @@ export * from './lib/scoreboard';
 export * from './lib/ball';
 export * from './lib/user-role';
 export * from './lib/permission';
+export * from './lib/report-filter';

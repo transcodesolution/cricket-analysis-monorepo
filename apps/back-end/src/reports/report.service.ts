@@ -5,11 +5,12 @@ import { Player } from '../database/model/player.model';
 import { Tournament } from '../database/model/tournament.model';
 import { MatchFormat } from '@cricket-analysis-monorepo/constants';
 import { responseMessage } from '../helper/response-message.helper';
-import { CreateReportDto, CreateReportFilterDto, GetPreDestinedReportDto, GetPreDestinedReportFilterDto, PaginationDto } from './dto/report.dto';
+import { CreateReportDto, CreateReportFilterDto, GetPreDestinedReportDto, GetPreDestinedReportFilterDto } from './dto/report.dto';
 import { Report } from '../database/model/report.model';
 import { ReportFilter } from '../database/model/report-filters.model';
 import { Team } from '../database/model/team.model';
 import { IReport, IReportFilter } from '@cricket-analysis-monorepo/interfaces';
+import { PaginationDto } from '../helper/pagination.dto';
 
 interface IFilterExecutionParameter {
   schema: string;
@@ -90,7 +91,7 @@ export class ReportService {
         return ${filter.queryToExecute.match(this.getFunctionNameRegex)[1]}(filterExecutionParameters)
       })()`;
       const values = await new Function("filterExecutionParameters", parsedFn)(filterExecutionParameters);
-      filterWithValues.push({ label: filter.label, values, isMultiSelectOption: filter.isMultiSelectOption });
+      filterWithValues.push({ label: filter.label, values, isMultiSelectOption: filter.isMultiSelectOption, queryParameterKey: filter.queryParameterKey, type: filter.type });
     }
 
     return { data: { report: { name: report.name, details, filters: filterWithValues }, totalData, state: { page: paginationDto.page, limit: paginationDto.limit, page_limit: Math.ceil(totalData / paginationDto.limit) } }, message: responseMessage.getDataSuccess("report") };
