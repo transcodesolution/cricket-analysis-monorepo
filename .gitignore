@@ -43,6 +43,7 @@ Thumbs.db
 
 uploads/
 .env
+front-end/.env
 
 # Next.js
 .next
