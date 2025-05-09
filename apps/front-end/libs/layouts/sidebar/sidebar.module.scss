@@ -1,0 +1,50 @@
+.sidebarLink {
+  text-decoration: none;
+  border-radius: 12px;
+  color: var(--mantine-color-bright);
+
+  &:hover {
+    background-color: var(--mantine-color-primary-1); 
+    color: var(--mantine-color-primary-7);
+  }
+}
+
+.active {
+  background-color: var(--mantine-color-primary-1); 
+  font-weight: 600;
+  color: var(--mantine-color-primary-6) !important; 
+}
+
+.linkText {
+  font-weight: 500;
+  color: inherit; 
+}
+
+.control {
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.collapse{
+   margin-left: var(--mantine-spacing-lg);
+   border-left: 1px solid  var(--mantine-color-bright);
+}
+
+.link {
+  font-weight: 500;
+  display: block;
+  text-decoration: none;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  padding-left: var(--mantine-spacing-lg);
+  font-size: var(--mantine-font-size-md);
+  color: var(--mantine-color-bright);
+  margin-left: var(--mantine-spacing-lg);
+  border-radius: 12px;
+  margin-top: var(--mantine-spacing-xs);
+
+  &:hover {
+    background-color: var(--mantine-color-primary-1); 
+    color: var(--mantine-color-primary-6);
+  }
+}

@@ -1,0 +1,113 @@
+'use client';
+import { DataTable, DataTableColumn } from 'mantine-datatable';
+import { Button, Flex, Paper, Stack, Title } from '@mantine/core';
+import { IconDownload } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
+import * as XLSX from 'xlsx';
+import { useParams, useSearchParams } from 'next/navigation';
+import { useGetReportById } from '@/libs/react-query-hooks/src';
+import { ITableRow } from '@/libs/types-api/src';
+import { ReportFilter } from './ReportFilter';
+
+const PAGE_SIZES = [10, 20];
+
+export const ReportTable = () => {
+  const searchParams = useSearchParams();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+
+  const { reportId } = useParams<{ reportId: string }>();
+  const filters = useMemo<Record<string, string>>(() => {
+    const f: Record<string, string> = {};
+    for (const [key, value] of searchParams.entries()) {
+      if (value && value !== 'all' && key !== '_rsc') {
+        const matched = key.match(/^filters\[(.+?)\]$/);
+        if (matched) {
+          f[matched[1]] = value;
+        } else {
+          f[key] = value;
+        }
+      }
+    }
+    return f;
+  }, [searchParams]);
+
+  const { data: getReportResponse, isLoading } = useGetReportById({
+    params: {
+      page,
+      limit: pageSize,
+      id: reportId,
+      ...filters,
+    },
+  });
+
+  const report = getReportResponse?.data?.report;
+  const reportFilters = getReportResponse?.data?.report?.filters || [];
+  const reportData = report?.details?.tableBody ?? [];
+  const tableHeaders = report?.details?.tableHeader ?? [];
+  const totalRecords = getReportResponse?.data?.totalData ?? 0;
+
+  const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header) => ({
+    accessor: header.value,
+    title: header.label,
+  }));
+
+  const downloadExcel = () => {
+    if (!reportData.length) return;
+
+    const ws = XLSX.utils.json_to_sheet(reportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Player Report');
+    XLSX.writeFile(wb, 'player_report.xlsx');
+  };
+
+  return (
+    <Stack>
+      <Paper withBorder radius="lg" p="md">
+        <Title order={4} fw={500} mb="md" c="var(--mantine-color-gray-8)">
+          {report?.name || 'Report'}
+        </Title>
+
+        <ReportFilter filters={reportFilters} />
+
+        <DataTable
+          mt="md"
+          idAccessor="playerId"
+          borderRadius="lg"
+          fetching={isLoading}
+          withTableBorder
+          withRowBorders={false}
+          highlightOnHover
+          verticalSpacing="xs"
+          records={reportData}
+          totalRecords={totalRecords}
+          paginationActiveBackgroundColor="var(--mantine-color-customBlue-5)"
+          recordsPerPage={pageSize}
+          page={page}
+          onPageChange={setPage}
+          recordsPerPageOptions={PAGE_SIZES}
+          onRecordsPerPageChange={setPageSize}
+          columns={columns}
+          c="var(--mantine-color-gray-7)"
+          styles={{
+            header: {
+              backgroundColor: 'var(--mantine-color-gray-1)',
+              color: 'var(--mantine-color-gray-7)',
+            },
+          }}
+          height="calc(100vh - 400px)"
+        />
+      </Paper>
+      <Flex justify="end">
+        <Button
+          leftSection={<IconDownload size={24} />}
+          size="md"
+          color="var(--mantine-color-customBlue-5)"
+          onClick={downloadExcel}
+        >
+          Report downloads
+        </Button>
+      </Flex>
+    </Stack>
+  );
+};

@@ -1,0 +1,181 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { SchemaTypes } from 'mongoose';
+import { TossResult, WinnerTeamDecision, MatchStatus } from '@cricket-analysis-monorepo/constants';
+import { BallType, Brand, Color } from '@cricket-analysis-monorepo/constants';
+
+@Schema({ timestamps: true, versionKey: false })
+export class MatchInfo {
+    @Prop()
+    name: string;
+
+    @Prop()
+    start_date: Date;
+
+    @Prop({ type: SchemaTypes.ObjectId })
+    venue: string;
+
+    @Prop()
+    end_date: Date;
+
+    @Prop({ type: SchemaTypes.ObjectId })
+    referee: string;
+
+    @Prop({ type: SchemaTypes.ObjectId })
+    method: string;
+
+    @Prop({
+        type: {
+            fourthUmpire: SchemaTypes.ObjectId,
+            onFieldBowlerEndUmpire: SchemaTypes.ObjectId,
+            onFieldLegUmpire: SchemaTypes.ObjectId,
+            thirdUmpire: SchemaTypes.ObjectId,
+        }
+    })
+    umpire: {
+        fourthUmpire: string;
+        onFieldBowlerEndUmpire: string;
+        onFieldLegUmpire: string;
+        thirdUmpire: string;
+    };
+
+    @Prop({
+        type: {
+            tossResult: { type: String, enum: TossResult },
+            winnerTeam: SchemaTypes.ObjectId,
+            winnerTeamDecision: { type: String, enum: WinnerTeamDecision },
+        }
+    })
+    toss: {
+        tossResult: TossResult;
+        winnerTeam: string;
+        winnerTeamDecision: WinnerTeamDecision;
+    };
+
+    @Prop()
+    match_number: number;
+
+    @Prop()
+    match_id: string;
+
+    @Prop()
+    summary: string;
+
+    @Prop({
+        type: {
+            impactPlayerIn: SchemaTypes.ObjectId,
+            impactPlayerOut: SchemaTypes.ObjectId,
+            playingEleven: [SchemaTypes.ObjectId],
+            substitutePlayers: [SchemaTypes.ObjectId],
+            team: SchemaTypes.ObjectId,
+        }
+    })
+    team2: {
+        impactPlayerIn: string;
+        impactPlayerOut: string;
+        playingEleven: string[];
+        substitutPlayers: string[];
+        team: string;
+    };
+
+    @Prop({ type: SchemaTypes.ObjectId })
+    tournamentId: string;
+
+    @Prop({
+        type: {
+            brand: { type: String, enum: Brand },
+            color: { type: String, enum: Color },
+            type: { type: String, enum: BallType },
+        }
+    })
+    ball: {
+        brand: string;
+        color: string;
+        type: string;
+    };
+
+    @Prop({
+        type: {
+            impactPlayerIn: SchemaTypes.ObjectId,
+            impactPlayerOut: SchemaTypes.ObjectId,
+            playingEleven: [SchemaTypes.ObjectId],
+            substitutePlayers: [SchemaTypes.ObjectId],
+            team: SchemaTypes.ObjectId,
+        }
+    })
+    team1: {
+        impactPlayerIn: string;
+        impactPlayerOut: string;
+        playingEleven: string[];
+        substitutePlayers: string[];
+        team: string;
+    };
+
+    @Prop({
+        type: {
+            playerOfMatch: SchemaTypes.ObjectId,
+            status: { type: String, enum: MatchStatus },
+            winBy: Number,
+            winningTeam: SchemaTypes.ObjectId,
+        }
+    })
+    result: {
+        playerOfMatch: string;
+        status: MatchStatus;
+        winBy: number;
+        winningTeam: string;
+    };
+
+    @Prop()
+    balls_per_over: number;
+
+    constructor() {
+        this.name = '';
+        this.start_date = new Date();
+        this.venue = '';
+        this.end_date = new Date();
+        this.referee = '';
+        this.umpire = {
+            fourthUmpire: '',
+            onFieldBowlerEndUmpire: '',
+            onFieldLegUmpire: '',
+            thirdUmpire: '',
+        };
+        this.balls_per_over = 6;
+        this.toss = {
+            tossResult: TossResult.head,
+            winnerTeam: '',
+            winnerTeamDecision: WinnerTeamDecision.bat,
+        };
+        this.match_number = 0;
+        this.match_id = "";
+        this.summary = '';
+        this.team2 = {
+            impactPlayerIn: '',
+            impactPlayerOut: '',
+            playingEleven: [],
+            substitutPlayers: [],
+            team: '',
+        };
+        this.tournamentId = '';
+        this.ball = {
+            brand: '',
+            color: '',
+            type: '',
+        };
+        this.team1 = {
+            impactPlayerIn: '',
+            impactPlayerOut: '',
+            playingEleven: [],
+            substitutePlayers: [],
+            team: '',
+        };
+        this.result = {
+            playerOfMatch: '',
+            status: MatchStatus.tie,
+            winBy: 0,
+            winningTeam: '',
+        };
+    }
+}
+
+export const MatchInfoSchema = SchemaFactory.createForClass(MatchInfo);
