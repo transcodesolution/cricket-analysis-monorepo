@@ -1,6 +1,6 @@
 import { ITableField, ICheckMappingRequest, IFileColumnDataResponse } from '@/libs/types-api/src';
 import http from './http-common';
-import { IApiResponse } from '@cricket-analysis/interfaces';
+import { IApiResponse } from '@cricket-analysis-monorepo/interfaces';
 
 export const getDatabaseTablesAndFields = async (): Promise<IApiResponse<ITableField[]>> => {
   try {

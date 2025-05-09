@@ -1,6 +1,6 @@
 import { AxiosProgressEvent } from 'axios';
 import http, { BASE_API_URL } from './http-common';
-import { IApiResponse } from '@cricket-analysis/interfaces';
+import { IApiResponse } from '@cricket-analysis-monorepo/interfaces';
 import { apiErrorHandler } from '@/libs/utils/apiErrorHandler';
 import { IFileColumnDataResponse } from '@/libs/types-api/src';
 

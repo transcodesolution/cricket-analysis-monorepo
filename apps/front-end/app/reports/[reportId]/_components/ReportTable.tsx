@@ -47,7 +47,7 @@ export const ReportTable = () => {
   const tableHeaders = report?.details?.tableHeader ?? [];
   const totalRecords = getReportResponse?.data?.totalData ?? 0;
 
-  const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header) => ({
+  const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header:any) => ({
     accessor: header.value,
     title: header.label,
   }));

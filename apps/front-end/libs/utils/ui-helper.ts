@@ -1,5 +1,5 @@
-import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis/service";
-import { IMatchSheetFormat } from "@cricket-analysis/interfaces";
+import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
+import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
 
 export const readExcelFiles = async (
   files: File[]

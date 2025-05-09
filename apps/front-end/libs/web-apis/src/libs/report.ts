@@ -1,4 +1,4 @@
-import { PaginationApiResponseType } from '@cricket-analysis/interfaces';
+import { PaginationApiResponseType } from '@cricket-analysis-monorepo/interfaces';
 import http from './http-common';
 import { IGetReportsResponse, IGetReportRequest, IGetReportByIdRequest, IGetReportByIdResponse } from '@/libs/types-api/src';
 

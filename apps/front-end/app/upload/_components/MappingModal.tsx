@@ -36,7 +36,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingMod
     }));
   };
 
-  const tableOptions = tablesAndFields?.map((table) => ({
+  const tableOptions = tablesAndFields?.map((table:any) => ({
     value: table.name,
     label: table.name,
   }));
@@ -47,7 +47,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingMod
       const selectedKey = mapping[fileName]?.[originalKey]?.key || '';
 
       const fieldOptions =
-        tablesAndFields.find((t) => t.name === selectedTable)?.fields.map((f) => ({
+        tablesAndFields.find((t:any) => t.name === selectedTable)?.fields.map((f:any) => ({
           value: f,
           label: f,
         })) || [];

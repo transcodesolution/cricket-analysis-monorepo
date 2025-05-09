@@ -5,7 +5,7 @@ import { IconCloudUpload } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { MappingModal } from './MappingModal';
 import { showNotification } from '@mantine/notifications';
-import { IApiResponse } from '@cricket-analysis/interfaces';
+import { IApiResponse } from '@cricket-analysis-monorepo/interfaces';
 import { readExcelFiles } from '@/libs/utils/ui-helper';
 import { IFileColumnDataResponse, IFileColumns, IUserMappingDetail } from '@/libs/types-api/src';
 import { useCheckMappingAndUpdate } from '@/libs/react-query-hooks/src';
