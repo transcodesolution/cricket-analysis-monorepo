@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useGetReportById } from '@/libs/react-query-hooks/src';
-import { ITableRow } from '@/libs/types-api/src';
+import { ITableHeader, ITableRow } from '@/libs/types-api/src';
 import { ReportFilter } from './ReportFilter';
 
 const PAGE_SIZES = [10, 20];
@@ -17,6 +17,7 @@ export const ReportTable = () => {
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
 
   const { reportId } = useParams<{ reportId: string }>();
+
   const filters = useMemo<Record<string, string>>(() => {
     const f: Record<string, string> = {};
     for (const [key, value] of searchParams.entries()) {
@@ -32,12 +33,22 @@ export const ReportTable = () => {
     return f;
   }, [searchParams]);
 
+  // 🔄 Convert comma values to arrays dynamically
+  const formattedFilters = useMemo(() => {
+    return Object.fromEntries(
+      Object.entries(filters).map(([key, value]) => [
+        key,
+        value.includes(',') ? value.split(',') : value,
+      ])
+    );
+  }, [filters]);
+
   const { data: getReportResponse, isLoading } = useGetReportById({
     params: {
       page,
       limit: pageSize,
       id: reportId,
-      ...filters,
+      ...formattedFilters,
     },
   });
 
@@ -47,7 +58,7 @@ export const ReportTable = () => {
   const tableHeaders = report?.details?.tableHeader ?? [];
   const totalRecords = getReportResponse?.data?.totalData ?? 0;
 
-  const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header:any) => ({
+  const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header: ITableHeader) => ({
     accessor: header.value,
     title: header.label,
   }));

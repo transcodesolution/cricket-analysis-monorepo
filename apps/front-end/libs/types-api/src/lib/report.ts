@@ -15,13 +15,18 @@ export interface IGetReportsResponse {
 export interface IGetReportByIdRequest {
   page: number;
   limit: number;
-  [key: string]: string | number;
+  [key: string]: string | number | string[];
   id: string
 }
 
 export interface IReportFilters {
   label: string;
-  values: Array<{ label: string; value: string }>;
+  values?: Array<{ label: string; value: string }>;
+  type?: 'select' | 'date-range';
+  queryParameterKey?: string;
+  isMultiSelectOption?: boolean;
+  filterType?: number;
+  title?: string;
 }
 
 export interface ITableHeader {
