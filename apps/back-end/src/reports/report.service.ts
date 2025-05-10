@@ -58,7 +58,7 @@ export class ReportService {
       this.reportModel.countDocuments(),
       this.reportModel.find({}, { name: 1 }).skip((getPreDestinedReportDto.page - 1) * getPreDestinedReportDto.limit).limit(getPreDestinedReportDto.limit),
     ]);
-    return { data: { reports, totalData, state: { page: getPreDestinedReportDto.page, limit: getPreDestinedReportDto.limit, page_limit: Math.ceil(totalData / getPreDestinedReportDto.limit) } }, message: responseMessage.customMessage("odi batsment report") };
+    return { data: { reports, totalData, state: { page: getPreDestinedReportDto.page, limit: getPreDestinedReportDto.limit, page_limit: Math.ceil(totalData / getPreDestinedReportDto.limit) } }, message: responseMessage.getDataSuccess("report") };
   }
 
   async getReportById(id: string, queryFilter: GetPreDestinedReportFilterDto, paginationDto: PaginationDto) {

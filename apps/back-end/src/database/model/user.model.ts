@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
 import { UserRole } from './user-role.model';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 @Schema({
     timestamps: true, versionKey: false, toJSON: {
@@ -19,13 +19,14 @@ import { IsNotEmpty, IsString } from 'class-validator';
 })
 export class User {
     @Prop({ type: String })
+    @IsOptional()
+    @IsString()
     firstName: string;
 
     @Prop({ type: String })
+    @IsOptional()
+    @IsString()
     lastName: string;
-
-    @Prop({ type: String })
-    userName: string;
 
     @Prop({ default: '' })
     @IsNotEmpty()
@@ -36,13 +37,18 @@ export class User {
         type: String,
     })
     @IsNotEmpty()
+    @MinLength(8)
     @IsString()
     password: string;
 
     @Prop({ type: SchemaTypes.ObjectId })
+    @IsOptional()
+    @IsString()
     roleId: string;
 
     @Prop({ type: String })
+    @IsOptional()
+    @IsString()
     profileImage: string;
 
     role?: UserRole;
@@ -50,7 +56,6 @@ export class User {
     constructor() {
         this.firstName = "";
         this.lastName = "";
-        this.userName = "";
         this.email = "";
         this.password = "";
         this.roleId = "";
