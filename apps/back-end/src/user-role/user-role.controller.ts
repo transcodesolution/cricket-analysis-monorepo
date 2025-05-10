@@ -1,0 +1,36 @@
+import { Body, Controller, Get, Param, Patch, Post, Query, SetMetadata } from "@nestjs/common";
+import { UserRoleService } from "./user-role.service";
+import { CreateUserRoleDto, GetUserRoleDto, UpdateUserRoleDto } from "./dto/user-role.dto";
+import { Permission } from "@cricket-analysis-monorepo/constants";
+import { ROUTE_PERMISSION_KEY_NAME } from "../helper/constant.helper";
+
+@Controller("/user-role")
+// @UseGuards(AuthGuard, UserPermissionCheckerGuard)
+export class UserRoleController {
+    constructor(private readonly userRoleService: UserRoleService) { }
+
+    @Post("/create")
+    @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.CREATE_ROLE])
+    createUserRole(@Body() createUserRoleDto: CreateUserRoleDto) {
+        return this.userRoleService.createUserRole(createUserRoleDto);
+    }
+
+    @Patch("/:userRoleId")
+    @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.UPDATE_ROLE])
+    updateUserRole(@Param("userRoleId") userRoleId: string, @Body() updateUserRoleDto: UpdateUserRoleDto) {
+        updateUserRoleDto.userRoleId = userRoleId;
+        return this.userRoleService.updateUserRole(updateUserRoleDto);
+    }
+
+    @Get("/")
+    @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.VIEW_ROLE])
+    getUserRoles(@Query() getUserRoleDto: GetUserRoleDto) {
+        return this.userRoleService.getUserRoles(getUserRoleDto);
+    }
+
+    @Get("/:userRoleId")
+    @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.VIEW_ROLE])
+    getUserRoleById(@Param("userRoleId") userRoleId: string) {
+        return this.userRoleService.getUserRoleById({ userRoleId });
+    }
+}
