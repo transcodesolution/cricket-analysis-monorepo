@@ -7,17 +7,12 @@ import { User } from "../database/model/user.model";
 import { CommonHelperService } from "../helper/common.helper";
 import { responseMessage } from "../helper/response-message.helper";
 
-interface ILoginResponse extends Pick<IUser, "firstName" | "lastName" | "_id" | "email"> {
-    token: string;
-    userType: string;
-}
-
 @Injectable()
 export class AuthService {
     constructor(@InjectModel(User.name) private readonly userModel: Model<User>, private readonly commonHelperService: CommonHelperService) { }
 
     async login(loginDto: LoginDto) {
-        const response = await this.userModel.findOne({ email: loginDto.email }).populate<{ role: IUserRole }>("role")
+        const response = await this.userModel.findOne<IUser>({ email: loginDto.email }).populate<{ role: IUserRole }>("role");
 
         if (!response) throw new BadRequestException(responseMessage.userNotFound);
         if (!response.role) throw new BadRequestException(responseMessage.customMessage("user have not valid permissions"));
@@ -26,7 +21,6 @@ export class AuthService {
 
         if (!passwordMatch) throw new BadRequestException(responseMessage.invalidUserPasswordEmail);
 
-        let result: ILoginResponse;
         if (typeof response.role !== "string") {
             const token = this.commonHelperService.generateToken({
                 userId: response._id.toString(),
@@ -34,16 +28,9 @@ export class AuthService {
                 status: "Login",
                 generatedOn: (new Date().getTime())
             })
-            result = {
-                userType: response.role.type,
-                firstName: response?.firstName,
-                lastName: response?.lastName,
-                _id: response?._id.toString(),
-                email: response?.email,
-                token,
-            }
+            response._doc.token = token;
         }
 
-        return { message: responseMessage.loginSuccess, data: result };
+        return { message: responseMessage.loginSuccess, data: response };
     }
 }

@@ -10,6 +10,7 @@ import {
   BadRequestException,
   Res,
   SetMetadata,
+  UseGuards,
 } from '@nestjs/common';
 import { DataIngestionService } from './data-ingestion.service';
 import { MappingDetailDto, UploadFileAndMappingUpdateDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
@@ -20,11 +21,13 @@ import { createReadStream, ReadStream } from 'fs';
 import { join } from 'path';
 import { Permission } from '@cricket-analysis-monorepo/constants';
 import { ROUTE_PERMISSION_KEY_NAME } from '../helper/constant.helper';
+import { AuthGuard } from '../guards/auth.guard';
+import { UserPermissionCheckerGuard } from '../guards/user-permission-checker.guard';
 
 const uploadFilePermissions = [Permission.UPLOAD_FILES];
 
 @Controller()
-// @UseGuards(AuthGuard, UserPermissionCheckerGuard)
+@UseGuards(AuthGuard, UserPermissionCheckerGuard)
 export class DataIngestionController {
   constructor(private readonly dataIngestionService: DataIngestionService) { }
 
