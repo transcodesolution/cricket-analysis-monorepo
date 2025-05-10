@@ -79,7 +79,7 @@ export const ReportTable = () => {
           {report?.name || 'Report'}
         </Title>
 
-        <ReportFilter filters={reportFilters} />
+        <ReportFilter reportFilters={reportFilters} />
 
         <DataTable
           mt="md"

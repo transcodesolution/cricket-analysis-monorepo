@@ -1,36 +1,41 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Flex, Paper, Select, MultiSelect } from '@mantine/core';
 import { DatePickerInput, DatesRangeValue } from '@mantine/dates';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
 import { IReportFilters } from '@/libs/types-api/src';
 
-interface IReportFilter {
-  filters: IReportFilters[];
+interface IFilter {
+  type: 'date-range' | 'select' | 'multi-select';
+  label: string;
+  key: string;
+  data?: { label: string; value: string }[];
+  isMultiSelect?: boolean;
 }
 
-export const ReportFilter = ({ filters }: IReportFilter) => {
+interface IReportFilter {
+  reportFilters: IReportFilters[];
+}
+
+export const ReportFilter = ({ reportFilters }: IReportFilter) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [dateRange, setDateRange] = useState<DatesRangeValue>([null, null]);
 
-  // Sync dateRange with URL parameters
-  useEffect(() => {
-    const start = searchParams.get('startDate');
-    const end = searchParams.get('endDate');
-    if (start && end) {
-      setDateRange([new Date(start), new Date(end)]);
-    }
-  }, [searchParams]);
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate');
+  const [dateRange, setDateRange] = useState<DatesRangeValue>([
+    startDate ? new Date(startDate) : null,
+    endDate ? new Date(endDate) : null,
+  ]);
 
-  const parsedFilters = useMemo(() => {
-    return filters.map((filter) => {
+  const filters: IFilter[] = useMemo(() => {
+    return reportFilters.map((filter) => {
       const { label, type, values = [], queryParameterKey, isMultiSelectOption } = filter;
 
       if (type === 'date-range') {
         return {
-          type: 'date-range' as const,
+          type: 'date-range',
           label,
           key: queryParameterKey ?? 'dateRange',
         };
@@ -38,22 +43,22 @@ export const ReportFilter = ({ filters }: IReportFilter) => {
 
       const filterData = [
         { value: 'all', label: 'All' },
-        ...values
-          .filter((val) => val?.value && val?.label)
-          .map((val) => ({
-            value: String(val.value),
-            label: String(val.label),
-          })),
+        ...values.map((val: { label: string; value: string } | string) =>
+          typeof val === 'object' && val.label && val.value
+            ? { label: String(val.label), value: String(val.value) }
+            : { label: String(val), value: String(val) }
+        ),
       ];
 
       return {
+        type: isMultiSelectOption ? 'multi-select' : 'select',
         label,
         key: queryParameterKey ?? label,
         data: filterData,
         isMultiSelect: isMultiSelectOption ?? false,
       };
     });
-  }, [filters]);
+  }, [reportFilters]);
 
   const handleApplyFilter = (filters: IFilterParams) => {
     const newSearchParams = updateUrlParams(filters);
@@ -71,66 +76,79 @@ export const ReportFilter = ({ filters }: IReportFilter) => {
     }
   };
 
+  const renderFilterField = (filter: IFilter) => {
+    switch (filter.type) {
+      case 'date-range':
+        return (
+          <DatePickerInput
+            type="range"
+            label={filter.label}
+            value={dateRange}
+            onChange={handleDateChange}
+            placeholder="Select Year Range"
+          />
+        );
+
+      case 'multi-select':
+        return (
+          <MultiSelect
+            label={filter.label}
+            placeholder={filter.label}
+            data={filter.data || []}
+            size="sm"
+            value={(searchParams.get(filter.key)?.split(',') || []) as string[]}
+            onChange={(values) => {
+              handleApplyFilter({
+                [filter.key]: values.length === 0 || values.includes('all') ? undefined : values.join(','),
+              });
+            }}
+            max={207}
+            styles={{
+              input: {
+                height: '2.2em',
+                width: '207px',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+              },
+              pillsList: {
+                flexWrap: 'nowrap',
+              },
+            }}
+          />
+        );
+
+      case 'select':
+      default:
+        return (
+          <Select
+            label={filter.label}
+            placeholder={filter.label}
+            data={filter.data || []}
+            size="sm"
+            clearable
+            value={searchParams.get(filter.key) || null}
+            onChange={(value) => {
+              handleApplyFilter({
+                [filter.key]: !value || value === 'all' ? undefined : value,
+              });
+            }}
+          />
+        );
+    }
+  };
+
   return (
     <Flex gap="sm" wrap="wrap">
-      {parsedFilters.map((cfg) => (
+      {filters.map((filter) => (
         <Paper
-          key={cfg.key}
+          key={filter.key}
           bg="var(--mantine-color-gray-1)"
           p="xs"
           radius="md"
           withBorder
           miw={220}
         >
-          {'type' in cfg && cfg.type === 'date-range' ? (
-            <DatePickerInput
-              type="range"
-              label={cfg.label}
-              value={dateRange}
-              onChange={handleDateChange}
-              placeholder="Select Year Range"
-            />
-          ) : cfg.isMultiSelect ? (
-            <MultiSelect
-              label={cfg.label}
-              placeholder={cfg.label}
-              data={cfg.data}
-              size="sm"
-              value={(searchParams.get(cfg.key)?.split(',') || []) as string[]}
-              onChange={(values) => {
-                handleApplyFilter({
-                  [cfg.key]: values.length === 0 || values.includes('all') ? undefined : values.join(','),
-                });
-              }}
-              max={207}
-
-              styles={{
-                input: {
-                  height: '2.2em',
-                  width: '207px',
-                  overflowX: "auto",
-                  overflowY: "hidden",
-                },
-                pillsList: {
-                  flexWrap: 'nowrap'
-                }
-              }}
-            />
-          ) : (
-            <Select
-              label={cfg.label}
-              placeholder={cfg.label}
-              data={cfg.data}
-              size="sm"
-              clearable
-              value={searchParams.get(cfg.key) || null}
-              onChange={(value) => {
-                handleApplyFilter({
-                  [cfg.key]: !value || value === 'all' ? undefined : value,
-                });
-              }}
-            />
-          )}
+          {renderFilterField(filter)}
         </Paper>
       ))}
     </Flex>
