@@ -7,6 +7,9 @@ export enum Permission {
     CREATE_ROLE = "create_role",
     UPDATE_ROLE = "update_role",
     VIEW_ROLE = "view_role",
+    CREATE_USER = "create_user",
+    UPDATE_USER = "update_user",
+    VIEW_USER = "get_user",
 }
 
 export const permissionsListByModuleWise: Record<string, { label: string, permissions: { label: string, value: Permission }[] }> = {
@@ -36,6 +39,14 @@ export const permissionsListByModuleWise: Record<string, { label: string, permis
             { label: "Create Role", value: Permission.CREATE_ROLE },
             { label: "Update Role", value: Permission.UPDATE_ROLE },
             { label: "View Role", value: Permission.VIEW_ROLE },
+        ]
+    },
+    user: {
+        label: "Users",
+        permissions: [
+            { label: "Create User", value: Permission.CREATE_USER },
+            { label: "Update User", value: Permission.UPDATE_USER },
+            { label: "View User", value: Permission.VIEW_USER },
         ]
     },
 };

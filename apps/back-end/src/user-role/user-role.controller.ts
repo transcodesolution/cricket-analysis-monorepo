@@ -1,11 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, SetMetadata } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, SetMetadata, UseGuards } from "@nestjs/common";
 import { UserRoleService } from "./user-role.service";
 import { CreateUserRoleDto, GetUserRoleDto, UpdateUserRoleDto } from "./dto/user-role.dto";
 import { Permission } from "@cricket-analysis-monorepo/constants";
 import { ROUTE_PERMISSION_KEY_NAME } from "../helper/constant.helper";
+import { AuthGuard } from "../guards/auth.guard";
+import { UserPermissionCheckerGuard } from "../guards/user-permission-checker.guard";
 
 @Controller("/user-role")
-// @UseGuards(AuthGuard, UserPermissionCheckerGuard)
+@UseGuards(AuthGuard, UserPermissionCheckerGuard)
 export class UserRoleController {
     constructor(private readonly userRoleService: UserRoleService) { }
 

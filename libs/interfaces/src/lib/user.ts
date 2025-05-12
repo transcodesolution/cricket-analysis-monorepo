@@ -9,5 +9,7 @@ export interface IUser {
     password: string;
     roleId: string;
     role: IUserRole;
+    _doc?: IUser;
+    token?: string;
     profileImage: string;
 }
