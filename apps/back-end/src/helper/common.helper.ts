@@ -1,11 +1,16 @@
-import { Injectable } from "@nestjs/common";
+import { IUser, IUserRole } from "@cricket-analysis-monorepo/interfaces";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { InjectModel } from "@nestjs/mongoose";
 import { compare, genSaltSync, hash } from "bcrypt";
 import { JwtPayload, sign } from "jsonwebtoken";
+import { Model } from "mongoose";
+import { User } from "../database/model/user.model";
+import { responseMessage } from "./response-message.helper";
 
 @Injectable()
 export class CommonHelperService {
-    constructor(private readonly configService: ConfigService) {
+    constructor(private readonly configService: ConfigService, @InjectModel(User.name) private readonly userModel: Model<User>) {
         this.JWT_TOKEN_SECRET = this.configService.get("JWT_TOKEN_SECRET");
     }
 
@@ -25,4 +30,14 @@ export class CommonHelperService {
         const token = sign(data, this.JWT_TOKEN_SECRET);
         return token;
     }
+
+    async getUserById({ userId }: { userId: string }) {
+        const user = await this.userModel.findOne<IUser>({ _id: userId }).populate<{ role: IUserRole }>("role");
+
+        if (!user) {
+            throw new BadRequestException(responseMessage.getDataNotFound("user"));
+        }
+
+        return { message: responseMessage.addDataSuccess("user details"), data: { user } };
+    };
 }

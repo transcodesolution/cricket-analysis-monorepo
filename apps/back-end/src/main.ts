@@ -11,7 +11,10 @@ async function startNestServer() {
   const globalPrefix = 'api';
   const configService = new ConfigService();
   app.setGlobalPrefix(globalPrefix);
-  app.useStaticAssets(join(__dirname, 'uploads'), { prefix: '/uploads' });
+  const uploadsPath = configService.get("NODE_ENV") === "production"
+    ? join(__dirname, 'uploads')
+    : join(__dirname, '..', '..', '..', 'uploads');
+  app.useStaticAssets(uploadsPath, { prefix: "/uploads" });
   app.enableCors({ origin: configService.get("CORS") });
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new ResponseTransformInterceptor())
