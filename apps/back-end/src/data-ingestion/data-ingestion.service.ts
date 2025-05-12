@@ -23,6 +23,9 @@ import { Response } from 'express';
 import { createReadStream, ReadStream } from 'fs';
 import { join } from 'path';
 import { ReportFilter } from '../database/model/report-filters.model';
+import { Report } from '../database/model/report.model';
+import { User } from '../database/model/user.model';
+import { UserRole } from '../database/model/user-role.model';
 
 @Injectable()
 export class DataIngestionService {
@@ -524,6 +527,8 @@ export class DataIngestionService {
       MatchAnalytics.name,
       Report.name,
       ReportFilter.name,
+      User.name,
+      UserRole.name,
     ];
 
     const response = collectionNames.flatMap((i) => {
