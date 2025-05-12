@@ -1,4 +1,3 @@
-import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core';
 import { MainLayout } from './_components/MainLayout';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -22,19 +21,8 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en" {...mantineHtmlProps}>
-      <head>
-        <ColorSchemeScript />
-        <meta
-          name="viewport"
-          content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"
-        />
-      </head>
-      <body>
-        <AuthProvider token={bearerToken}>
-          <MainLayout>{children}</MainLayout>
-        </AuthProvider>
-      </body>
-    </html >
+    <AuthProvider token={bearerToken}>
+      <MainLayout>{children}</MainLayout>
+    </AuthProvider>
   );
 }

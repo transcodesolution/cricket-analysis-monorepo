@@ -37,7 +37,7 @@ export const setupAxiosInterceptors = ({ token }: { token: string }) => {
     (error: AxiosError) => {
       if (error.response?.status === 401) {
         if (typeof window !== 'undefined') {
-          window.location.href = '/signin';
+          window.location.href = '/auth/signin';
         }
       }
       return Promise.reject(error);

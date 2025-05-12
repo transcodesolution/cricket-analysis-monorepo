@@ -4,10 +4,8 @@ import {
   Box,
   Button,
   Center,
-  Checkbox,
   Paper,
   PasswordInput,
-  Text,
   TextInput,
   Title,
 } from '@mantine/core';
@@ -54,8 +52,6 @@ export default function Page() {
       <Center h="100vh">
         <Box>
           <Title ta="center">Welcome back!</Title>
-          <Text ta="center">Sign in to your account to continue</Text>
-
           <Surface component={Paper} className={classes.card}>
             <form onSubmit={handleSignInFormSubmit} onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -76,10 +72,6 @@ export default function Page() {
                 mt="md"
                 classNames={{ label: classes.label }}
                 {...form.getInputProps('password')}
-              />
-              <Checkbox
-                label="Remember me"
-                classNames={{ label: classes.label }}
               />
               <Button fullWidth mt="xl" type="submit" loading={form.submitting} disabled={form.submitting}>
                 Sign in
