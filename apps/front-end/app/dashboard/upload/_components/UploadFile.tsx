@@ -15,7 +15,7 @@ export const UploadFile = () => {
   const [showModal, setShowModal] = useState(false);
   const [fileColumnData, setFileColumnData] = useState<IFileColumns[]>([]);
   const [droppedFiles, setDroppedFiles] = useState<FileWithPath[]>([]);
-
+  const [loading, setLoading] = useState(false);
   const { mutate: checkMappingAndUpdate } = useCheckMappingAndUpdate();
 
   const handleDrop = (files: FileWithPath[]) => {
@@ -31,7 +31,7 @@ export const UploadFile = () => {
 
         handleMappingCheck(structuredData, files);
       })
-      .catch((error: any) => {
+      .catch((error) => {
         showNotification({
           message: error?.message || 'An error occurred while checking mapping.',
           color: 'red',
@@ -40,6 +40,7 @@ export const UploadFile = () => {
   };
 
   const handleMappingCheck = (structuredData: IFileColumns[], files: FileWithPath[]) => {
+    setLoading(true)
     checkMappingAndUpdate(
       { files: structuredData },
       {
@@ -60,12 +61,14 @@ export const UploadFile = () => {
             }));
             uploadFilesToService(files, userMappingDetail);
           }
-        }
+        },
+        onSettled: () => setLoading(false)
       }
     );
   };
 
   const uploadFilesToService = (files: FileWithPath[], userMappingDetail: IUserMappingDetail[] = []) => {
+    setLoading(true);
     const formData = new FormData();
     files.forEach((file) => {
       formData.append('sheets', file, file.name);
@@ -80,11 +83,12 @@ export const UploadFile = () => {
         setDroppedFiles([]);
       })
       .catch((error) => {
+        console.log(error, 'error')
         showNotification({
           message: error?.message || 'Something went wrong while uploading.',
           color: 'red',
         });
-      });
+      }).finally(() => { setLoading(false) })
   };
 
   const submitFinalUserMapping = async (userMappingDetail: IUserMappingDetail[]) => {
@@ -100,6 +104,7 @@ export const UploadFile = () => {
             radius="lg"
             accept={[MIME_TYPES.csv, MIME_TYPES.xlsx]}
             multiple
+            loading={loading}
           >
             <Stack align="center" justify="center" py="xl">
               <IconCloudUpload size={48} color="gray" />
