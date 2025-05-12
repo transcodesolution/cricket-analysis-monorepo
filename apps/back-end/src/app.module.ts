@@ -7,9 +7,11 @@ import { DataIngestionModule } from './data-ingestion/data-ingestion.module';
 import { SeederModule } from './seeders/seeder.module';
 import { ReportModule } from './reports/report.module';
 import { AuthModule } from './auth/auth.module';
+import { UserRoleModule } from './user-role/user-role.module';
+import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [EnvConfigModule, DatabaseModule, DataIngestionModule, SeederModule, ReportModule, AuthModule],
+  imports: [EnvConfigModule, DatabaseModule, DataIngestionModule, SeederModule, ReportModule, AuthModule, UserRoleModule, UserModule],
   controllers: [AppController],
   providers: [AppService],
 })

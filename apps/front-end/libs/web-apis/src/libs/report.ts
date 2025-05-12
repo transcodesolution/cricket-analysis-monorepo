@@ -4,7 +4,7 @@ import { IGetReportsResponse, IGetReportRequest, IGetReportByIdRequest, IGetRepo
 
 export const getReports = async (params: IGetReportRequest): Promise<PaginationApiResponseType<IGetReportsResponse>> => {
   try {
-    const res = await http.get<PaginationApiResponseType<IGetReportsResponse>>('/api/report', { params });
+    const res = await http.get<PaginationApiResponseType<IGetReportsResponse>>('/report', { params });
     return res.data;
   } catch (error) {
     throw new Error(`Error while fetching reports: ${error}`);
@@ -14,7 +14,7 @@ export const getReports = async (params: IGetReportRequest): Promise<PaginationA
 export const getReportById = async (params: IGetReportByIdRequest): Promise<PaginationApiResponseType<IGetReportByIdResponse>> => {
   try {
     const { id, ...otherParams } = params;
-    const res = await http.get<PaginationApiResponseType<IGetReportByIdResponse>>(`/api/report/${id}`, { params: otherParams });
+    const res = await http.get<PaginationApiResponseType<IGetReportByIdResponse>>(`/report/${id}`, { params: otherParams });
     return res.data;
   } catch (error) {
     throw new Error(`Error while fetching player report: ${error}`);

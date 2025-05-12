@@ -1,0 +1,1 @@
+export const ROUTE_PERMISSION_KEY_NAME = "routePermissions";

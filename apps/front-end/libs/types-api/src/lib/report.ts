@@ -1,27 +1,24 @@
+import { IReportFilter } from "@cricket-analysis-monorepo/interfaces";
+
 export interface IGetReportRequest {
   page: number;
   limit: number;
 }
 
-export interface IReports {
+export interface IReport {
   _id: string,
   name: string
 }
 export interface IGetReportsResponse {
-  reports: IReports[];
+  reports: IReport[];
   totalData: number;
 }
 
 export interface IGetReportByIdRequest {
   page: number;
   limit: number;
-  [key: string]: string | number;
+  [key: string]: string | number | string[];
   id: string
-}
-
-export interface IReportFilters {
-  label: string;
-  values: Array<{ label: string; value: string }>;
 }
 
 export interface ITableHeader {
@@ -40,7 +37,7 @@ export interface IGetReportByIdResponse {
       tableBody: ITableRow[];
       tableHeader: ITableHeader[];
     };
-    filters: IReportFilters[];
+    filters: IReportFilter[];
   };
   totalData: number;
 }
