@@ -15,17 +15,17 @@ const linksData = [
   {
     label: 'Upload',
     icon: IconUpload,
-    link: '/upload',
+    link: '/dashboard/upload',
   },
   {
     label: 'Reports',
     icon: IconReportAnalytics,
-    link: '/reports',
+    link: '/dashboard/reports',
   },
   {
     label: 'AI Analysis',
     icon: IconWand,
-    link: '/ai-analysis',
+    link: '/dashboard/ai-analysis',
   },
 ];
 

@@ -1,7 +1,6 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Flex, Paper, Select, MultiSelect } from '@mantine/core';
 import { DatePickerInput, DatesRangeValue } from '@mantine/dates';
-import { useState } from 'react';
 import dayjs from 'dayjs';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
 import { IReportFilter } from '@cricket-analysis-monorepo/interfaces';
@@ -17,10 +16,7 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
 
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
-  const [dateRange, setDateRange] = useState<DatesRangeValue>([
-    startDate ? new Date(startDate) : null,
-    endDate ? new Date(endDate) : null,
-  ]);
+
 
   const handleApplyFilter = (filters: IFilterParams) => {
     const newSearchParams = updateUrlParams(filters);
@@ -28,12 +24,18 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
   };
 
   const handleDateChange = (range: DatesRangeValue) => {
-    setDateRange(range);
     const [start, end] = range;
     if (start && end) {
       handleApplyFilter({
         startDate: dayjs(start).format('YYYY-MM-DD'),
         endDate: dayjs(end).format('YYYY-MM-DD'),
+      });
+    }
+    
+    if(!start && !end){
+      handleApplyFilter({
+        startDate: '',
+        endDate: '',
       });
     }
   };
@@ -46,9 +48,10 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
         <DatePickerInput
           type="range"
           label={filter.label}
-          value={dateRange}
+          defaultValue={[startDate, endDate]}
           onChange={handleDateChange}
           placeholder="Select Year Range"
+          clearable
         />
       );
     }
