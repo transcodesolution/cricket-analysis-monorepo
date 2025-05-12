@@ -1,3 +1,4 @@
+import { ReportFilterType } from "@cricket-analysis-monorepo/constants";
 import { IPaginationApiResponseState } from "./api-response.js";
 import { IODIBatsmanStat } from "./odi-batsmen-stat-report.js";
 
@@ -12,6 +13,8 @@ export interface IReportFilter {
     label: string;
     values: number[] | IFilterValue[];
     isMultiSelectOption: boolean;
+    queryParameterKey: string;
+    type: ReportFilterType;
 }
 
 export interface IFilterValue {

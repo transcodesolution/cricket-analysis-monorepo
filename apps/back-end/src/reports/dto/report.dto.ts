@@ -1,22 +1,8 @@
-import { ArrayMinSize, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from "class-validator";
-import { Transform, Type } from "class-transformer";
+import { ArrayMinSize, IsMongoId, IsNotEmpty, IsString, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
 import { FilterConfiguration } from "../../database/model/report.model";
 import { ReportFilter } from "../../database/model/report-filters.model";
-
-export class PaginationDto {
-    @IsOptional()
-    @Transform((obj) => (+obj.value))
-    page: number;
-
-    @IsOptional()
-    @Transform((obj) => (+obj.value))
-    limit: number;
-
-    constructor() {
-        this.page = 1;
-        this.limit = 10;
-    }
-}
+import { PaginationDto } from "../../helper/pagination.dto";
 
 class ReportDto {
     @IsNotEmpty()
