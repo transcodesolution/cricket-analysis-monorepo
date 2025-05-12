@@ -7,13 +7,15 @@ import {
   Group,
   Text,
   Avatar,
-  Image,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconHelpOctagon,
   IconSettings,
 } from '@tabler/icons-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 interface IMainLayout {
   children: React.ReactNode;
@@ -40,7 +42,7 @@ export const MainLayout = ({ children }: IMainLayout) => {
       {/* Header */}
       <AppShell.Header bg='var(--mantine-color-gray-1)'>
         <Flex justify="space-between" align="center" h="100%" px="lg">
-          <Group>
+          <Group onClick={() => redirect('/dashboard')} styles={{ root: { cursor: 'pointer' } }}>
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
             <Image
               src="/assets/images/logo.svg"
