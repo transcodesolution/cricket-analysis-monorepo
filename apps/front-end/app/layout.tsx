@@ -3,12 +3,12 @@ import 'mantine-datatable/styles.layer.css';
 import '@mantine/dropzone/styles.css';
 import '@mantine/notifications/styles.layer.css';
 import '@mantine/dates/styles.css';
+import './global.css'
 
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 import { theme } from '@/theme/theme';
 import { ReactQueryClientProvider } from '@/libs/providers/ReactQueryClientProvider';
 import { Notification } from '@/libs/custom/notification';
-import './global.css'
 
 export const metadata = {
   title: 'CrickAI - Smart Cricket Insights',
