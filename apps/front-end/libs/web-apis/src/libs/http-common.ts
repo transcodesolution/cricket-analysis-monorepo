@@ -21,9 +21,12 @@ export const axiosNextServerInstance = axios.create({
   },
 });
 
-export const setupAxiosInterceptors = () => {
+export const setupAxiosInterceptors = ({ token }: { token: string }) => {
   axiosInstance.interceptors.request.use(
     (request: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+      if (request.headers) {
+        request.headers['Authorization'] = `${token}`;
+      }
       return request;
     },
     (error: AxiosError) => Promise.reject(error)
@@ -32,6 +35,11 @@ export const setupAxiosInterceptors = () => {
   axiosInstance.interceptors.response.use(
     (response: AxiosResponse) => response,
     (error: AxiosError) => {
+      if (error.response?.status === 401) {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/signin';
+        }
+      }
       return Promise.reject(error);
     }
   );
