@@ -1,14 +1,16 @@
+import { IReportFilter } from "@cricket-analysis-monorepo/interfaces";
+
 export interface IGetReportRequest {
   page: number;
   limit: number;
 }
 
-export interface IReports {
+export interface IReport {
   _id: string,
   name: string
 }
 export interface IGetReportsResponse {
-  reports: IReports[];
+  reports: IReport[];
   totalData: number;
 }
 
@@ -17,16 +19,6 @@ export interface IGetReportByIdRequest {
   limit: number;
   [key: string]: string | number | string[];
   id: string
-}
-
-export interface IReportFilters {
-  label: string;
-  values?: Array<{ label: string; value: string }>;
-  type?: 'select' | 'date-range';
-  queryParameterKey?: string;
-  isMultiSelectOption?: boolean;
-  filterType?: number;
-  title?: string;
 }
 
 export interface ITableHeader {
@@ -45,7 +37,7 @@ export interface IGetReportByIdResponse {
       tableBody: ITableRow[];
       tableHeader: ITableHeader[];
     };
-    filters: IReportFilters[];
+    filters: IReportFilter[];
   };
   totalData: number;
 }

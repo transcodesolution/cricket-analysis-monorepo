@@ -1,24 +1,17 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Flex, Paper, Select, MultiSelect } from '@mantine/core';
 import { DatePickerInput, DatesRangeValue } from '@mantine/dates';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import dayjs from 'dayjs';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
-import { IReportFilters } from '@/libs/types-api/src';
+import { IReportFilter } from '@cricket-analysis-monorepo/interfaces';
+import { ReportFilterType } from '@cricket-analysis-monorepo/constants';
 
-interface IFilter {
-  type: 'date-range' | 'select' | 'multi-select';
-  label: string;
-  key: string;
-  data?: { label: string; value: string }[];
-  isMultiSelect?: boolean;
+interface IReportFilters {
+  reportFilters: IReportFilter[];
 }
 
-interface IReportFilter {
-  reportFilters: IReportFilters[];
-}
-
-export const ReportFilter = ({ reportFilters }: IReportFilter) => {
+export const ReportFilter = ({ reportFilters }: IReportFilters) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -28,37 +21,6 @@ export const ReportFilter = ({ reportFilters }: IReportFilter) => {
     startDate ? new Date(startDate) : null,
     endDate ? new Date(endDate) : null,
   ]);
-
-  const filters: IFilter[] = useMemo(() => {
-    return reportFilters.map((filter) => {
-      const { label, type, values = [], queryParameterKey, isMultiSelectOption } = filter;
-
-      if (type === 'date-range') {
-        return {
-          type: 'date-range',
-          label,
-          key: queryParameterKey ?? 'dateRange',
-        };
-      }
-
-      const filterData = [
-        { value: 'all', label: 'All' },
-        ...values.map((val: { label: string; value: string } | string) =>
-          typeof val === 'object' && val.label && val.value
-            ? { label: String(val.label), value: String(val.value) }
-            : { label: String(val), value: String(val) }
-        ),
-      ];
-
-      return {
-        type: isMultiSelectOption ? 'multi-select' : 'select',
-        label,
-        key: queryParameterKey ?? label,
-        data: filterData,
-        isMultiSelect: isMultiSelectOption ?? false,
-      };
-    });
-  }, [reportFilters]);
 
   const handleApplyFilter = (filters: IFilterParams) => {
     const newSearchParams = updateUrlParams(filters);
@@ -76,72 +38,81 @@ export const ReportFilter = ({ reportFilters }: IReportFilter) => {
     }
   };
 
-  const renderFilterField = (filter: IFilter) => {
-    switch (filter.type) {
-      case 'date-range':
-        return (
-          <DatePickerInput
-            type="range"
-            label={filter.label}
-            value={dateRange}
-            onChange={handleDateChange}
-            placeholder="Select Year Range"
-          />
-        );
+  const renderFilterField = (filter: IReportFilter) => {
+    const key = filter.queryParameterKey ?? filter.label;
 
-      case 'multi-select':
-        return (
-          <MultiSelect
-            label={filter.label}
-            placeholder={filter.label}
-            data={filter.data || []}
-            size="sm"
-            value={(searchParams.get(filter.key)?.split(',') || []) as string[]}
-            onChange={(values) => {
-              handleApplyFilter({
-                [filter.key]: values.length === 0 || values.includes('all') ? undefined : values.join(','),
-              });
-            }}
-            max={207}
-            styles={{
-              input: {
-                height: '2.2em',
-                width: '207px',
-                overflowX: 'auto',
-                overflowY: 'hidden',
-              },
-              pillsList: {
-                flexWrap: 'nowrap',
-              },
-            }}
-          />
-        );
-
-      case 'select':
-      default:
-        return (
-          <Select
-            label={filter.label}
-            placeholder={filter.label}
-            data={filter.data || []}
-            size="sm"
-            clearable
-            value={searchParams.get(filter.key) || null}
-            onChange={(value) => {
-              handleApplyFilter({
-                [filter.key]: !value || value === 'all' ? undefined : value,
-              });
-            }}
-          />
-        );
+    if (filter.type === ReportFilterType.DATE_RANGE) {
+      return (
+        <DatePickerInput
+          type="range"
+          label={filter.label}
+          value={dateRange}
+          onChange={handleDateChange}
+          placeholder="Select Year Range"
+        />
+      );
     }
+
+    const options = [
+      { value: 'all', label: 'All' },
+      ...filter.values.map((val) =>
+        typeof val === 'object' && 'label' in val && 'value' in val
+          ? { label: String(val.label), value: String(val.value) }
+          : { label: String(val), value: String(val) }
+      ),
+    ];
+
+    if (filter.isMultiSelectOption) {
+      return (
+        <MultiSelect
+          label={filter.label}
+          placeholder={filter.label}
+          data={options}
+          size="sm"
+          value={(searchParams.get(key)?.split(',') || []) as string[]}
+          onChange={(values) => {
+            handleApplyFilter({
+              [key]: values.length === 0 || values.includes('all') ? undefined : values.join(','),
+            });
+          }}
+          max={207}
+          styles={{
+            input: {
+              height: '2.2em',
+              width: '207px',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+            },
+            pillsList: {
+              flexWrap: 'nowrap',
+            },
+          }}
+        />
+      );
+    }
+
+    return (
+      <Select
+        label={filter.label}
+        placeholder={filter.label}
+        data={options}
+        size="sm"
+        clearable
+        value={searchParams.get(key) || null}
+        onChange={(value) => {
+          handleApplyFilter({
+            [key]: !value || value === 'all' ? undefined : value,
+          });
+        }}
+      />
+    );
   };
 
   return (
     <Flex gap="sm" wrap="wrap">
-      {filters.map((filter) => (
+      {reportFilters.map((filter) => (
         <Paper
-          key={filter.key}
+          key={filter.queryParameterKey ?? filter.label}
           bg="var(--mantine-color-gray-1)"
           p="xs"
           radius="md"
