@@ -1,7 +1,12 @@
-export interface Ball {
+import { SubstituteReasonType, WicketType } from '@cricket-analysis-monorepo/constants';
+
+export interface IBall {
+  over?: number;
   ball: number;
+  foursHit: number;
+  sixHit: number;
   bowler: string;
-  non_stiker: {
+  non_striker: {
     player: string;
   };
   runs_off_bat: number;
@@ -11,36 +16,38 @@ export interface Ball {
     shot: {
       name: string;
       type: string;
+      angle: number;
+      distance: number;
     };
   };
   substitute: {
     player: string;
-    reasonType: string;
+    reasonType: SubstituteReasonType;
     replacedPlayer: string;
   };
   wicket: {
-    dismissedPlayer: string;
-    takenBy: string[];
-    type: string;
+    dismissedPlayer?: string;
+    takenBy?: string[];
+    type?: WicketType;
   };
   winningChance: number;
-}
-
-export interface MatchScoreboard {
-  over: number;
-  matchId: string;
-  innings: number;
-  match_id: string;
-  sheet_match_id: string;
-  extras: {
+  extras?: Partial<{
     byes: number;
-    fours: number;
     legbyes: number;
     noballs: number;
     penalty: number;
-    sixes: number;
     total: number;
     wides: number;
-  };
-  balls: Ball[];
+    dots: number;
+    fours: number;
+    sixes: number;
+  }>;
+}
+
+export interface IMatchScoreboard {
+  over: number;
+  match_id: string;
+  sheet_match_id: string;
+  innings: number;
+  balls: IBall[];
 }
