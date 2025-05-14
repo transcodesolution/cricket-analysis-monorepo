@@ -99,9 +99,9 @@ jobs:
             mv ~/cricket-analysis-build/dist/apps/back-end/package-lock.json ~/cricket-analysis-build/dist/package-lock.json &&
             mv ~/cricket-analysis-build/dist/apps/back-end/main.js ~/cricket-analysis-build/dist/main.js &&
             mv ~/cricket-analysis-build/dist/apps/back-end/main.js.map ~/cricket-analysis-build/dist/main.js.map &&
-            npm install &&
+            cd ~/cricket-analysis-build/dist && npm install &&
             pm2 restart 0 && pm2 logs 0 &&
-            rm -r ~/cricket-analysis-build/build-output-tar.gz &&
+            rm -r ~/cricket-analysis-build/build-output.tar.gz &&
             rm -r ~/cricket-analysis-build/dist/apps"
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
