@@ -1,11 +1,12 @@
-import { MatchStatus, TossResult, WinnerTeamDecision } from "@cricket-analysis-monorepo/constants";
+import { MatchStatus, TossResult, WinnerTeamDecision, Brand, Color, BallType } from "@cricket-analysis-monorepo/constants";
 
-export interface MatchInfo {
+export interface IMatchInfo {
   name: string;
-  startDate: Date;
+  start_date: Date;
   venue: string;
-  endDate: Date;
+  end_date: Date;
   referee: string;
+  method: string;
   umpire: {
     fourthUmpire: string;
     onFieldBowlerEndUmpire: string;
@@ -18,23 +19,23 @@ export interface MatchInfo {
     winnerTeamDecision: WinnerTeamDecision;
   };
   match_number: number;
-  balls_per_over: number;
   match_id: string;
   summary: string;
-  team2: {
+  balls_per_over: number;
+  tournamentId: string;
+  ball: {
+    brand: Brand;
+    color: Color;
+    type: BallType;
+  };
+  team1: {
     impactPlayerIn: string;
     impactPlayerOut: string;
     playingEleven: string[];
-    substitutPlayers: string[];
+    substitutePlayers: string[];
     team: string;
   };
-  tournamentId: string;
-  ball: {
-    brand: string;
-    color: string;
-    type: string;
-  };
-  team1: {
+  team2: {
     impactPlayerIn: string;
     impactPlayerOut: string;
     playingEleven: string[];

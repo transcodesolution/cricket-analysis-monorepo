@@ -35,7 +35,7 @@ export class Player {
   battingStyle: BattingStyle;
 
   @Prop({ type: Object })
-  debut: object;
+  debut: Record<string, string>;
 
   @Prop()
   aboutMe: string;

@@ -1,6 +1,6 @@
-import { Country, MatchFormat, TournamentBoard, TournamentType } from "@cricket-analysis-monorepo/constants";
+import { Country, MatchFormat, TournamentBoard, TournamentType, Gender } from "@cricket-analysis-monorepo/constants";
 
-export interface OrganizerDetails {
+export interface IOrganizerDetails {
     contact: string;
     countryCode: string;
     email: string;
@@ -8,11 +8,12 @@ export interface OrganizerDetails {
 }
 
 export interface ITournament {
+    _id?: string;
     event: string;
-    gender: string;
-    organizerDetails: OrganizerDetails;
-    endDate: Date | null;
-    startDate: Date | null;
+    gender: Gender;
+    organizerDetails: IOrganizerDetails;
+    startDate: Date;
+    endDate: Date;
     logo: string;
     season: string;
     board: TournamentBoard;
