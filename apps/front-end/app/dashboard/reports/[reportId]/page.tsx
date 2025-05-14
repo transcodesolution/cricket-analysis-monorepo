@@ -4,7 +4,7 @@ import BackToOverview from "@/libs/custom/back-to-overview";
 
 export default function Page() {
   return <Stack>
-    <BackToOverview title="Reports" backUrl='/reports' />
+    <BackToOverview title="Reports" backUrl='/dashboard/reports' />
     <ReportTable />
   </Stack>
 }

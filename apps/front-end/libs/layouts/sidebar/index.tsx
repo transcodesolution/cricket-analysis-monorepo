@@ -3,6 +3,7 @@ import {
   IconUpload,
   IconReportAnalytics,
   IconWand,
+  IconUsers,
 } from '@tabler/icons-react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -26,6 +27,11 @@ const linksData = [
     label: 'AI Analysis',
     icon: IconWand,
     link: '/dashboard/ai-analysis',
+  },
+  {
+    label: 'Users',
+    icon: IconUsers,
+    link: '/dashboard/users',
   },
 ];
 
