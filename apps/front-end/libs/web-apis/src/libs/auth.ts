@@ -13,6 +13,7 @@ export const signIn = async (params: ISignInRequest): Promise<ISignInResponse> =
 export const nextServerSignIn = async (params: ISignInRequest): Promise<ISignInResponse> => {
   try {
     const result = await axiosNextServerInstance.post<ISignInResponse>('/auth/signin', params);
+    console.log(result , 'result')
     return result.data;
   } catch (error) {
     throw new Error(`Error while signin at next serverSide: ${error}`);
