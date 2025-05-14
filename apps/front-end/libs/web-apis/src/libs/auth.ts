@@ -12,7 +12,7 @@ export const signIn = async (params: ISignInRequest): Promise<ISignInResponse> =
 
 export const nextServerSignIn = async (params: ISignInRequest): Promise<ISignInResponse> => {
   try {
-    const result = await axiosNextServerInstance.post<ISignInResponse>('/api/auth/signin', params);
+    const result = await axiosNextServerInstance.post<ISignInResponse>('/auth/signin', params);
     return result.data;
   } catch (error) {
     throw new Error(`Error while signin at next serverSide: ${error}`);
@@ -21,7 +21,7 @@ export const nextServerSignIn = async (params: ISignInRequest): Promise<ISignInR
 
 export const logout = async (): Promise<void> => {
   try {
-    await axiosNextServerInstance.post('/api/auth/signout');
+    await axiosNextServerInstance.post('/auth/signout');
   } catch (error) {
     throw new Error(`Error while logging out: ${error}`);
   }

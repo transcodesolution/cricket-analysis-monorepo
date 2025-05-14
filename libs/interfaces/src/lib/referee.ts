@@ -1,3 +1,3 @@
-export interface Referee {
+export interface IReferee {
     name: string;
 }

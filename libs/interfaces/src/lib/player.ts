@@ -1,18 +1,16 @@
-import { Gender } from "@cricket-analysis-monorepo/constants";
-import { PlayerRole, BattingStyle } from "@cricket-analysis-monorepo/constants";
+import { Gender, PlayerRole, BattingStyle, BowlingStyleType } from "@cricket-analysis-monorepo/constants";
 
-export interface Player {
+export interface IPlayer {
     name: string;
     role: PlayerRole;
-    teams: { id: string, capNumber: number }[];
-    season: number;
+    teams: { id: string; capNumber: number }[];
     shortName: string;
     gender: Gender;
     dob: string;
     profilePictureUrl: string;
     uniqueId: string;
-    bowlingStyle: { code: string; name: string };
+    bowlingStyle: BowlingStyleType;
     battingStyle: BattingStyle;
-    debut: object;
+    debut: Record<string, string>; // or a stricter type if you have structure
     aboutMe: string;
 }

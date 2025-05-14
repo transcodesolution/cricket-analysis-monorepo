@@ -1,43 +1,89 @@
 export interface IMatchAnalytics {
-  netRunRate: number;
   totalBallFaced: number;
-  totalRuns: string;
+  totalRuns: number;
   matchId: string;
-  economyRate: number;
-  teamTwo: ITeamAnalytics;
   teamOne: ITeamAnalytics;
+  teamTwo: ITeamAnalytics;
 }
 
 export interface ITeamAnalytics {
-  fallOfWickets: IFallOfWicket[];
-  players: IPlayerAnalytics[];
-  teamId: string;
-  yetToBatPlayerIds: string[];
+  netRunRate?: number;
+  fallOfWickets?: IFallOfWicket[];
+  playerStats?: IPlayerAnalytics[];
+  team?: string;
+  yetToBatPlayers?: string[];
+  summary?: IMatchSummary;
 }
 
 export interface IFallOfWicket {
-  ballNumber: number;
-  playerId: string;
-  runsScore: string;
+  over?: number;
+  ballNumber?: number;
+  player?: string;
+  bowler?: string;
+  runsScore?: number;
 }
 
 export interface IPlayerAnalytics {
-  asBatsmen: IBatsmanStats;
-  asBowler: IBowlerStats;
-  playerId: string;
+  batting?: IBatsmanStats;
+  bowling?: IBowlerStats;
+  player?: string;
 }
 
 export interface IBatsmanStats {
-  overPlayed: number;
-  totalFoursHit: number;
-  totalRuns: string;
-  totalSixHit: number;
+  overPlayedIn?: {
+    over: number;
+    runs: number;
+    totalSixHit: number;
+    ballsFaced: number;
+    0: number;
+    1: number;
+  }[];
+  totalFoursHit?: number;
+  runs?: number;
+  totalSixHit?: number;
+  ballsFaced?: number;
+  0?: number;
+  1?: number;
+  2?: number;
+  3?: number;
+  4?: number;
+  5?: number;
+  6?: number;
+  strikeRate?: number;
+  timeSpend?: number;
+  shot?: {
+    over?: number;
+    bowler?: string;
+    angle?: number;
+    distance?: number;
+    runs?: number;
+    shotType?: string;
+    result?: string;
+  };
 }
 
 export interface IBowlerStats {
-  oversBowl: number;
-  runsConceded: number;
-  totalNoBall: number;
-  totalWicketTaken: number;
-  totalWide: number;
+  overs?: number;
+  ballsBowled?: number;
+  runsConceded?: number;
+  totalNoBall?: number;
+  totalWicketTaken?: number;
+  totalWide?: number;
+  totalFourConceded?: number;
+  totalSixConceded?: number;
+  totalMaidenOvers?: number;
+  totalDotBalls?: number;
+  economyRate?: number;
+  phases?: {
+    powerPlay?: number;
+    middle?: number;
+    Death?: number;
+  }[];
+}
+
+export interface IMatchSummary {
+  topScorer?: string;
+  totalWicketTaken?: number;
+  topWicketTaken?: string;
+  margin?: number;
 }
