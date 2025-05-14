@@ -2,7 +2,7 @@ import axios, { AxiosResponse, InternalAxiosRequestConfig, AxiosError as Origina
 
 type AxiosError = { config: { _retry: boolean } } & OriginalAxiosError;
 
-export const BASE_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
+export const BASE_API_URL = `${process.env.NEXT_PUBLIC_BASE_API_URL}/api`;
 export const NEXT_APP_URL = '/';
 
 const axiosInstance = axios.create({

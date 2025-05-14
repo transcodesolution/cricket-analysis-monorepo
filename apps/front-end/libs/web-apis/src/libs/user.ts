@@ -5,7 +5,7 @@ import { IApiResponse, IUser } from '@cricket-analysis-monorepo/interfaces';
 
 export const getUser = async (): Promise<IApiResponse<IGetUserResponse>> => {
   try {
-    const result = await http.get<IApiResponse<IGetUserResponse>>('/user');
+    const result = await http.get<IApiResponse<IGetUserResponse>>('/panel-user');
     return result.data;
   } catch (error) {
     throw new Error(`Error while fetching user: ${error}`);
@@ -19,7 +19,7 @@ export const getUsers = async (params: IGetUsersRequest): Promise<IApiResponse<I
   query.set('limit', params.limit.toString());
 
   try {
-    const result = await http.get<IApiResponse<IGetUsersResponse>>(`/user/all?${query}`);
+    const result = await http.get<IApiResponse<IGetUsersResponse>>(`/user?${query}`);
     return result.data;
   } catch (error) {
     return apiErrorHandler(error, "fetching user");
@@ -48,7 +48,7 @@ export const updateUser = async (params: Partial<IUser>): Promise<IApiResponse<I
 
 export const createUser = async (params: Partial<IUser>): Promise<IApiResponse<IUser>> => {
   try {
-    const result = await http.post<IApiResponse<IUser>>(`/user/add`, params);
+    const result = await http.post<IApiResponse<IUser>>(`/user/create`, params);
     return result.data;
   } catch (error) {
     return apiErrorHandler(error, "creating user");
