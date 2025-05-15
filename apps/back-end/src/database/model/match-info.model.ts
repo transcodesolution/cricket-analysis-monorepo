@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
-import { TossResult, WinnerTeamDecision, MatchStatus } from '@cricket-analysis-monorepo/constants';
+import { TossResult, WinnerTeamDecision, MatchStatus, MatchMethod } from '@cricket-analysis-monorepo/constants';
 import { BallType, Brand, Color } from '@cricket-analysis-monorepo/constants';
 
 @Schema({ timestamps: true, versionKey: false })
@@ -8,20 +8,20 @@ export class MatchInfo {
     @Prop()
     name: string;
 
-    @Prop()
-    start_date: Date;
+    @Prop({ type: Date })
+    start_date: string;
 
     @Prop({ type: SchemaTypes.ObjectId })
     venue: string;
 
-    @Prop()
-    end_date: Date;
+    @Prop({ type: Date })
+    end_date: string;
 
     @Prop({ type: SchemaTypes.ObjectId })
     referee: string;
 
-    @Prop({ type: SchemaTypes.ObjectId })
-    method: string;
+    @Prop({ type: String, enum: MatchMethod })
+    method: MatchMethod;
 
     @Prop({
         type: {
@@ -130,9 +130,10 @@ export class MatchInfo {
 
     constructor() {
         this.name = '';
-        this.start_date = new Date();
+        this.start_date = '';
         this.venue = '';
-        this.end_date = new Date();
+        this.method = MatchMethod.DLS;
+        this.end_date = '';
         this.referee = '';
         this.umpire = {
             fourthUmpire: '',
