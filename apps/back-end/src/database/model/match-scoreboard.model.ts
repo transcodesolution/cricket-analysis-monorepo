@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
-import { SubstituteReasonType, WicketType } from '@cricket-analysis-monorepo/constants';
+import { BattingStyle, SubstituteReasonType, WicketType } from '@cricket-analysis-monorepo/constants';
 
 export class Wicket {
     @Prop({ type: SchemaTypes.ObjectId })
@@ -37,7 +37,7 @@ export class Ball {
     @Prop({
         type: {
             player: { type: SchemaTypes.ObjectId, index: true },
-            position: String,
+            position: { type: String, enum: BattingStyle },
             shot: {
                 name: String,
                 type: String,
@@ -48,7 +48,7 @@ export class Ball {
     })
     striker: {
         player: string;
-        position: string;
+        position: BattingStyle;
         shot: {
             name: string;
             type: string;
@@ -61,7 +61,7 @@ export class Ball {
         type: {
             player: { type: SchemaTypes.ObjectId, index: true },
             reasonType: { type: String, enum: SubstituteReasonType },
-            replacedPlayer: SchemaTypes.ObjectId,
+            replacedPlayer: { type: SchemaTypes.ObjectId },
         },
     })
     substitute: {
@@ -100,7 +100,7 @@ export class Ball {
         this.runs_off_bat = 0;
         this.striker = {
             player: '',
-            position: '',
+            position: BattingStyle.LEFT_HAND,
             shot: { name: '', type: '', angle: 0, distance: 0 },
         };
         this.substitute = {

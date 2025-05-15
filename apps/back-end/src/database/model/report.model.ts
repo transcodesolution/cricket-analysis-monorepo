@@ -13,6 +13,11 @@ export class FilterConfiguration {
     @IsEnum(MatchFormat)
     @IsOptional()
     matchFormat?: MatchFormat;
+
+    @Prop()
+    @IsString()
+    @IsOptional()
+    overValue?: number;
 }
 
 @Schema({ timestamps: true, versionKey: false })

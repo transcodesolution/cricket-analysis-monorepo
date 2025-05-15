@@ -77,22 +77,41 @@ export class ReportService {
 
     const { totalData, ...details } = reports;
 
-    const filters = await this.reportFilterModel.find({ _id: { $in: report.filters.map((i) => i.id) } });
+    const filterIds = report.filters.map((i) => i.id);
+    const filters = await this.reportFilterModel.find({ _id: { $in: filterIds } });
 
-    const filterWithValues: Partial<IReportFilter>[] = [];
+    const filterWithValues: Partial<IReportFilter>[] = await Promise.all(
+      filters.map(async (filter) => {
+        const filterConfig = report.filters.find((i) => i.id.toString() === filter._id.toString()) || {};
+        const filterExecutionParameters: IFilterExecutionParameter = {
+          schema: this.collections[filter.collectionName],
+          filters: { ...filterConfig }
+        };
 
-    for (const filter of filters) {
-      const filterExecutionParameters: IFilterExecutionParameter = { schema: this.collections[filter.collectionName], filters: {} };
-      if (report.name.includes(MatchFormat.ODI)) {
-        filterExecutionParameters.filters.matchFormat = MatchFormat.ODI;
-      }
-      const parsedFn = `return (async function () {
+        delete filterExecutionParameters.filters['id'];
+
+        const fnNameMatch = filter.queryToExecute.match(this.getFunctionNameRegex);
+        if (!fnNameMatch) {
+          throw new Error('Invalid filter query function');
+        }
+        const fnName = fnNameMatch[1];
+
+        const parsedFn = `return (async function () {
         ${filter.queryToExecute}
-        return ${filter.queryToExecute.match(this.getFunctionNameRegex)[1]}(filterExecutionParameters)
+        return ${fnName}(filterExecutionParameters)
       })()`;
-      const values = await new Function("filterExecutionParameters", parsedFn)(filterExecutionParameters);
-      filterWithValues.push({ label: filter.label, values, isMultiSelectOption: filter.isMultiSelectOption, queryParameterKey: filter.queryParameterKey, type: filter.type });
-    }
+
+        const values = await new Function("filterExecutionParameters", parsedFn)(filterExecutionParameters);
+
+        return {
+          label: filter.label,
+          values,
+          isMultiSelectOption: filter.isMultiSelectOption,
+          queryParameterKey: filter.queryParameterKey,
+          type: filter.type
+        };
+      })
+    );
 
     return { data: { report: { name: report.name, details, filters: filterWithValues }, totalData, state: { page: paginationDto.page, limit: paginationDto.limit, page_limit: Math.ceil(totalData / paginationDto.limit) } }, message: responseMessage.getDataSuccess("report") };
   }

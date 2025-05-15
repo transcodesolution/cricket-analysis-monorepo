@@ -17,10 +17,10 @@ export class Team implements ITeam {
     @Prop({ default: '' })
     shortName: string;
 
-    @Prop({ type: String, enum: Object.values(MatchFormat) })
+    @Prop({ type: String, enum: MatchFormat })
     formatPlayed: MatchFormat;
 
-    @Prop({ type: String, enum: Object.values(TournamentType) })
+    @Prop({ type: String, enum: TournamentType })
     tournamentType: TournamentType;
 
     @Prop({ default: '' })
