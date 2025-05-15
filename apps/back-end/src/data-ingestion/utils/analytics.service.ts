@@ -155,9 +155,7 @@ export class AnalyticsService {
     private initializeBattingStat(): BattingStats {
         return {
             overPlayedIn: [],
-            totalFoursHit: 0,
             runs: 0,
-            totalSixHit: 0,
             ballsFaced: 0,
             0: 0,
             1: 0,
@@ -177,16 +175,22 @@ export class AnalyticsService {
         stat.runs += (+ball.runs_off_bat);
 
         const playingOverIn = stat.overPlayedIn.find((i) => (i.over === ball.over));
+        const has1s = ball.runs_off_bat == 1 ? 1 : 0;
+        const has2s = ball.runs_off_bat == 2 ? 1 : 0;
+        const has3s = ball.runs_off_bat == 3 ? 1 : 0;
+        const has5s = ball.runs_off_bat == 5 ? 1 : 0;
         if (!playingOverIn) {
-            stat.overPlayedIn.push({ over: ball.over, runs: +ball.runs_off_bat, totalFoursHit: ball.foursHit || 0, totalSixHit: ball.sixHit || 0 });
+            stat.overPlayedIn.push({ over: ball.over, runs: +ball.runs_off_bat, ballsFaced: 1, 1: has1s, 2: has2s, 3: has3s, 4: ball.foursHit || 0, 5: has5s, 6: ball.sixHit || 0 });
         } else {
             playingOverIn.runs += (+ball.runs_off_bat);
-            playingOverIn.totalFoursHit += +(ball.foursHit || 0);
-            playingOverIn.totalSixHit += +(ball.sixHit || 0);
+            playingOverIn[1] += has1s;
+            playingOverIn[2] += has2s;
+            playingOverIn[3] += has3s;
+            playingOverIn[4] += +(ball.foursHit || 0);
+            playingOverIn[5] += has5s;
+            playingOverIn[6] += +(ball.sixHit || 0);
+            playingOverIn.ballsFaced++;
         }
-
-        if (+ball.runs_off_bat === 4) stat.totalFoursHit++;
-        if (+ball.runs_off_bat === 6) stat.totalSixHit++;
 
         if (stat[ball.runs_off_bat] !== undefined) {
             stat[ball.runs_off_bat]++;
@@ -220,13 +224,13 @@ export class AnalyticsService {
             totalMaidenOvers: 0,
             totalDotBalls: 0,
             economyRate: 0,
-            phases: [],
+            // phases: [],
         };
     }
 
     private updateBowlingStat(stat, ball: Ball) {
         stat.ballsBowled++;
-        stat.runsConceded += +(ball.runs_off_bat) + (ball.extras?.total ?? 0);
+        stat.runsConceded += +(ball.runs_off_bat) + +(ball.extras?.total ?? 0);
 
         if (ball.extras?.noballs) stat.totalNoBall++;
         if (ball.extras?.wides) stat.totalWide++;

@@ -15,7 +15,7 @@ import { Referee } from '../database/model/referee.model';
 import { Venue } from '../database/model/venue.model';
 import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
-import { MatchStatus, UmpireSubType, UmpireType } from '@cricket-analysis-monorepo/constants';
+import { MatchMethod, MatchStatus, UmpireSubType, UmpireType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
 import { IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
 import { formatCsvFiles, formatExcelFiles, stripExt } from '@cricket-analysis-monorepo/service';
@@ -44,6 +44,9 @@ export class DataIngestionService {
           return MatchStatus[matchResult[0] as keyof typeof MatchStatus];
         }
         return "";
+      },
+      "method": (value: string) => {
+        return MatchMethod.DLS;
       }
     },
   }
@@ -166,8 +169,8 @@ export class DataIngestionService {
     const matchInfo = new this.matchInfoModel(matchInfoObj);
     await Promise.all([
       matchInfo.save(),
-      this.playerModel.updateMany({ _id: { $in: team1PlayingEleven } }, { $push: { teams: { id: team1?._id } } }),
-      this.playerModel.updateMany({ _id: { $in: team2PlayingEleven } }, { $push: { teams: { id: team2?._id } } }),
+      this.playerModel.updateMany({ _id: { $in: team1PlayingEleven }, "teams.id": { $ne: team1?._id } }, { $push: { teams: { id: team1?._id } } }),
+      this.playerModel.updateMany({ _id: { $in: team2PlayingEleven }, "teams.id": { $ne: team2?._id } }, { $push: { teams: { id: team2?._id } } }),
     ]);
     return matchInfo._id;
   }
@@ -595,12 +598,22 @@ export class DataIngestionService {
                     const enumField = "result.status";
                     const enumFunction = (enumValue)[enumField];
                     dataToUpdate[enumField] = enumFunction(value);
+                  } else if (mappingKey === "method") {
+                    const enumFunction = (enumValue)[mappingKey];
+                    dataToUpdate[mappingKey] = enumFunction(value);
                   }
                   dataToUpdate[mappingKey] = result[value][0];
                 }
               }
               else if (collection.includes(value)) {
-                dataToUpdate[value] = result[value][0];
+                const enumValue = this.enumValues[j.collectionName];
+                if (value === "method") {
+                  const enumFunction = (enumValue)[value];
+                  dataToUpdate[value] = enumFunction(value);
+                }
+                else {
+                  dataToUpdate[value] = result[value][0];
+                }
               }
             });
             await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields, extractedSheetInfo[match_id]);

@@ -8,6 +8,11 @@ export enum MatchFormat {
     THE_HUNDRED = 'TheHundred',
 }
 
+export enum MatchMethod {
+    DLS = 'DLS',
+    VJD = 'VJD',
+}
+
 export enum TossResult {
     head = 'head',
     tail = 'tail',

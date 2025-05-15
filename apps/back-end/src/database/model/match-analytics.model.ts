@@ -6,26 +6,28 @@ export class BattingStats {
         type: [{
             over: Number,
             runs: Number,
-            totalFoursHit: Number,
-            totalSixHit: Number,
             0: Number,
             1: Number,
+            2: Number,
+            3: Number,
+            4: Number,
+            5: Number,
+            6: Number,
         }]
     })
     overPlayedIn?: {
         over: number,
         runs: number,
-        totalSixHit: number,
-        ballsFaced: number,
         0: number,
         1: number,
+        2: number,
+        3: number,
+        4: number,
+        5: number,
+        6: number,
     }[];
     @Prop()
-    totalFoursHit?: number;
-    @Prop()
     runs?: number;
-    @Prop()
-    totalSixHit?: number;
     @Prop()
     ballsFaced?: number;
     @Prop()
@@ -49,7 +51,7 @@ export class BattingStats {
     @Prop({
         type: {
             over: Number,
-            bowler: String,
+            bowler: SchemaTypes.ObjectId,
             angle: Number,
             distance: Number,
             runs: Number,
@@ -91,8 +93,8 @@ export class BowlingStats {
     totalDotBalls?: number;
     @Prop()
     economyRate?: number;
-    @Prop()
-    phases?: { powerPlay?: number, middle?: number, Death?: number }[];
+    // @Prop()
+    // phases?: { powerPlay?: number, middle?: number, Death?: number }[];
 }
 
 export class FallOfWickets {
