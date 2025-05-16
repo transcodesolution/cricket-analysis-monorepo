@@ -1,4 +1,5 @@
-import { deleteRoles } from '@/libs/web-apis/src/libs/role';
+
+import { deleteRoles } from '@/libs/web-apis/src';
 import { IApiResponse } from '@cricket-analysis-monorepo/interfaces';
 import { useMutation } from '@tanstack/react-query';
 

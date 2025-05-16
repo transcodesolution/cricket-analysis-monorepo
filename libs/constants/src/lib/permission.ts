@@ -48,5 +48,5 @@ export const permissionsListByModuleWise: Record<string, { label: string, permis
             { label: "Update User", value: Permission.UPDATE_USER },
             { label: "View User", value: Permission.VIEW_USER },
         ]
-    },
+    }
 };

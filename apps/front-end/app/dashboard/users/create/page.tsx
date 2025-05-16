@@ -4,7 +4,7 @@ import { showNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useCreateUser } from "@/libs/react-query-hooks/src";
 import { IUser } from "@cricket-analysis-monorepo/interfaces";
-import { Paper } from "@mantine/core";
+import { Stack } from "@mantine/core";
 import BackToOverview from "@/libs/custom/back-to-overview";
 
 export default function Page() {
@@ -36,9 +36,9 @@ export default function Page() {
     );
   };
   return (
-    <Paper withBorder radius="lg" p="md">
+    <Stack pos='relative'>
       <BackToOverview title="Users" backUrl='/dashboard/users' />
-      <UserForm onSubmit={handleCreateUser} isLoading={isCreating} />
-    </Paper>
+      <UserForm onSubmit={handleCreateUser} isSubmitting={isCreating} />
+    </Stack>
   )
 } 

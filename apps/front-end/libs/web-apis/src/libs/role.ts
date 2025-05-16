@@ -23,7 +23,7 @@ export const getRoleById = async (roleId: string): Promise<IApiResponse<IUserRol
 
 export const createRole = async (params: Partial<IUserRole>): Promise<IApiResponse<IUserRole>> => {
   try {
-    const result = await http.post<IApiResponse<IUserRole>>('/user-role/add', params);
+    const result = await http.post<IApiResponse<IUserRole>>('/user-role/create', params);
     return result.data;
   } catch (error) {
     return apiErrorHandler(error, "creating role");

@@ -1,19 +1,20 @@
-'use client';
-import { useConfirmDelete } from '@/libs/hooks/useConfirmDelete';
-import { useDeleteUsers, useGetUsers } from '@/libs/react-query-hooks/src';
+'use client'
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
-import { IUser } from '@cricket-analysis-monorepo/interfaces';
 import { ActionIcon, Anchor, Text } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 import { DataTable, DataTableColumn, DataTableSortStatus } from 'mantine-datatable'
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState } from 'react'
+import { usePermissions } from '@/libs/hooks/usePermissions';
+import { useConfirmDelete } from '@/libs/hooks/useConfirmDelete';
+import { useDeleteRoles, useGetRoles } from '@/libs/react-query-hooks/src';
+import { IUserRole } from '@cricket-analysis-monorepo/interfaces';
 
-const PAGE_SIZES = [10, 20, 50, 100];
+const PAGE_SIZES = [50, 100, 200, 500, 1000];
 const SORT_ORDER = ['asc', 'desc'];
 
-export const UserList = () => {
+export const RoleList = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -22,13 +23,15 @@ export const UserList = () => {
   const search = searchParams.get('search') || ''
   const sortColumn = searchParams.get('sortColumn') || 'lastUpdatedDate';
   const sortOrder = SORT_ORDER.includes(searchParams.get('sortOrder') || '') ? searchParams.get('sortOrder') : 'desc';
-  const { data: getUserResponse, isLoading, refetch } = useGetUsers({ page: Number(page), limit: Number(pageSize), search: search });
-  const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
-  const { deleteUsersMutation } = useDeleteUsers()
-  const userData = getUserResponse?.data?.users;
+
+  const { data: getRolesResponse, isLoading, refetch } = useGetRoles({ page, limit: pageSize, search });
+  const rolesData = getRolesResponse?.data?.roles;
+  const [selectedRoles, setSelectedRoles] = useState<IUserRole[]>([]);
+  const { deleteRolesMutation } = useDeleteRoles();
+  const permission = usePermissions()
   const confirmDelete = useConfirmDelete();
 
-  const [sortStatus, setSortStatus] = useState<DataTableSortStatus<IUser>>({
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus<IUserRole>>({
     columnAccessor: sortColumn,
     direction: sortOrder as 'asc' | 'desc',
   });
@@ -45,70 +48,65 @@ export const UserList = () => {
     handleApplyFilter({ 'pageSize': pageNumber.toString() })
   };
 
-  const handleSortStatusChange = (status: DataTableSortStatus<IUser>) => {
+  const handleSortStatusChange = (status: DataTableSortStatus<IUserRole>) => {
     handleChangePage(1);
     setSortStatus?.(status);
   };
 
-  const columns: DataTableColumn<IUser>[] = [
+  const columns: DataTableColumn<IUserRole>[] = [
     {
-      accessor: 'firstName',
-      title: 'Name',
+      accessor: 'name',
+      title: 'Role Name',
       ellipsis: true,
       sortable: true,
-      width: 'auto',
-      render: ({ firstName, lastName, _id }) => {
+      render: ({ name, _id }) => {
         return (
-          <Anchor component={Link} href={`/dashboard/users/${_id}`} style={{ position: 'relative' }}>
-            {firstName || lastName ? `${firstName ?? ''} ${lastName ?? ''}`.trim() : '-'}
-          </Anchor>
+          <Anchor component={Link} href={`/dashboard/roles/${_id}`} style={{ position: 'relative' }}>{name || '-'}</Anchor>
         );
       },
     },
     {
-      accessor: 'email',
-      title: 'Email',
+      accessor: 'type',
+      title: 'Type',
       ellipsis: true,
       sortable: true,
-      width: 'auto',
-      render: ({ email }) => {
+      render: ({ type }) => {
         return (
-          <Text c='primary'>{email || '-'}</Text>
+          <Text c='primary'>{type || 'custom'}</Text>
         );
       },
     },
     {
-      accessor: 'role',
-      title: 'Role',
+      accessor: 'permissions',
+      title: 'Permissions',
       ellipsis: true,
       sortable: true,
-      width: 'auto',
-      render: ({ role }) => <Text>{role?.name}</Text>,
+      render: ({ permissions }) => <Text>{permissions?.length || 0}</Text>,
     },
   ]
 
   const handleDeleteSelected = () => {
-    const ids = selectedUsers.map((user) => String(user._id));
-
+    const roleIds = selectedRoles.map((role) => String(role._id));
     confirmDelete({
-      itemName: ids.length > 1 ? 'these users' : 'this user',
+      itemName: roleIds.length > 1 ? 'these roles' : 'this role',
       onConfirm: () => {
-        deleteUsersMutation.mutate(
-          { ids },
+        deleteRolesMutation.mutate(
+          { roleIds },
           {
             onSuccess: () => {
               refetch();
-              setSelectedUsers([]);
+              setSelectedRoles([]);
             },
           }
         );
       },
     });
-  };
+  }
 
   return (
     <React.Fragment>
-      {selectedUsers.length > 0 &&
+      {
+        permission?.hasJobDelete && selectedRoles.length > 0 &&
         <ActionIcon color='red' onClick={handleDeleteSelected}>
           <IconTrash size="1.5rem" />
         </ActionIcon>
@@ -116,10 +114,10 @@ export const UserList = () => {
       <DataTable
         idAccessor='_id'
         highlightOnHover
-        records={userData}
+        records={rolesData}
         fetching={isLoading}
-        selectedRecords={selectedUsers}
-        onSelectedRecordsChange={setSelectedUsers}
+        selectedRecords={selectedRoles}
+        onSelectedRecordsChange={setSelectedRoles}
         page={page}
         onPageChange={handleChangePage}
         totalRecords={3}
@@ -131,10 +129,10 @@ export const UserList = () => {
         sortStatus={sortStatus}
         onSortStatusChange={handleSortStatusChange}
         columns={columns}
-        borderRadius="lg"
         withTableBorder
         withRowBorders={false}
         verticalSpacing="xs"
+        borderRadius="lg"
         paginationActiveBackgroundColor="var(--mantine-color-customBlue-5)"
         c="var(--mantine-color-gray-7)"
         styles={{
@@ -145,6 +143,6 @@ export const UserList = () => {
         }}
         height="calc(100vh - 280px)"
       />
-    </React.Fragment>
+    </React.Fragment >
   )
 }
