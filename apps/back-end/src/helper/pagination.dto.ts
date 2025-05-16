@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsOptional } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
 export class PaginationDto {
     @IsOptional()
@@ -9,6 +9,10 @@ export class PaginationDto {
     @IsOptional()
     @Transform((obj) => (+obj.value))
     limit: number;
+
+    @IsOptional()
+    @IsString()
+    search?: string;
 
     constructor() {
         this.page = 1;

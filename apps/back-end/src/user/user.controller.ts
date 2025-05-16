@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, SetMetadata, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, SetMetadata, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto, GetUserDto, UpdateUserDto } from "./dto/user.dto";
 import { ConfigService } from "@nestjs/config";
@@ -7,7 +7,7 @@ import { UserPermissionCheckerGuard } from "../guards/user-permission-checker.gu
 import { Permission } from "@cricket-analysis-monorepo/constants";
 import { ROUTE_PERMISSION_KEY_NAME } from "../helper/constant.helper";
 
-@Controller("/user")
+@Controller("/user-management/users")
 @UseGuards(AuthGuard, UserPermissionCheckerGuard)
 export class UserController {
     BACKEND_URL = "";
@@ -17,7 +17,7 @@ export class UserController {
     }
 
 
-    @Post("/create")
+    @Post("/")
     @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.CREATE_USER])
     createUser(@Body() createUserDto: CreateUserDto) {
         return this.userService.createUser(createUserDto);

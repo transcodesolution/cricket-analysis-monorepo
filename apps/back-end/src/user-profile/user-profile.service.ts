@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { UpdatePanelUserDto } from "./dto/panel-user.dto";
+import { UpdateUserProfileDto } from "./dto/user-profile.dto";
 import { User } from "../database/model/user.model";
 import { CommonHelperService } from "../helper/common.helper";
 import { responseMessage } from "../helper/response-message.helper";
@@ -9,22 +9,14 @@ import { unlinkSync } from "fs";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
-export class PanelUserService {
+export class UserProfileService {
     BACKEND_URL = "";
 
     constructor(@InjectModel(User.name) private readonly userModel: Model<User>, private readonly commonHelperService: CommonHelperService, private readonly configService: ConfigService) {
         this.BACKEND_URL = this.configService.get("BACKEND_URL");
     }
 
-    async updateUser(updatePanelUserDto: UpdatePanelUserDto) {
-        if (updatePanelUserDto.email) {
-            const existingUser = await this.userModel.findOne({ _id: { $ne: updatePanelUserDto.userId }, email: updatePanelUserDto.email });
-
-            if (existingUser) {
-                throw new BadRequestException(responseMessage.dataAlreadyExist("email"));
-            }
-        }
-
+    async updateUser(updatePanelUserDto: UpdateUserProfileDto) {
         const user = await this.userModel.findOne({ _id: updatePanelUserDto.userId });
 
         if (!user) {
@@ -46,7 +38,7 @@ export class PanelUserService {
         return { message: responseMessage.updateDataSuccess("user"), data: { user } };
     };
 
-    getPanelUserDetails(userIdDto: { userId: string }) {
+    getUserProfile(userIdDto: { userId: string }) {
         return this.commonHelperService.getUserById(userIdDto);
     }
 }
