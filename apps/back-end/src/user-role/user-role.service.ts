@@ -21,9 +21,19 @@ export class UserRoleService {
     };
 
     async getUserRoles(getUserRoleDto: GetUserRoleDto) {
+        const match: FilterQuery<IUserRole> = { type: UserRoleType.custom };
+
+        if (getUserRoleDto.search) {
+            const searchRegex = new RegExp(getUserRoleDto.search, "i");
+            match.$or = [
+                { name: searchRegex },
+                { type: searchRegex },
+            ]
+        }
+
         const [totalData, roles] = await Promise.all([
-            this.userRoleModel.countDocuments({}),
-            this.userRoleModel.find({}).sort({ _id: 1 }).skip((getUserRoleDto.page - 1) * getUserRoleDto.limit).limit(getUserRoleDto.limit)
+            this.userRoleModel.countDocuments(match),
+            this.userRoleModel.find(match).sort({ _id: 1 }).skip((getUserRoleDto.page - 1) * getUserRoleDto.limit).limit(getUserRoleDto.limit)
         ]);
 
         return { message: responseMessage.getDataSuccess("roles"), data: { roles, totalData, state: { page: getUserRoleDto.page, limit: getUserRoleDto.limit, page_limit: Math.ceil(totalData / getUserRoleDto.limit) || 1 } } };

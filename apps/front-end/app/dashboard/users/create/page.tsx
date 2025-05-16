@@ -4,11 +4,13 @@ import { showNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useCreateUser } from "@/libs/react-query-hooks/src";
 import { IUser } from "@cricket-analysis-monorepo/interfaces";
-import { Paper } from "@mantine/core";
+import { Stack } from "@mantine/core";
 import BackToOverview from "@/libs/custom/back-to-overview";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const { mutate: createUser, isPending: isCreating } = useCreateUser();
+  const router = useRouter()
 
   const handleCreateUser = (user: Partial<IUser>) => {
     createUser(
@@ -23,6 +25,7 @@ export default function Page() {
             color: "green",
             icon: <IconCheck size={16} />,
           });
+          router.push(`/dashboard/users/`);
         },
         onError: (error) => {
           showNotification({
@@ -36,9 +39,9 @@ export default function Page() {
     );
   };
   return (
-    <Paper withBorder radius="lg" p="md">
+    <Stack pos='relative'>
       <BackToOverview title="Users" backUrl='/dashboard/users' />
-      <UserForm onSubmit={handleCreateUser} isLoading={isCreating} />
-    </Paper>
+      <UserForm onSubmit={handleCreateUser} isSubmitting={isCreating} />
+    </Stack>
   )
 } 

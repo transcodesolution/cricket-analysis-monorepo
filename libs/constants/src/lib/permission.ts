@@ -9,9 +9,7 @@ export enum Permission {
     VIEW_ROLE = "view_role",
     CREATE_USER = "create_user",
     UPDATE_USER = "update_user",
-    UPDATE_PANEL_USER = "update_panel_user",
     VIEW_USER = "get_user",
-    VIEW_PANEL_USER = "view_panel_user",
 }
 
 export const permissionsListByModuleWise: Record<string, { label: string, permissions: { label: string, value: Permission }[] }> = {
@@ -50,12 +48,5 @@ export const permissionsListByModuleWise: Record<string, { label: string, permis
             { label: "Update User", value: Permission.UPDATE_USER },
             { label: "View User", value: Permission.VIEW_USER },
         ]
-    },
-    panelUser: {
-        label: "Users",
-        permissions: [
-            { label: "Update Panel User", value: Permission.UPDATE_PANEL_USER },
-            { label: "View Panel User", value: Permission.VIEW_PANEL_USER },
-        ]
-    },
+    }
 };

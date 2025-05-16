@@ -2,8 +2,9 @@ import React from 'react';
 import {
   IconUpload,
   IconReportAnalytics,
-  IconWand,
   IconUsers,
+  IconBrandRedhat,
+  IconBrandGithubCopilot,
 } from '@tabler/icons-react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -11,42 +12,57 @@ import { Box, Flex, ThemeIcon } from '@mantine/core';
 import { NavbarLinksGroup } from './components/NavbarLinksGroup';
 import classes from './sidebar.module.scss';
 import Link from 'next/link';
+import { checkPermissions, useUserStore } from '@/libs/store/src';
+import { Permission } from '@cricket-analysis-monorepo/constants';
 
 const linksData = [
   {
     label: 'Upload',
     icon: IconUpload,
     link: '/dashboard/upload',
+    permissions: [Permission.UPLOAD_FILES]
   },
   {
     label: 'Reports',
     icon: IconReportAnalytics,
     link: '/dashboard/reports',
+    permissions: [Permission.VIEW_REPORTS]
   },
   {
     label: 'AI Analysis',
-    icon: IconWand,
+    icon: IconBrandGithubCopilot,
     link: '/dashboard/ai-analysis',
+    permissions: [Permission.AI_ANALYSIS]
+  },
+  {
+    label: 'Roles',
+    icon: IconBrandRedhat,
+    link: '/dashboard/roles',
+    permissions: [Permission.VIEW_ROLE]
   },
   {
     label: 'Users',
     icon: IconUsers,
     link: '/dashboard/users',
+    permissions: [Permission.VIEW_USER]
   },
 ];
 
 export const Sidebar = () => {
   const pathname = usePathname();
+  const { user } = useUserStore();
+  const userPermissions = user?.role?.permissions || [];
+  const filteredData = linksData.filter((item) => item.permissions.every((permission) => userPermissions.includes(permission)));
 
   return (
     <Flex direction="column" h="100%" gap='xs'>
-      {linksData.map((item) =>
+      {filteredData.map((item) =>
         item.link ? (
           <Link
             href={item.link}
             key={item.label}
             className={clsx(classes.sidebarLink, {
-              [classes.active]: pathname === item.link,
+              [classes.active]: pathname.includes(item.link),
             })}
           >
             <Flex align='center' py={7} px="xs">

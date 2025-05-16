@@ -9,12 +9,7 @@ import {
   Avatar,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import {
-  IconHelpOctagon,
-  IconSettings,
-} from '@tabler/icons-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 interface IMainLayout {
@@ -54,17 +49,13 @@ export const MainLayout = ({ children }: IMainLayout) => {
               CrickAI
             </Text>
           </Group>
-
-          <Group gap="lg">
-            <IconHelpOctagon />
-            <IconSettings />
-            <Avatar
-              src={null}
-              alt="User"
-              radius="xl"
-              size={32}
-            />
-          </Group>
+          <Avatar
+            src={null}
+            alt="User"
+            radius="xl"
+            size='md'
+            color='primary'
+          />
         </Flex>
       </AppShell.Header>
 

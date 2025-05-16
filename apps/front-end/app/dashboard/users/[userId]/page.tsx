@@ -4,7 +4,7 @@ import { useGetUserById, useUpdateUser } from '@/libs/react-query-hooks/src';
 import { UserForm } from '../_components/UserForm';
 import { showNotification } from '@mantine/notifications';
 import { IconCheck } from '@tabler/icons-react';
-import { LoadingOverlay, Paper } from '@mantine/core';
+import { LoadingOverlay, Stack } from '@mantine/core';
 import { useParams } from 'next/navigation';
 import { IUser } from '@cricket-analysis-monorepo/interfaces';
 import BackToOverview from '@/libs/custom/back-to-overview';
@@ -39,10 +39,10 @@ export default function Page() {
     );
   };
   return (
-    <Paper withBorder radius="lg" p="md">
+    <Stack pos='relative'>
       <LoadingOverlay visible={isLoading} zIndex={1000} overlayProps={{ radius: 'sm', blur: 2 }} />
       <BackToOverview title="Users" backUrl='/dashboard/users' />
-      <UserForm onSubmit={handleUpdateUser} isLoading={isUpdating} user={user} />
-    </Paper>
+      <UserForm onSubmit={handleUpdateUser} user={user} isSubmitting={isUpdating} />
+    </Stack>
   )
 } 

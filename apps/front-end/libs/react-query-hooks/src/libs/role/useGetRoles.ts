@@ -1,5 +1,6 @@
-import { IGetRolesRequest } from '@/libs/types-api/src/lib/role';
-import { getRoles } from '@/libs/web-apis/src/libs/role';
+
+import { IGetRolesRequest } from '@/libs/types-api/src';
+import { getRoles } from '@/libs/web-apis/src';
 import { useQuery } from '@tanstack/react-query';
 
 interface IUseGetRoles extends IGetRolesRequest {

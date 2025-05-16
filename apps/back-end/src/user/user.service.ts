@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { FilterQuery, Model } from "mongoose";
 import { CreateUserDto, GetUserDto, UpdateUserDto } from "./dto/user.dto";
 import { User } from "../database/model/user.model";
 import { CommonHelperService } from "../helper/common.helper";
 import { responseMessage } from "../helper/response-message.helper";
 import { ConfigService } from "@nestjs/config";
 import { UserRoleType } from "@cricket-analysis-monorepo/constants";
+import { IUser } from "@cricket-analysis-monorepo/interfaces";
 
 @Injectable()
 export class UserService {
@@ -69,9 +70,20 @@ export class UserService {
     }
 
     async getUser(getUserDto: GetUserDto) {
+        const match: FilterQuery<IUser> = {};
+
+        if (getUserDto.search) {
+            const searchRegex = new RegExp(getUserDto.search, "i");
+            match.$or = [
+                { firstName: searchRegex },
+                { lastName: searchRegex },
+                { type: searchRegex },
+            ]
+        }
+
         const [totalData, users] = await Promise.all([
-            this.userModel.countDocuments({}),
-            this.userModel.find({}).sort({ _id: 1 }).populate("role", "name type").skip((getUserDto.page - 1) * getUserDto.limit).limit(getUserDto.limit)
+            this.userModel.countDocuments(match),
+            this.userModel.find(match).sort({ _id: 1 }).populate("role", "name type").skip((getUserDto.page - 1) * getUserDto.limit).limit(getUserDto.limit)
         ]);
 
         return { message: responseMessage.getDataSuccess("user"), data: { users, totalData, state: { page: getUserDto.page, limit: getUserDto.limit, page_limit: Math.ceil(totalData / getUserDto.limit) || 1 } } };
