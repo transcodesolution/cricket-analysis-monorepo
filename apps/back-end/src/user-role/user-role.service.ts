@@ -21,7 +21,7 @@ export class UserRoleService {
     };
 
     async getUserRoles(getUserRoleDto: GetUserRoleDto) {
-        const match: FilterQuery<IUserRole> = {};
+        const match: FilterQuery<IUserRole> = { type: UserRoleType.custom };
 
         if (getUserRoleDto.search) {
             const searchRegex = new RegExp(getUserRoleDto.search, "i");
