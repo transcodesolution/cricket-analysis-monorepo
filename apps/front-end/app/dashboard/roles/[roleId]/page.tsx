@@ -7,18 +7,26 @@ import { useParams } from 'next/navigation';
 import { RoleForm } from '../_components/RoleForm';
 import { IUserRole } from '@cricket-analysis-monorepo/interfaces';
 import { showNotification } from '@mantine/notifications';
-import { IconX } from '@tabler/icons-react';
+import { IconCheck, IconX } from '@tabler/icons-react';
 
 export default function Page() {
   const { roleId } = useParams<{ roleId: string }>();
   const { data: getRoleByIdResponse, isLoading } = useGetRoleById({ roleId });
-  const { mutate: updateRole } = useUpdateRole();
+  const { mutate: updateRole, isPending: isUpdating } = useUpdateRole();
 
 
   const handleUpdateRole = (role: IUserRole) => {
     updateRole({
       ...role
     }, {
+      onSuccess: () => {
+        showNotification({
+          title: "Success",
+          message: "Role Updated Successfully",
+          color: "green",
+          icon: <IconCheck size={16} />,
+        });
+      },
       onError: (error) => {
         showNotification({
           title: "Update Failed",
@@ -37,7 +45,7 @@ export default function Page() {
   return (
     <Stack pos='relative'>
       <BackToOverview title="Back" backUrl='/dashboard/roles' />
-      <RoleForm role={role} onSubmit={handleUpdateRole} />
+      <RoleForm role={role} onSubmit={handleUpdateRole} isSubmitting={isUpdating} />
     </Stack>
   )
 }

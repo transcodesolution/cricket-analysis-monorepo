@@ -6,9 +6,11 @@ import { useCreateUser } from "@/libs/react-query-hooks/src";
 import { IUser } from "@cricket-analysis-monorepo/interfaces";
 import { Stack } from "@mantine/core";
 import BackToOverview from "@/libs/custom/back-to-overview";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const { mutate: createUser, isPending: isCreating } = useCreateUser();
+  const router = useRouter()
 
   const handleCreateUser = (user: Partial<IUser>) => {
     createUser(
@@ -23,6 +25,7 @@ export default function Page() {
             color: "green",
             icon: <IconCheck size={16} />,
           });
+          router.push(`/dashboard/users/`);
         },
         onError: (error) => {
           showNotification({
