@@ -1,4 +1,4 @@
-import { createRole } from '@/libs/web-apis/src/libs/role';
+import { createRole } from '@/libs/web-apis/src';
 import { IApiResponse, IUserRole } from '@cricket-analysis-monorepo/interfaces';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';

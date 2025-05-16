@@ -42,7 +42,7 @@ export default function Page() {
     <Paper withBorder radius="lg" p="md">
       <LoadingOverlay visible={isLoading} zIndex={1000} overlayProps={{ radius: 'sm', blur: 2 }} />
       <BackToOverview title="Users" backUrl='/dashboard/users' />
-      <UserForm onSubmit={handleUpdateUser} isLoading={isUpdating} user={user} />
+      <UserForm onSubmit={handleUpdateUser} user={user} isSubmitting={isUpdating} />
     </Paper>
   )
 } 

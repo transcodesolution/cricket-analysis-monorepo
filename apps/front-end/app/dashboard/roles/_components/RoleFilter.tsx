@@ -2,11 +2,11 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CloseButton, Flex, TextInput } from '@mantine/core'
+import { CloseButton, Flex, Input } from '@mantine/core'
 import React, { useRef } from 'react'
-import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams'
+import {  IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams'
 
-export const UserFilter = () => {
+export const RoleFilter = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -26,9 +26,9 @@ export const UserFilter = () => {
 
   return (
     <Flex align='center' justify='space-between'>
-      <TextInput
+      <Input
         ref={searchInputRef}
-        placeholder="Search User"
+        placeholder="Search Role"
         onKeyDown={handleKeyDown}
         rightSectionPointerEvents="all"
         rightSection={
@@ -45,6 +45,5 @@ export const UserFilter = () => {
         }
       />
     </Flex>
-
   )
 }

@@ -2,8 +2,9 @@ import React from 'react';
 import {
   IconUpload,
   IconReportAnalytics,
-  IconWand,
   IconUsers,
+  IconBrandRedhat,
+  IconBrandGithubCopilot,
 } from '@tabler/icons-react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
@@ -25,8 +26,13 @@ const linksData = [
   },
   {
     label: 'AI Analysis',
-    icon: IconWand,
+    icon: IconBrandGithubCopilot,
     link: '/dashboard/ai-analysis',
+  },
+  {
+    label: 'Roles',
+    icon: IconBrandRedhat,
+    link: '/dashboard/roles',
   },
   {
     label: 'Users',

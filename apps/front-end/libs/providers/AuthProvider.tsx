@@ -1,8 +1,9 @@
 'use client';
 
 import { setupAxiosInterceptors } from "@/libs/web-apis/src";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useMemo } from "react";
 import { useGetUser } from "@/libs/react-query-hooks/src";
+import { setPermissions, setUser } from "../store/src";
 
 
 export const AuthProvider = ({
@@ -17,7 +18,12 @@ export const AuthProvider = ({
 
   const { data: getUserResponse } = useGetUser({ enabled: !!token });
   const { user } = getUserResponse?.data || {};
+  const permissions = useMemo(() => user?.role?.permissions || [], [user]);
 
+  useEffect(() => {
+    if (user) setUser(user);
+    setPermissions(permissions);
+  }, [user, permissions]);
   console.log(user, 'user')
 
   return children;
