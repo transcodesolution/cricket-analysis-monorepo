@@ -1,0 +1,3 @@
+npx nx build back-end && echo '✅ Back-end App Build successful' || (echo '❌ Back-end App Build failed. Commit aborted.' && exit 1)
+
+npx nx build front-end && echo '✅ Front-end App Build successful' || (echo '❌ Front-end App Build failed. Commit aborted.' && exit 1)
