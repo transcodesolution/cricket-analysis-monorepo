@@ -100,9 +100,15 @@ jobs:
             mv ~/cricket-analysis-build/dist/apps/back-end/main.js ~/cricket-analysis-build/dist/main.js &&
             mv ~/cricket-analysis-build/dist/apps/back-end/main.js.map ~/cricket-analysis-build/dist/main.js.map &&
             cd ~/cricket-analysis-build/dist && npm install &&
-            pm2 restart 0 && pm2 logs 0 &&
-            rm -r ~/cricket-analysis-build/build-output.tar.gz &&
-            rm -r ~/cricket-analysis-build/dist/apps"
+            pm2 restart 0 && pm2 logs 0"
+            
+      - name: Clean Up server
+        run: |
+          ssh -o StrictHostKeyChecking=no $SERVER_URL "
+           rm -r ~/cricket-analysis-build/build-output.tar.gz &&
+           rm -r ~/cricket-analysis-build/dist/apps
+          "
+
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_URL: ${{ secrets.SERVER_URL }}
