@@ -175,14 +175,16 @@ export class AnalyticsService {
         stat.runs += (+ball.runs_off_bat);
 
         const playingOverIn = stat.overPlayedIn.find((i) => (i.over === ball.over));
+        const has0s = ball.runs_off_bat == 0 ? 1 : 0;
         const has1s = ball.runs_off_bat == 1 ? 1 : 0;
         const has2s = ball.runs_off_bat == 2 ? 1 : 0;
         const has3s = ball.runs_off_bat == 3 ? 1 : 0;
         const has5s = ball.runs_off_bat == 5 ? 1 : 0;
         if (!playingOverIn) {
-            stat.overPlayedIn.push({ over: ball.over, runs: +ball.runs_off_bat, ballsFaced: 1, 1: has1s, 2: has2s, 3: has3s, 4: ball.foursHit || 0, 5: has5s, 6: ball.sixHit || 0 });
+            stat.overPlayedIn.push({ over: ball.over, runs: +ball.runs_off_bat, ballsFaced: 1, 0: has0s, 1: has1s, 2: has2s, 3: has3s, 4: ball.foursHit || 0, 5: has5s, 6: ball.sixHit || 0 });
         } else {
             playingOverIn.runs += (+ball.runs_off_bat);
+            playingOverIn[0] += has0s;
             playingOverIn[1] += has1s;
             playingOverIn[2] += has2s;
             playingOverIn[3] += has3s;
