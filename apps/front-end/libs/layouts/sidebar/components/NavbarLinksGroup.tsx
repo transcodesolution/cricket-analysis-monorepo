@@ -50,7 +50,7 @@ export const NavbarLinksGroup = ({
             href={linkItem.link}
             key={linkItem.label}
             className={clsx(classes.link, {
-              [classes.active]: pathname === linkItem.link,
+              [classes.active]: pathname.includes(linkItem.link),
             })}
           >
             {linkItem.label}

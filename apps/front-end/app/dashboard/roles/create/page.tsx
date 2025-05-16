@@ -1,9 +1,9 @@
 'use client'
 import { usePermissions } from '@/libs/hooks/usePermissions';
 import { useCreateRole } from '@/libs/react-query-hooks/src';
-import { IApiResponse, IUserRole } from '@cricket-analysis-monorepo/interfaces';
+import { IUserRole } from '@cricket-analysis-monorepo/interfaces';
 import { showNotification } from '@mantine/notifications';
-import { IconX } from '@tabler/icons-react';
+import { IconCheck, IconX } from '@tabler/icons-react';
 import React from 'react'
 import { RoleForm } from '../_components/RoleForm';
 import { useRouter } from 'next/navigation';
@@ -32,11 +32,14 @@ export default function Page() {
         permissions
       },
       {
-        onSuccess: (newJob: IApiResponse<IUserRole>) => {
-          const roleId = newJob?.data?._id
-          if (roleId) {
-            router.push(`/dashboard/roles/`);
-          }
+        onSuccess: () => {
+          showNotification({
+            title: "Success",
+            message: "Role Created Successfully",
+            color: "green",
+            icon: <IconCheck size={16} />,
+          });
+          router.push(`/dashboard/roles/`);
         },
         onError: (error) => {
           showNotification({
@@ -51,7 +54,7 @@ export default function Page() {
   };
   return (
     <Stack pos='relative'>
-      <BackToOverview title="Roles" backUrl='/dashboard/roles'/>
+      <BackToOverview title="Roles" backUrl='/dashboard/roles' />
       <RoleForm role={null} onSubmit={handleCreateRole} isSubmitting={isCreating} />
     </Stack>
   )

@@ -1,20 +1,20 @@
-import { getUser } from '@/libs/web-apis/src';
+import { getUserProfile } from '@/libs/web-apis/src';
 import { useQuery } from '@tanstack/react-query';
 
-interface IUseGetUser {
+interface IUseGetUserProfile {
   staleTime?: number;
   enabled?: boolean;
   refetchOnWindowFocus?: boolean;
 };
 
-export const useGetUser = ({
+export const useGetUserProfile = ({
   staleTime = 1000 * 60 * 0.2,
   enabled = true,
   refetchOnWindowFocus = false,
-}: IUseGetUser) => {
+}: IUseGetUserProfile) => {
   return useQuery({
     queryKey: ['getUser'],
-    queryFn: async () => getUser(),
+    queryFn: async () => getUserProfile(),
     enabled,
     staleTime,
     refetchOnWindowFocus,
