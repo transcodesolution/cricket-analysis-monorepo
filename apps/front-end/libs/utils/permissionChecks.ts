@@ -15,7 +15,5 @@ export const PERMISSION_CONFIG: { [key: string]: Permission[] } = {
 
   hasUserCreate: [Permission.CREATE_USER],
   hasUserUpdate: [Permission.UPDATE_USER],
-  hasPanelUserUpdate: [Permission.UPDATE_PANEL_USER],
   hasUserRead: [Permission.VIEW_USER],
-  hasPanelUserRead: [Permission.VIEW_PANEL_USER],
 };
