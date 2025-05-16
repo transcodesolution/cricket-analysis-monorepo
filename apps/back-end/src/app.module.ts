@@ -9,10 +9,10 @@ import { ReportModule } from './reports/report.module';
 import { AuthModule } from './auth/auth.module';
 import { UserRoleModule } from './user-role/user-role.module';
 import { UserModule } from './user/user.module';
-import { PanelUserModule } from './panel-user/panel-user.module';
+import { UserProfileModule } from './user-profile/user-profile.module';
 
 @Module({
-  imports: [EnvConfigModule, DatabaseModule, DataIngestionModule, SeederModule, ReportModule, AuthModule, UserRoleModule, UserModule, PanelUserModule],
+  imports: [EnvConfigModule, DatabaseModule, DataIngestionModule, SeederModule, ReportModule, AuthModule, UserRoleModule, UserModule, UserProfileModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
-import { PanelUserController } from './panel-user.controller';
+import { UserProfileController } from './user-profile.controller';
 import { CommonHelperService } from '../helper/common.helper';
 import { EnvConfigModule } from '../config/config.module';
 import { AuthenticateUserRequest } from '../helper/jwt.helper';
-import { PanelUserService } from './panel-user.service';
+import { UserProfileService } from './user-profile.service';
 
 @Module({
     imports: [DatabaseModule, EnvConfigModule],
-    controllers: [PanelUserController],
-    providers: [PanelUserService, CommonHelperService, AuthenticateUserRequest],
+    controllers: [UserProfileController],
+    providers: [UserProfileService, CommonHelperService, AuthenticateUserRequest],
 })
-export class PanelUserModule { }
+export class UserProfileModule { }
