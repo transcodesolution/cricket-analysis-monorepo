@@ -8,12 +8,13 @@ import { responseMessage } from "../helper/response-message.helper";
 import { ConfigService } from "@nestjs/config";
 import { UserRoleType } from "@cricket-analysis-monorepo/constants";
 import { IUser } from "@cricket-analysis-monorepo/interfaces";
+import { UserRole } from "../database/model/user-role.model";
 
 @Injectable()
 export class UserService {
     BACKEND_URL = "";
 
-    constructor(@InjectModel(User.name) private readonly userModel: Model<User>, private readonly commonHelperService: CommonHelperService, private readonly configService: ConfigService) {
+    constructor(@InjectModel(User.name) private readonly userModel: Model<User>, @InjectModel(UserRole.name) private readonly userRoleModel: Model<UserRole>, private readonly commonHelperService: CommonHelperService, private readonly configService: ConfigService) {
         this.BACKEND_URL = this.configService.get("BACKEND_URL");
     }
 
@@ -80,6 +81,10 @@ export class UserService {
                 { type: searchRegex },
             ]
         }
+
+        const [administratorRoleId] = await this.userRoleModel.distinct("_id", { type: UserRoleType.adminstrator }).lean();
+
+        match.roleId = { $ne: administratorRoleId };
 
         const [totalData, users] = await Promise.all([
             this.userModel.countDocuments(match),
