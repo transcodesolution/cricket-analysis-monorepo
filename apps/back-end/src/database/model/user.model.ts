@@ -42,7 +42,7 @@ export class User {
     password: string;
 
     @Prop({ type: SchemaTypes.ObjectId })
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
     roleId: string;
 
