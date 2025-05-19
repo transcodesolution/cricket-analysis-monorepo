@@ -2,22 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { BattingStats, BowlingStats, FallOfWickets, MatchAnalytics, PlayerStats, TeamAnalytics } from '../../database/model/match-analytics.model';
-import { Ball, MatchScoreboard } from '../../database/model/match-scoreboard.model';
-import { MatchInfo } from '../../database/model/match-info.model';
+import { Ball } from '../../database/model/match-scoreboard.model';
+import { CommonHelperService } from '../../helper/common.helper';
 
 @Injectable()
 export class AnalyticsService {
     constructor(
-        @InjectModel(MatchInfo.name) private readonly matchInfoModel: Model<MatchInfo>,
-        @InjectModel(MatchScoreboard.name) private readonly scoreboardModel: Model<MatchScoreboard>,
         @InjectModel(MatchAnalytics.name) private readonly analyticsModel: Model<MatchAnalytics>,
+        private readonly commonHelperService: CommonHelperService,
     ) { }
 
     async generateAnalyticsForMatch(matchId: string): Promise<MatchAnalytics | undefined> {
-        const matchInfo = await this.matchInfoModel.findOne({ match_id: matchId }).lean();
-
-        // Fetch all scoreboard data for this match
-        const scoreboards = await this.scoreboardModel.find({ sheet_match_id: matchId, match_id: { $ne: null } }).lean();
+        const [matchInfo, scoreboards] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: matchId, queryMethodName: "find" });
 
         if (matchInfo && scoreboards.length) {
             // Separate innings
