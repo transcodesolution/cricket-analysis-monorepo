@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Connection, Model } from 'mongoose';
 import { DatabaseFields } from './dto/constant.dto';
-import { ColumnDto, MappingDetailDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
+import { ColumnDto, MappingDetailDto, UploadFileAndMappingUpdateDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
 import { responseMessage } from '../helper/response-message.helper';
 import { MappingData } from '../database/model/mapping.model';
 import { Collection } from "mongoose";
@@ -17,15 +17,16 @@ import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
 import { MatchMethod, MatchStatus, UmpireSubType, UmpireType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
-import { IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
+import { IMatchSheetFormat, IUploadResult } from '@cricket-analysis-monorepo/interfaces';
 import { formatCsvFiles, formatExcelFiles, stripExt } from '@cricket-analysis-monorepo/service';
-import { Response } from 'express';
 import { createReadStream, ReadStream } from 'fs';
 import { join } from 'path';
 import { ReportFilter } from '../database/model/report-filters.model';
 import { Report } from '../database/model/report.model';
 import { User } from '../database/model/user.model';
 import { UserRole } from '../database/model/user-role.model';
+import { IMulterFileObject } from './dto/interfaces';
+import { CommonHelperService } from '../helper/common.helper';
 
 @Injectable()
 export class DataIngestionService {
@@ -61,7 +62,8 @@ export class DataIngestionService {
     @InjectModel(Team.name) private readonly teamModel: Model<Team>,
     @InjectModel(MatchScoreboard.name) private readonly matchScoreboardModel: Model<MatchScoreboard>,
     @InjectModel(MatchInfo.name) private readonly matchInfoModel: Model<MatchInfo>,
-    private readonly analyticService: AnalyticsService) { }
+    private readonly analyticService: AnalyticsService,
+    private readonly commonHelperService: CommonHelperService) { }
 
   matchUmpireType(value: string) {
     const isOffField = this.umpireMatchingRegexs.offFieldUmpireWord.test(value);
@@ -355,27 +357,25 @@ export class DataIngestionService {
 
 
   readExcelFiles = async <T = string>(
-    files: ({ filename: string, readStream: T })[],
+    file: ({ filename: string, readStream: T }),
   ): Promise<Record<string, IMatchSheetFormat>> => {
     const results: Record<string, IMatchSheetFormat> = {};
 
-    for (const file of files) {
-      const baseName = stripExt(file.filename);
-      const ext = stripExt(file.filename) === file.filename
-        ? '' // no extension
-        : file.filename.split('.').pop()?.toLowerCase() ?? '';
+    const baseName = stripExt(file.filename);
+    const ext = stripExt(file.filename) === file.filename
+      ? '' // no extension
+      : file.filename.split('.').pop()?.toLowerCase() ?? '';
 
-      try {
-        if (ext === 'csv') {
-          await formatCsvFiles<T>(results, baseName, file.readStream);
-        } else {
-          // Excel (.xlsx) case
-          formatExcelFiles<T>(results, file.readStream, baseName);
-        }
-      } catch (err) {
-        console.error(`Error reading ${file.filename}:`, err);
-        results[baseName] = {};
+    try {
+      if (ext === 'csv') {
+        await formatCsvFiles<T>(results, baseName, file.readStream);
+      } else {
+        // Excel (.xlsx) case
+        formatExcelFiles<T>(results, file.readStream, baseName);
       }
+    } catch (err) {
+      console.error(`Error reading ${file.filename}:`, err);
+      results[baseName] = {};
     }
 
     return results;
@@ -390,9 +390,7 @@ export class DataIngestionService {
 
     if (!sheetScoreboardData) {
       const fileName = `${sheet_match_id}.csv`;
-      const fileData = await this.readExcelFiles<ReadStream>([
-        { filename: fileName, readStream: createReadStream(join("uploads/", fileName)) }
-      ]);
+      const fileData = await this.readExcelFiles<ReadStream>({ filename: fileName, readStream: createReadStream(join("uploads/", fileName)) });
       sheetScoreboardData = fileData[sheet_match_id];
     }
 
@@ -545,88 +543,85 @@ export class DataIngestionService {
     };
   }
 
-  async processMappingSheetDataWithDatabaseKeys(uploadFileAndMappingUpdateDto: UserMappingDetailDto, extractedSheetInfo: Record<string, IMatchSheetFormat>) {
-    const { files } = uploadFileAndMappingUpdateDto;
+  async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat) {
     try {
-      for (const i of files) {
-        const { fileName } = i;
-        const match_id = this.getMatchId(fileName);
-        const result: IMatchSheetFormat = extractedSheetInfo[fileName];
-        const mappings = await this.mappedDataModel.find();
-        const index = mappings.findIndex((i) => i.collectionName === MatchInfo.name);
-        if (index !== -1) {
-          const [removedElement] = mappings.splice(index, 1);
-          mappings.push(removedElement);
-        }
-        const isInfoFile = this.infoFileMatchingRegex.test(fileName);
-        const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
-        for (const j of mappings) {
-          const collection: string[] = DatabaseFields[j.collectionName]();
-          if (isInfoFile) {
-            const dataToUpdate: { [keyname: string]: Record<string, string>[] | string } = {}
-            const dbMappingKeys = Object.keys(j.fields);
-            Object.keys(result).forEach((value) => {
-              let mappingKey = dbMappingKeys.find((k) => j.fields[k]?.includes(value));
-              // enum manage for result
-              // if (enumMappingKey) {
-              //   if (enumValue && typeof enumValue === 'object' && enumMappingKey in enumValue) {
-              //     dataToUpdate[enumMappingKey] = enumFunction(value);
-              //   }
-              // }
-              if (mappingKey) {
-                if (j.collectionName === Team.name) {
-                  dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { [mappingKey]: result[value][0] }] as Record<string, string>[];
-                } else if (j.collectionName === Umpire.name) {
-                  if (this.matchUmpireType(value)) {
-                    dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: result[value][0], type: this.matchUmpireType(value) }] as Record<string, string>[];
-                  } else {
-                    dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: result[value][0], type: UmpireType.onfield, subType: value.includes("1") ? UmpireSubType.BOWLER_END : UmpireSubType.SQUARE_LEG }] as Record<string, string>[];
-                  }
-                } else if (j.collectionName === Player.name) {
-                  if ((result[value] as string[]).length > 1) {
-                    dataToUpdate["registry"] = [...(dataToUpdate["registry"] || []), { name: result[value][0], uniqueId: result[value][1] }] as Record<string, string>[];
-                  }
-                  else {
-                    dataToUpdate[mappingKey] = result[value][0];
-                  }
-                } else if (mappingKey?.includes("playingEleven")) {
-                  mappingKey = mappingKey.replace(".$", "");
-                  dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), result[value][0]];
+      const match_id = this.getMatchId(fileName);
+      const mappings = await this.mappedDataModel.find();
+      const index = mappings.findIndex((i) => i.collectionName === MatchInfo.name);
+      if (index !== -1) {
+        const [removedElement] = mappings.splice(index, 1);
+        mappings.push(removedElement);
+      }
+      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+      const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
+      for (const j of mappings) {
+        const collection: string[] = DatabaseFields[j.collectionName]();
+        if (isInfoFile) {
+          const dataToUpdate: { [keyname: string]: Record<string, string>[] | string } = {}
+          const dbMappingKeys = Object.keys(j.fields);
+          Object.keys(extractedSheetInfo).forEach((value) => {
+            let mappingKey = dbMappingKeys.find((k) => j.fields[k]?.includes(value));
+            // enum manage for result
+            // if (enumMappingKey) {
+            //   if (enumValue && typeof enumValue === 'object' && enumMappingKey in enumValue) {
+            //     dataToUpdate[enumMappingKey] = enumFunction(value);
+            //   }
+            // }
+            if (mappingKey) {
+              if (j.collectionName === Team.name) {
+                dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { [mappingKey]: extractedSheetInfo[value][0] }] as Record<string, string>[];
+              } else if (j.collectionName === Umpire.name) {
+                if (this.matchUmpireType(value)) {
+                  dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: this.matchUmpireType(value) }] as Record<string, string>[];
                 } else {
-                  const enumValue = this.enumValues[j.collectionName];
-                  if (mappingKey === "result.winBy") {
-                    const enumField = "result.status";
-                    const enumFunction = (enumValue)[enumField];
-                    dataToUpdate[enumField] = enumFunction(value);
-                  } else if (mappingKey === "method") {
-                    const enumFunction = (enumValue)[mappingKey];
-                    dataToUpdate[mappingKey] = enumFunction(value);
-                  }
-                  dataToUpdate[mappingKey] = result[value][0];
+                  dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: UmpireType.onfield, subType: value.includes("1") ? UmpireSubType.BOWLER_END : UmpireSubType.SQUARE_LEG }] as Record<string, string>[];
                 }
-              }
-              else if (collection.includes(value)) {
-                const enumValue = this.enumValues[j.collectionName];
-                if (value === "method") {
-                  const enumFunction = (enumValue)[value];
-                  dataToUpdate[value] = enumFunction(value);
+              } else if (j.collectionName === Player.name) {
+                if ((extractedSheetInfo[value] as string[]).length > 1) {
+                  dataToUpdate["registry"] = [...(dataToUpdate["registry"] || []), { name: extractedSheetInfo[value][0], uniqueId: extractedSheetInfo[value][1] }] as Record<string, string>[];
                 }
                 else {
-                  dataToUpdate[value] = result[value][0];
+                  dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
                 }
+              } else if (mappingKey?.includes("playingEleven")) {
+                mappingKey = mappingKey.replace(".$", "");
+                dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value][0]];
+              } else {
+                const enumValue = this.enumValues[j.collectionName];
+                if (mappingKey === "result.winBy") {
+                  const enumField = "result.status";
+                  const enumFunction = (enumValue)[enumField];
+                  dataToUpdate[enumField] = enumFunction(value);
+                } else if (mappingKey === "method") {
+                  const enumFunction = (enumValue)[mappingKey];
+                  dataToUpdate[mappingKey] = enumFunction(value);
+                }
+                dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
               }
-            });
-            await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields, extractedSheetInfo[match_id]);
-          }
-          else if (j.collectionName === MatchScoreboard.name) {
-            await this.saveMappedDataToDb(j.collectionName, result, match_id, scoreboardMappingFields);
-          }
+            }
+            else if (collection.includes(value)) {
+              const enumValue = this.enumValues[j.collectionName];
+              if (value === "method") {
+                const enumFunction = (enumValue)[value];
+                dataToUpdate[value] = enumFunction(value);
+              }
+              else {
+                dataToUpdate[value] = extractedSheetInfo[value][0];
+              }
+            }
+          });
+          await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields);
         }
-        await this.analyticService.generateAnalyticsForMatch(match_id);
+        else if (j.collectionName === MatchScoreboard.name) {
+          await this.saveMappedDataToDb(j.collectionName, extractedSheetInfo, match_id, scoreboardMappingFields);
+        }
       }
+      await this.analyticService.generateAnalyticsForMatch(match_id);
+      return Promise.resolve({});
     } catch (error) {
       console.error("Date & Time Log : ", new Date());
       console.error("processMappingSheetDataWithDatabaseKeys error : ", error);
+      return Promise.reject(error.message);
     }
   }
 
@@ -634,13 +629,34 @@ export class DataIngestionService {
     return fileName.split("_")[0];
   }
 
-  async updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto: UserMappingDetailDto, extractedSheetInfo: Record<string, IMatchSheetFormat>, res: Response) {
-    const { files } = uploadFileAndMappingUpdateDto;
+  async updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, sheets: IMulterFileObject[]) {
+    const { userMappingDetail } = uploadFileAndMappingUpdateDto;
 
-    for (const i of files) {
+    const uploadResult: IUploadResult[] = [];
+
+    let mappingDetailRaw = userMappingDetail as unknown as string;
+    if (mappingDetailRaw.startsWith("'") && mappingDetailRaw.endsWith("'")) {
+      mappingDetailRaw = mappingDetailRaw.slice(1, -1);
+    }
+
+    const userMappingDetailDto: UserMappingDetailDto = JSON.parse(mappingDetailRaw);
+
+    for (const i of userMappingDetailDto.files) {
       const { fileName, mappingsByUser } = i;
+
+      const currentSheetData = sheets.find((i) => i.filename.includes(fileName));
+
+      if (!currentSheetData) {
+        throw new BadRequestException(responseMessage.customMessage("please pass user mapping detail correctly! files uploaded and mapping detail must be equal length"))
+      }
+
+      currentSheetData.readStream = createReadStream(join("uploads/", currentSheetData.filename));
+
+      const extractedSheetInfo = await this.readExcelFiles<ReadStream>(currentSheetData);
+
       const match_id = this.getMatchId(fileName);
       const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+
       const bulkOperations = mappingsByUser.flatMap((j) => {
         return Object.keys(j.fields).map((key) => ({
           updateOne: {
@@ -652,19 +668,25 @@ export class DataIngestionService {
       if (bulkOperations.length > 0) {
         await this.mappedDataModel.bulkWrite(bulkOperations);
       }
-      const [matchInfo, scoreboardCount] = await Promise.all([
-        this.matchInfoModel.findOne({ match_id }),
-        this.matchScoreboardModel.countDocuments({ sheet_match_id: match_id }),
-      ]);
-      if (matchInfo && isInfoFile) {
-        throw new BadRequestException("match info file is already uploaded");
-      } else if (!isInfoFile && scoreboardCount !== 0) {
-        throw new BadRequestException("match scoreboard file is already uploaded");
+
+      const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
+
+      if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
+        uploadResult.push({ fileName, message: responseMessage.dataAlreadyUploaded("file") });
+        continue;
       }
+
+      uploadResult.push({ fileName, message: responseMessage.customMessage("Process started to load data in database") });
+      this.processMappingSheetDataWithDatabaseKeys(fileName, extractedSheetInfo[fileName])
+        .catch((err) => {
+          console.error("processMappingSheetDataWithDatabaseKeys method: Background processing task failed:", err);
+        });
     }
 
-    res.status(200).json({ message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"), data: extractedSheetInfo });
 
-    await this.processMappingSheetDataWithDatabaseKeys(uploadFileAndMappingUpdateDto, extractedSheetInfo);
+    return {
+      message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"),
+      data: uploadResult,
+    };
   }
 }

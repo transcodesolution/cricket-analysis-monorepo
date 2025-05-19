@@ -8,21 +8,18 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
-  Res,
   SetMetadata,
   UseGuards,
 } from '@nestjs/common';
 import { DataIngestionService } from './data-ingestion.service';
-import { MappingDetailDto, UploadFileAndMappingUpdateDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
+import { MappingDetailDto, UploadFileAndMappingUpdateDto } from './dto/mapping-data-ingestion.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { Response } from 'express';
-import { createReadStream, ReadStream } from 'fs';
-import { join } from 'path';
 import { Permission } from '@cricket-analysis-monorepo/constants';
 import { ROUTE_PERMISSION_KEY_NAME } from '../helper/constant.helper';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserPermissionCheckerGuard } from '../guards/user-permission-checker.guard';
+import { IMulterFileObject } from './dto/interfaces';
 
 const uploadFilePermissions = [Permission.UPLOAD_FILES];
 
@@ -56,20 +53,10 @@ export class DataIngestionController {
       },
     }),
   }))
-  async updateMappingAndSaveInformationToDB(@Body() uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, @UploadedFiles() file: { sheets?: (Pick<Express.Multer.File, "filename"> & { readStream: ReadStream })[] }, @Res() res: Response) {
-    let { sheets } = file;
+  async updateMappingAndSaveInformationToDB(@Body() uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, @UploadedFiles() file: { sheets?: IMulterFileObject[] }) {
+    const { sheets } = file;
     if (sheets && sheets.length > 0) {
-      sheets = sheets.map((file) => ({
-        ...file,
-        readStream: createReadStream(join("uploads/", file.filename)),
-      })) as (File & { name: string; filename: string; buffer: string; readStream: ReadStream })[];
-      const extractedSheetInfo = await this.dataIngestionService.readExcelFiles<ReadStream>(sheets);
-      let mappingDetailRaw = uploadFileAndMappingUpdateDto.userMappingDetail as unknown as string;
-      if (mappingDetailRaw.startsWith("'") && mappingDetailRaw.endsWith("'")) {
-        mappingDetailRaw = mappingDetailRaw.slice(1, -1);
-      }
-      const userMappingDetailDto: UserMappingDetailDto = JSON.parse(mappingDetailRaw);
-      return this.dataIngestionService.updateMappingAndSaveInformationToDB(userMappingDetailDto, extractedSheetInfo, res);
+      return this.dataIngestionService.updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto, sheets);
     }
     throw new BadRequestException("No files found");
   }

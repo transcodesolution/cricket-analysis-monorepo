@@ -56,6 +56,7 @@ export const responseMessage = {
     customMessage: (message: string): string => { return `${message[0].toUpperCase() + message.slice(1).toLowerCase()}` },
     invalidId: (message: string): string => { return `invalid ${message}!` },
     dataAlreadyExist: (message: string): string => { return `Please change ${message}, ${message} is already exists!` },
+    dataAlreadyUploaded: (message: string): string => { return `Please change ${message}, ${message} is already uploaded!` },
     getDataSuccess: (message: string): string => { return `${message[0].toUpperCase() + message.slice(1).toLowerCase()} successfully retrieved!` },
     uploadDataSuccess: (message: string): string => { return `${message[0].toUpperCase() + message.slice(1).toLowerCase()} successfully uploaded!` },
     addDataSuccess: (message: string): string => { return `${message[0].toUpperCase() + message.slice(1).toLowerCase()} successfully added!` },
