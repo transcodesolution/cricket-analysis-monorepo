@@ -27,3 +27,5 @@ export class UpdateLoginUserDto extends PickType(User, ["firstName", "lastName",
 }
 
 export class GetUserDto extends PaginationDto { }
+
+export class GetUserByIdDto extends PickType(UpdateUserDto, ["userId"]) { }

@@ -1,15 +1,15 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
-import { CreateUserRoleDto, GetUserRoleDto, UpdateUserRoleDto } from "./dto/user-role.dto";
+import { CreateUserRoleDto, GetUserRoleByIdDto, GetUserRoleDto, UpdateUserRoleDto } from "./dto/user-role.dto";
 import { IUserRole } from "@cricket-analysis-monorepo/interfaces";
 import { responseMessage } from "../helper/response-message.helper";
-import { UserRole } from "../database/model/user-role.model";
+import { UserRole, UserRoleDocument } from "../database/model/user-role.model";
 import { UserRoleType } from "@cricket-analysis-monorepo/constants";
 
 @Injectable()
 export class UserRoleService {
-    constructor(@InjectModel(UserRole.name) private readonly userRoleModel: Model<UserRole>) { }
+    constructor(@InjectModel(UserRole.name) private readonly userRoleModel: Model<UserRoleDocument>) { }
 
     async createUserRole(createUserRoleDto: CreateUserRoleDto) {
         const role = new this.userRoleModel(createUserRoleDto);
@@ -39,7 +39,7 @@ export class UserRoleService {
         return { message: responseMessage.getDataSuccess("roles"), data: { roles, totalData, state: { page: getUserRoleDto.page, limit: getUserRoleDto.limit, page_limit: Math.ceil(totalData / getUserRoleDto.limit) || 1 } } };
     };
 
-    async getUserRoleById({ userRoleId }) {
+    async getUserRoleById({ userRoleId }: GetUserRoleByIdDto) {
         const role = await this.userRoleModel.findOne({ _id: userRoleId });
 
         if (!role) {
@@ -65,5 +65,17 @@ export class UserRoleService {
         }
 
         return { message: responseMessage.updateDataSuccess("role"), data: role };
+    };
+
+    async deleteUserRole({ userRoleId }: GetUserRoleByIdDto) {
+        const role = await this.userRoleModel.findOneAndUpdate({ _id: userRoleId });
+
+        if (!role) {
+            throw new BadRequestException(responseMessage.getDataNotFound("role"));
+        }
+
+        await role.softDelete();
+
+        return { message: responseMessage.deleteDataSuccess("user role"), data: { role } };
     };
 }

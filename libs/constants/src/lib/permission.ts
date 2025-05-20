@@ -6,9 +6,11 @@ export enum Permission {
     AI_ANALYSIS = "ai_analysis",
     CREATE_ROLE = "create_role",
     UPDATE_ROLE = "update_role",
+    DELETE_ROLE = "delete_role",
     VIEW_ROLE = "view_role",
     CREATE_USER = "create_user",
     UPDATE_USER = "update_user",
+    DELETE_USER = "delete_user",
     VIEW_USER = "get_user",
 }
 
@@ -38,6 +40,7 @@ export const permissionsListByModuleWise: Record<string, { label: string, permis
         permissions: [
             { label: "Create Role", value: Permission.CREATE_ROLE },
             { label: "Update Role", value: Permission.UPDATE_ROLE },
+            { label: "Delete Role", value: Permission.DELETE_ROLE },
             { label: "View Role", value: Permission.VIEW_ROLE },
         ]
     },
@@ -46,6 +49,7 @@ export const permissionsListByModuleWise: Record<string, { label: string, permis
         permissions: [
             { label: "Create User", value: Permission.CREATE_USER },
             { label: "Update User", value: Permission.UPDATE_USER },
+            { label: "Delete User", value: Permission.DELETE_USER },
             { label: "View User", value: Permission.VIEW_USER },
         ]
     }
