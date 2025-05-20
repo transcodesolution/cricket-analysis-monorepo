@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
-import { CreateUserDto, GetUserDto, UpdateUserDto } from "./dto/user.dto";
-import { User } from "../database/model/user.model";
+import { CreateUserDto, GetUserByIdDto, GetUserDto, UpdateUserDto } from "./dto/user.dto";
+import { User, UserDocument } from "../database/model/user.model";
 import { CommonHelperService } from "../helper/common.helper";
 import { responseMessage } from "../helper/response-message.helper";
 import { ConfigService } from "@nestjs/config";
@@ -14,7 +14,7 @@ import { UserRole } from "../database/model/user-role.model";
 export class UserService {
     BACKEND_URL = "";
 
-    constructor(@InjectModel(User.name) private readonly userModel: Model<User>, @InjectModel(UserRole.name) private readonly userRoleModel: Model<UserRole>, private readonly commonHelperService: CommonHelperService, private readonly configService: ConfigService) {
+    constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>, @InjectModel(UserRole.name) private readonly userRoleModel: Model<UserRole>, private readonly commonHelperService: CommonHelperService, private readonly configService: ConfigService) {
         this.BACKEND_URL = this.configService.get("BACKEND_URL");
     }
 
@@ -66,7 +66,19 @@ export class UserService {
         return { message: responseMessage.updateDataSuccess("user"), data: { user } };
     };
 
-    getUserById(userIdDto: { userId: string }) {
+    async deleteUser({ userId }: GetUserByIdDto) {
+        const user = await this.userModel.findOne({ _id: userId });
+
+        if (!user) {
+            throw new BadRequestException(responseMessage.getDataNotFound("user"));
+        }
+
+        await user.softDelete();
+
+        return { message: responseMessage.deleteDataSuccess("user"), data: { user } };
+    };
+
+    getUserById(userIdDto: GetUserByIdDto) {
         return this.commonHelperService.getUserById(userIdDto);
     }
 

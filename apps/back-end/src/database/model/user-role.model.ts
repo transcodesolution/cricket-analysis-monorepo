@@ -1,9 +1,15 @@
 import { Permission, UserRoleType } from '@cricket-analysis-monorepo/constants';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsEnum, IsOptional } from 'class-validator';
+import { ISoftDeleteMethod, softDeletePlugin } from '.';
+
+export interface UserRoleDocument extends UserRole, Document, ISoftDeleteMethod<UserRoleDocument> { }
 
 @Schema({ timestamps: true, versionKey: false })
 export class UserRole {
+    @Prop({ type: Date, default: null })
+    deletedAt: Date;
+
     @Prop({ type: String })
     name: string;
 
@@ -17,3 +23,5 @@ export class UserRole {
 }
 
 export const UserRoleSchema = SchemaFactory.createForClass(UserRole);
+
+UserRoleSchema.plugin(softDeletePlugin<UserRole>);

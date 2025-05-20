@@ -74,7 +74,7 @@ export class MatchInfo {
         impactPlayerOut: string;
         playingEleven: string[];
         substitutPlayers: string[];
-        team: string;
+        team?: string;
     };
 
     @Prop({ type: SchemaTypes.ObjectId })
@@ -107,7 +107,7 @@ export class MatchInfo {
         impactPlayerOut: string;
         playingEleven: string[];
         substitutePlayers: string[];
-        team: string;
+        team?: string;
     };
 
     @Prop({
@@ -131,16 +131,8 @@ export class MatchInfo {
     constructor() {
         this.name = '';
         this.start_date = '';
-        this.venue = '';
         this.method = MatchMethod.DLS;
         this.end_date = '';
-        this.referee = '';
-        this.umpire = {
-            fourthUmpire: '',
-            onFieldBowlerEndUmpire: '',
-            onFieldLegUmpire: '',
-            thirdUmpire: '',
-        };
         this.balls_per_over = 6;
         this.toss = {
             tossResult: TossResult.head,
@@ -155,7 +147,6 @@ export class MatchInfo {
             impactPlayerOut: '',
             playingEleven: [],
             substitutPlayers: [],
-            team: '',
         };
         this.tournamentId = '';
         this.ball = {
@@ -168,7 +159,6 @@ export class MatchInfo {
             impactPlayerOut: '',
             playingEleven: [],
             substitutePlayers: [],
-            team: '',
         };
         this.result = {
             playerOfMatch: '',
