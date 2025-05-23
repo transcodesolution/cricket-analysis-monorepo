@@ -1,3 +1,23 @@
-npx nx build back-end && echo '✅ Back-end App Build successful' || (echo '❌ Back-end App Build failed. Commit aborted.' && exit 1)
+CHANGED=$(git diff --name-only origin/development)
 
-npx nx build front-end && echo '✅ Front-end App Build successful' || (echo '❌ Front-end App Build failed. Commit aborted.' && exit 1)
+BUILD_FAILED=0
+
+# Check and build back-end if any file in apps/back-end changed
+if echo "$CHANGED" | grep -q '^apps/back-end/'; then
+  echo "📦 Building back-end..."
+  if ! npx nx build back-end; then
+    echo '❌ Back-end build failed. Commit aborted.'
+    exit 1
+  fi
+fi
+
+# Check and build front-end if any file in apps/front-end changed
+if echo "$CHANGED" | grep -q '^apps/front-end/'; then
+  echo "🎨 Building front-end..."
+  if ! npx nx build front-end; then
+    echo '❌ Front-end build failed. Commit aborted.'
+    exit 1
+  fi
+fi
+
+echo "✅ Commit checks passed."
