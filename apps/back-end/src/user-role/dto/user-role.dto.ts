@@ -17,3 +17,5 @@ export class UpdateUserRoleDto extends CreateUserRoleDto {
 }
 
 export class GetUserRoleDto extends PaginationDto { }
+
+export class GetUserRoleByIdDto extends PickType(UpdateUserRoleDto, ["userRoleId"]) { }

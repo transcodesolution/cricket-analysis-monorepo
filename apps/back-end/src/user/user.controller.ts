@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, SetMetadata, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, SetMetadata, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto, GetUserDto, UpdateUserDto } from "./dto/user.dto";
 import { ConfigService } from "@nestjs/config";
@@ -28,6 +28,12 @@ export class UserController {
     updateUser(@Param("userId") userId: string, @Body() updateUserDto: UpdateUserDto) {
         updateUserDto.userId = userId;
         return this.userService.updateUser(updateUserDto);
+    }
+
+    @Delete("/:userId")
+    @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.DELETE_USER])
+    deleteUser(@Param("userId") userId: string) {
+        return this.userService.deleteUser({ userId });
     }
 
     @Get("/")

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, Res } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Connection, Model } from 'mongoose';
 import { DatabaseFields } from './dto/constant.dto';
@@ -27,6 +27,7 @@ import { User } from '../database/model/user.model';
 import { UserRole } from '../database/model/user-role.model';
 import { IMulterFileObject } from './dto/interfaces';
 import { CommonHelperService } from '../helper/common.helper';
+import { Response } from 'express';
 
 @Injectable()
 export class DataIngestionService {
@@ -629,7 +630,7 @@ export class DataIngestionService {
     return fileName.split("_")[0];
   }
 
-  async updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, sheets: IMulterFileObject[]) {
+  async updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, sheets: IMulterFileObject[], @Res() res: Response) {
     const { userMappingDetail } = uploadFileAndMappingUpdateDto;
 
     const uploadResult: IUploadResult[] = [];
@@ -672,21 +673,29 @@ export class DataIngestionService {
       const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
 
       if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
-        uploadResult.push({ fileName, message: responseMessage.dataAlreadyUploaded("file") });
+        uploadResult.push({ hasAlreadyUploaded: true, fileName, message: responseMessage.dataAlreadyUploaded("file") });
         continue;
       }
 
-      uploadResult.push({ fileName, message: responseMessage.customMessage("Process started to load data in database") });
+      uploadResult.push({ hasAlreadyUploaded: false, fileName, message: responseMessage.customMessage("Process started to load data in database") });
       this.processMappingSheetDataWithDatabaseKeys(fileName, extractedSheetInfo[fileName])
         .catch((err) => {
           console.error("processMappingSheetDataWithDatabaseKeys method: Background processing task failed:", err);
         });
     }
 
+    const alreadyUpload = uploadResult.filter((i) => i.hasAlreadyUploaded).map((i) => i.fileName);
 
-    return {
+    if (alreadyUpload.length > 0) {
+      return res.status(HttpStatus.PARTIAL_CONTENT).json({
+        message: "Mapping performed successfully and files $fileNames are already uploaded, Rest are processing to load data".replace("$fileNames", alreadyUpload.join(", ")),
+        data: uploadResult,
+      });
+    }
+
+    return res.status(HttpStatus.OK).json({
       message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"),
       data: uploadResult,
-    };
+    });
   }
 }

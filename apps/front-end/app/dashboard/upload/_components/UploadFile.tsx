@@ -45,6 +45,7 @@ export const UploadFile = () => {
       { files: structuredData },
       {
         onSuccess: ({ data }: IApiResponse<IFileColumnDataResponse>) => {
+          console.log(data, 'data')
           const hasMissingMappings = Object.values(data || {}).some(cols => cols.length > 0);
 
           if (hasMissingMappings) {
@@ -78,9 +79,19 @@ export const UploadFile = () => {
 
     // Upload files
     uploadFileToServiceViaHandler({ formData })
-      .then(() => {
+      .then((response) => {
+        console.log(response, 'response');
         setShowModal(false);
         setDroppedFiles([]);
+
+        let color = 'orange';
+        if (response.statusCode === 200) {
+          color = 'green';
+        }
+        showNotification({
+          message: response.message,
+          color,
+        });
       })
       .catch((error) => {
         console.log(error, 'error')

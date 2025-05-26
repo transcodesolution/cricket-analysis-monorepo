@@ -1,15 +1,20 @@
 'use client';
 import { DataTable } from 'mantine-datatable';
 import { Paper, Stack, Title, Anchor } from '@mantine/core';
-import { useState } from 'react';
 import Link from 'next/link';
 import { useGetReports } from '@/libs/react-query-hooks/src';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
 
-const PAGE_SIZES = [10, 20];
+const PAGE_SIZES = [10, 20, 50, 100];
 
 export const ReportList = () => {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const page = Number(searchParams.get('page')) || 1;
+  const pageSize = Number(searchParams.get('pageSize')) || PAGE_SIZES[0];
+
   const { data: getReports, isLoading } = useGetReports({
     page,
     limit: pageSize,
@@ -17,6 +22,20 @@ export const ReportList = () => {
 
   const reports = getReports?.data?.reports || [];
   const totalData = getReports?.data?.totalData
+
+
+  const handleChangePage = (pageNumber: number) => {
+    handleApplyFilter({ 'page': pageNumber.toString() })
+  };
+
+  const handleChangePageSize = (pageNumber: number) => {
+    handleApplyFilter({ 'pageSize': pageNumber.toString() })
+  };
+
+  const handleApplyFilter = (filters: IFilterParams) => {
+    const newSearchParams = updateUrlParams(filters);
+    router.push(`${newSearchParams.toString()}`);
+  };
 
   return (
     <Stack>
@@ -36,9 +55,9 @@ export const ReportList = () => {
           paginationActiveBackgroundColor="var(--mantine-color-customBlue-5)"
           recordsPerPage={pageSize}
           page={page}
-          onPageChange={setPage}
+          onPageChange={handleChangePage}
           recordsPerPageOptions={PAGE_SIZES}
-          onRecordsPerPageChange={setPageSize}
+          onRecordsPerPageChange={handleChangePageSize}
           columns={[
             {
               accessor: 'name',

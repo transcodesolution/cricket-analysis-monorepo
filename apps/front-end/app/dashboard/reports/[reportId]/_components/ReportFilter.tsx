@@ -72,6 +72,7 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
           placeholder={filter.label}
           data={options}
           size="sm"
+          searchable
           value={(searchParams.get(key)?.split(',') || []) as string[]}
           onChange={(values) => {
             handleApplyFilter({
@@ -100,6 +101,7 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
         placeholder={filter.label}
         data={options}
         size="sm"
+        searchable
         clearable
         value={searchParams.get(key) || null}
         onChange={(value) => {

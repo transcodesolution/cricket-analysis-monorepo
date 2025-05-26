@@ -2,6 +2,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
 import { UserRole } from './user-role.model';
 import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { ISoftDeleteMethod, softDeletePlugin } from '.';
+
+export interface UserDocument extends User, Document, ISoftDeleteMethod<UserDocument> { }
 
 @Schema({
     timestamps: true, versionKey: false, toJSON: {
@@ -15,9 +18,12 @@ import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
                 justOne: true
             }
         },
-    }
+    },
 })
 export class User {
+    @Prop({ type: Date, default: null })
+    deletedAt: Date;
+
     @Prop({ type: String })
     @IsOptional()
     @IsString()
@@ -64,3 +70,5 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.plugin(softDeletePlugin<User>);

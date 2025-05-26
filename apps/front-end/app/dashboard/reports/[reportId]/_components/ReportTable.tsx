@@ -2,19 +2,22 @@
 import { DataTable, DataTableColumn } from 'mantine-datatable';
 import { Button, Flex, Paper, Stack, Title } from '@mantine/core';
 import { IconDownload } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useGetReportById } from '@/libs/react-query-hooks/src';
 import { ITableHeader, ITableRow } from '@/libs/types-api/src';
 import { ReportFilter } from './ReportFilter';
+import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
 
-const PAGE_SIZES = [10, 20];
+const PAGE_SIZES = [10, 20, 50, 100];
 
 export const ReportTable = () => {
   const searchParams = useSearchParams();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+  const router = useRouter();
+
+  const page = Number(searchParams.get('page')) || 1;
+  const pageSize = Number(searchParams.get('pageSize')) || PAGE_SIZES[0];
 
   const { reportId } = useParams<{ reportId: string }>();
 
@@ -72,12 +75,35 @@ export const ReportTable = () => {
     XLSX.writeFile(wb, 'player_report.xlsx');
   };
 
+
+  const handleApplyFilter = (filters: IFilterParams) => {
+    const newSearchParams = updateUrlParams(filters);
+    router.push(`${newSearchParams.toString()}`);
+  };
+
+  const handleChangePage = (pageNumber: number) => {
+    handleApplyFilter({ 'page': pageNumber.toString() })
+  };
+
+  const handleChangePageSize = (pageNumber: number) => {
+    handleApplyFilter({ 'pageSize': pageNumber.toString() })
+  };
   return (
     <Stack>
       <Paper withBorder radius="lg" p="md">
-        <Title order={4} fw={500} mb="md" c="var(--mantine-color-gray-8)">
-          {report?.name || 'Report'}
-        </Title>
+        <Flex justify="space-between" align="center" w='100%'>
+          <Title order={4} fw={500} mb="md" c="var(--mantine-color-gray-8)">
+            {report?.name || 'Report'}
+          </Title>
+          <Button
+            leftSection={<IconDownload size={18} />}
+            size="sm"
+            color="var(--mantine-color-customBlue-5)"
+            onClick={downloadExcel}
+          >
+            Download
+          </Button>
+        </Flex>
 
         <ReportFilter reportFilters={reportFilters} />
 
@@ -95,9 +121,9 @@ export const ReportTable = () => {
           paginationActiveBackgroundColor="var(--mantine-color-customBlue-5)"
           recordsPerPage={pageSize}
           page={page}
-          onPageChange={setPage}
+          onPageChange={handleChangePage}
           recordsPerPageOptions={PAGE_SIZES}
-          onRecordsPerPageChange={setPageSize}
+          onRecordsPerPageChange={handleChangePageSize}
           columns={columns}
           c="var(--mantine-color-gray-7)"
           styles={{
@@ -106,19 +132,9 @@ export const ReportTable = () => {
               color: 'var(--mantine-color-gray-7)',
             },
           }}
-          height="calc(100vh - 400px)"
+          height="calc(100vh - 320px)"
         />
       </Paper>
-      <Flex justify="end">
-        <Button
-          leftSection={<IconDownload size={24} />}
-          size="md"
-          color="var(--mantine-color-customBlue-5)"
-          onClick={downloadExcel}
-        >
-          Report downloads
-        </Button>
-      </Flex>
     </Stack>
   );
 };
