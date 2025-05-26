@@ -11,7 +11,7 @@ import { useConfirmDelete } from '@/libs/hooks/useConfirmDelete';
 import { useDeleteRoles, useGetRoles } from '@/libs/react-query-hooks/src';
 import { IUserRole } from '@cricket-analysis-monorepo/interfaces';
 
-const PAGE_SIZES = [50, 100, 200, 500, 1000];
+const PAGE_SIZES = [10, 20, 50, 100];
 const SORT_ORDER = ['asc', 'desc'];
 
 export const RoleList = () => {

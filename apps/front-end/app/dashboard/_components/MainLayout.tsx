@@ -11,6 +11,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
+import { ProfilePopOver } from './ProfilePopOver';
 
 interface IMainLayout {
   children: React.ReactNode;
@@ -49,13 +50,7 @@ export const MainLayout = ({ children }: IMainLayout) => {
               CrickAI
             </Text>
           </Group>
-          <Avatar
-            src={null}
-            alt="User"
-            radius="xl"
-            size='md'
-            color='primary'
-          />
+          <ProfilePopOver />
         </Flex>
       </AppShell.Header>
 
