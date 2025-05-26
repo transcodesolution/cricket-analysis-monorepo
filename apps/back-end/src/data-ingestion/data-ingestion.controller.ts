@@ -10,6 +10,7 @@ import {
   BadRequestException,
   SetMetadata,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import { DataIngestionService } from './data-ingestion.service';
 import { MappingDetailDto, UploadFileAndMappingUpdateDto } from './dto/mapping-data-ingestion.dto';
@@ -20,6 +21,7 @@ import { ROUTE_PERMISSION_KEY_NAME } from '../helper/constant.helper';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserPermissionCheckerGuard } from '../guards/user-permission-checker.guard';
 import { IMulterFileObject } from './dto/interfaces';
+import { Response } from 'express';
 
 const uploadFilePermissions = [Permission.UPLOAD_FILES];
 
@@ -42,6 +44,7 @@ export class DataIngestionController {
   }
 
   @Post('/update-mapping-and-save-entries')
+  @HttpCode(HttpStatus.OK)
   @SetMetadata(ROUTE_PERMISSION_KEY_NAME, uploadFilePermissions)
   @UseInterceptors(FileFieldsInterceptor([{ name: "sheets" }], {
     storage: diskStorage({
@@ -53,10 +56,10 @@ export class DataIngestionController {
       },
     }),
   }))
-  async updateMappingAndSaveInformationToDB(@Body() uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, @UploadedFiles() file: { sheets?: IMulterFileObject[] }) {
+  async updateMappingAndSaveInformationToDB(@Body() uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, @UploadedFiles() file: { sheets?: IMulterFileObject[] }, @Res() res: Response) {
     const { sheets } = file;
     if (sheets && sheets.length > 0) {
-      return this.dataIngestionService.updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto, sheets);
+      return this.dataIngestionService.updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto, sheets, res);
     }
     throw new BadRequestException("No files found");
   }
