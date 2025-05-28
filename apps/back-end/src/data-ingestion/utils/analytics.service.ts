@@ -17,8 +17,8 @@ export class AnalyticsService {
 
         if (matchInfo && scoreboards.length) {
             // Separate innings
-            const inningsOneBalls = scoreboards.filter(sb => sb.innings === 1).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over })));
-            const inningsTwoBalls = scoreboards.filter(sb => sb.innings === 2).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over })));
+            const inningsOneBalls = scoreboards.filter(sb => sb.innings === 1).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id })));
+            const inningsTwoBalls = scoreboards.filter(sb => sb.innings === 2).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id })));
 
             const analytics = new this.analyticsModel(); // Create empty analytics document
 
@@ -35,6 +35,7 @@ export class AnalyticsService {
             const team2TotalRuns = this.calculateTotalRuns(inningsTwoBalls);
 
             analytics.totalRuns = team1TotalRuns + team2TotalRuns;
+            analytics.totalBallFaced = analytics.teamOne.ballFaced + analytics.teamTwo.ballFaced;
 
             const team1NRR = this.calculateNetRunRate(team1TotalRuns, inningsOneBalls.length);
             const team2NRR = this.calculateNetRunRate(team2TotalRuns, inningsTwoBalls.length);
@@ -57,17 +58,23 @@ export class AnalyticsService {
         const battingStats = new Map<string, BattingStats>();
         const bowlingStats = new Map<string, BowlingStats>();
         const fallOfWickets: FallOfWickets[] = [];
+        const nonStrikers: string[] = [];
 
-        let totalRuns = 0;
+        let totalRuns = 0, ballFaced = 0;
 
         for (const ball of balls) {
             if (!ball.striker?.player) {
                 return teamAnalytics;
             }
             const strikerId = ball.striker?.player?.toString();
+            const nonStrikerId = ball.non_striker?.player?.toString();
             const bowlerId = ball.bowler.toString();
             const runs = +ball.runs_off_bat + +(ball.extras?.total ?? 0);
             totalRuns += runs;
+
+            if (!(+(ball.extras?.wides || 0) || +(ball.extras?.noballs || 0))) {
+                ballFaced++;
+            }
 
             // Batting
             if (strikerId) {
@@ -82,7 +89,7 @@ export class AnalyticsService {
                 if (!bowlingStats.has(bowlerId)) {
                     bowlingStats.set(bowlerId, this.initializeBowlingStat());
                 }
-                this.updateBowlingStat(bowlingStats.get(bowlerId), ball);
+                this.updateBowlingStat(bowlingStats.get(bowlerId), ball, bowlerId);
             }
 
             // Wickets
@@ -92,8 +99,15 @@ export class AnalyticsService {
                     ballNumber: ball.ball,
                     player: ball.wicket.dismissedPlayer,
                     bowler: ball.bowler,
-                    runsScore: totalRuns
+                    type: ball.wicket.type,
+                    takenBy: ball.wicket.takenBy,
+                    runsScore: totalRuns,
+                    ballReference: ball._id,
                 });
+            }
+
+            if (nonStrikerId) {
+                nonStrikers.push(nonStrikerId);
             }
         }
 
@@ -133,9 +147,9 @@ export class AnalyticsService {
         }
 
         // Identify players who are yet to bat
-        const yetToBatPlayers = Array.from(playingEleven).filter(playerId => !battingStats.has(playerId.toString()));
+        teamAnalytics.yetToBatPlayers = Array.from(playingEleven).filter(playerId => !battingStats.has(playerId.toString()) || !nonStrikers.includes(playerId.toString()));
 
-        teamAnalytics.yetToBatPlayers = yetToBatPlayers;
+        teamAnalytics.ballFaced = ballFaced;
 
         return teamAnalytics;
     }
@@ -162,12 +176,15 @@ export class AnalyticsService {
             6: 0,
             strikeRate: 0,
             timeSpend: 0,
-            shot: {},
+            shot: [],
         };
     }
 
-    private updateBattingStat(stat, ball: Ball) {
-        stat.ballsFaced++;
+    private updateBattingStat(stat: BattingStats, ball: Ball) {
+        const checklegalDelivery = !(+(ball.extras?.wides ?? 0) || +(ball.extras?.noballs ?? 0));
+        if (checklegalDelivery) {
+            stat.ballsFaced++;
+        }
         stat.runs += (+ball.runs_off_bat);
 
         const playingOverIn = stat.overPlayedIn.find((i) => (i.over === ball.over));
@@ -177,7 +194,11 @@ export class AnalyticsService {
         const has3s = ball.runs_off_bat == 3 ? 1 : 0;
         const has5s = ball.runs_off_bat == 5 ? 1 : 0;
         if (!playingOverIn) {
-            stat.overPlayedIn.push({ over: ball.over, runs: +ball.runs_off_bat, ballsFaced: 1, 0: has0s, 1: has1s, 2: has2s, 3: has3s, 4: ball.foursHit || 0, 5: has5s, 6: ball.sixHit || 0 });
+            let ballsFaced = 0;
+            if (checklegalDelivery) {
+                ballsFaced = 1;
+            }
+            stat.overPlayedIn.push({ over: ball.over, runs: +ball.runs_off_bat, ballsFaced, 0: has0s, 1: has1s, 2: has2s, 3: has3s, 4: ball.foursHit || 0, 5: has5s, 6: ball.sixHit || 0 });
         } else {
             playingOverIn.runs += (+ball.runs_off_bat);
             playingOverIn[0] += has0s;
@@ -187,7 +208,9 @@ export class AnalyticsService {
             playingOverIn[4] += +(ball.foursHit || 0);
             playingOverIn[5] += has5s;
             playingOverIn[6] += +(ball.sixHit || 0);
-            playingOverIn.ballsFaced++;
+            if (checklegalDelivery) {
+                playingOverIn.ballsFaced++;
+            }
         }
 
         if (stat[ball.runs_off_bat] !== undefined) {
@@ -226,19 +249,35 @@ export class AnalyticsService {
         };
     }
 
-    private updateBowlingStat(stat, ball: Ball) {
-        stat.ballsBowled++;
-        stat.runsConceded += +(ball.runs_off_bat) + +(ball.extras?.total ?? 0);
+    private updateBowlingStat(stat: BowlingStats, ball: Ball, bowlerId: string) {
+        ball.runs_off_bat = +ball.runs_off_bat;
+        const checklegalDelivery = !(+(ball.extras?.wides ?? 0) || +(ball.extras?.noballs ?? 0));
+        const hasDotBall = ball.runs_off_bat === 0;
+        if (checklegalDelivery) {
+            stat.ballsBowled++;
+        }
+        stat.runsConceded += ball.runs_off_bat + +(ball.extras?.total ?? 0);
 
         if (ball.extras?.noballs) stat.totalNoBall++;
         if (ball.extras?.wides) stat.totalWide++;
 
-        if (ball.wicket?.dismissedPlayer) stat.totalWicketTaken++;
+        if (ball.wicket.dismissedPlayer && ball.wicket.takenBy.find((i) => i.toString() === bowlerId)) stat.totalWicketTaken++;
 
         if (+ball.runs_off_bat === 4) stat.totalFourConceded++;
         if (+ball.runs_off_bat === 6) stat.totalSixConceded++;
-        if ((+ball.runs_off_bat + (ball.extras?.total ?? 0)) === 0) stat.totalDotBalls++;
+        if (checklegalDelivery && hasDotBall) stat.totalDotBalls++;
 
-        stat.economyRate = stat.ballsBowled ? (stat.runsConceded / (stat.ballsBowled / 6)) : 0;
+        const ballBowledWithDecimal = stat.ballsBowled / 6;
+
+        stat.overs = Math.floor(ballBowledWithDecimal);
+        stat.economyRate = stat.ballsBowled ? (stat.runsConceded / stat.overs) : 0;
+
+        if (checklegalDelivery && stat.ballsBowled === ball.ball && hasDotBall) {
+            stat[`_current${ball.over}`] += 1;
+        }
+        if (stat[`_current${ball.over}`] === 6) {
+            stat.totalMaidenOvers++;
+            stat[`_current${ball.over}`] = 0;
+        }
     }
 }

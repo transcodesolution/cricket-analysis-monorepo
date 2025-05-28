@@ -20,10 +20,10 @@ function getDeepKeys<T>(obj: T, parent = ''): string[] {
         if (Array.isArray(value)) {
             if (value.length > 0 && typeof value[0] === 'object') {
                 // Use `$.` notation for arrays of objects
-                keys = keys.concat(getDeepKeys(value[0], `${currentPath}.$`));
+                keys = keys.concat(getDeepKeys(value[0], `${currentPath}`));
             } else {
                 // Array of primitives
-                keys.push(`${currentPath}.$`);
+                keys.push(`${currentPath}`);
             }
         } else if (value !== null && typeof value === 'object') {
             // Recurse into nested object

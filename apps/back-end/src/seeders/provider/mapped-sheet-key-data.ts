@@ -18,7 +18,8 @@ export const MAPPED_SHEET_KEY_DATA: MappingData[] = [
             gender: [
                 "gender"
             ],
-            startDate: ["date"]
+            startDate: ["start_date", "date"],
+            season: []
         }
     },
     {
@@ -38,6 +39,8 @@ export const MAPPED_SHEET_KEY_DATA: MappingData[] = [
             name: [
                 "team1",
                 "team2",
+                "batting_team",
+                "bowling_team",
             ],
         }
     },
@@ -76,6 +79,8 @@ export const MAPPED_SHEET_KEY_DATA: MappingData[] = [
     {
         collectionName: MatchInfo.name,
         fields: {
+            "venue": ["venue"],
+            "tournamentId": ["event"],
             "toss.winnerTeam": [
                 "toss_winner",
             ],
@@ -83,16 +88,20 @@ export const MAPPED_SHEET_KEY_DATA: MappingData[] = [
                 "toss_decision",
             ],
             "result.playerOfMatch": [
-                "player_of_match"
+                "player_of_match",
+                "player_of_match1",
+                "player_of_match2",
             ],
             "result.winningTeam": [
                 "winner"
             ],
             "result.winBy": [
-                "winner_wickets"
+                "winner_wickets",
+                "winner_runs"
             ],
             "result.status": [
-                "winner_wickets"
+                "winner_wickets",
+                "winner_runs"
             ],
             "umpire.fourthUmpire": [
                 "tv_umpire"
@@ -112,10 +121,13 @@ export const MAPPED_SHEET_KEY_DATA: MappingData[] = [
             "team2.team": [
                 "team2"
             ],
-            "team1.playingEleven.$": [
+            "referee": [
+                "match_referee"
+            ],
+            "team1.playingEleven": [
                 "player1", "player2", "player3", "player4", "player5", "player6", "player7", "player8", "player9", "player10", "player11",
             ],
-            "team2.playingEleven.$": [
+            "team2.playingEleven": [
                 "player12", "player13", "player14", "player15", "player16", "player17", "player18", "player19", "player20", "player21", "player22",
             ]
         }
@@ -123,44 +135,45 @@ export const MAPPED_SHEET_KEY_DATA: MappingData[] = [
     {
         collectionName: MatchScoreboard.name,
         fields: {
-            "balls.$.ball": [
+            "innings": ["innings"],
+            "balls.ball": [
                 "ball",
             ],
-            "balls.$.striker.player": [
+            "balls.striker.player": [
                 "striker",
             ],
-            "balls.$.non_striker.player": [
+            "balls.non_striker.player": [
                 "non_striker"
             ],
-            "balls.$.bowler": [
+            "balls.bowler": [
                 "bowler"
             ],
-            "balls.$.runs_off_bat": [
+            "balls.runs_off_bat": [
                 "runs_off_bat"
             ],
-            "balls.$.extras.total": [
+            "balls.extras.total": [
                 "extras"
             ],
-            "balls.$.extras.wides": [
+            "balls.extras.wides": [
                 "wides"
             ],
-            "balls.$.extras.noballs": [
+            "balls.extras.noballs": [
                 "noballs"
             ],
-            "balls.$.extras.penalty": [
+            "balls.extras.penalty": [
                 "penalty"
             ],
-            "balls.$.extras.byes": [
+            "balls.extras.byes": [
                 "byes"
             ],
-            "balls.$.extras.legbyes": [
+            "balls.extras.legbyes": [
                 "legbyes"
             ],
-            "balls.$.wicket.type": [
+            "balls.wicket.type": [
                 "wicket_type",
                 "other_wicket_type"
             ],
-            "balls.$.wicket.dismissedPlayer": [
+            "balls.wicket.dismissedPlayer": [
                 "player_dismissed",
                 "other_player_dismissed"
             ],

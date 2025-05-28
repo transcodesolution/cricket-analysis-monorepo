@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Country, MatchFormat, TournamentBoard, TournamentType } from "@cricket-analysis-monorepo/constants";
+import { Country, MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constants";
 import { Gender } from '@cricket-analysis-monorepo/constants';
 
 @Schema({ timestamps: true, versionKey: false })
@@ -37,9 +37,6 @@ export class Tournament {
     @Prop()
     season: string;
 
-    @Prop({ enum: Object.values(TournamentBoard) })
-    board: string;
-
     @Prop({ enum: Object.values(TournamentType) })
     type: string;
 
@@ -66,7 +63,6 @@ export class Tournament {
         this.startDate = null;
         this.logo = '';
         this.season = '';
-        this.board = '';
         this.type = '';
         this.country = Country.India;
         this.matchFormat = MatchFormat.ODI;
