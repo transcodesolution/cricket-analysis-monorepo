@@ -106,7 +106,7 @@ export const RoleList = () => {
   return (
     <React.Fragment>
       {
-        permission?.hasJobDelete && selectedRoles.length > 0 &&
+        permission?.hasRoleDelete && selectedRoles.length > 0 &&
         <ActionIcon color='red' onClick={handleDeleteSelected}>
           <IconTrash size="1.5rem" />
         </ActionIcon>
