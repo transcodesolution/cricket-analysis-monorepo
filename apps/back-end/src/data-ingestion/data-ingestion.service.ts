@@ -15,7 +15,7 @@ import { Referee } from '../database/model/referee.model';
 import { Venue } from '../database/model/venue.model';
 import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
-import { MatchMethod, MatchStatus, UmpireSubType, UmpireType } from '@cricket-analysis-monorepo/constants';
+import { MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
 import { IMatchSheetFormat, IUploadResult } from '@cricket-analysis-monorepo/interfaces';
 import { formatCsvFiles, formatExcelFiles, stripExt } from '@cricket-analysis-monorepo/service';
@@ -113,6 +113,8 @@ export class DataIngestionService {
                 return playerId ? new mongoose.Types.ObjectId(playerId) as unknown as string : null;
               })
             );
+          } else if ([WicketType.caught, WicketType.bowled, WicketType.caughtandbowled, WicketType.lbw, WicketType.hitwicket].includes(j.wicket.type)) {
+            j.wicket.takenBy = [j.bowler];
           } else {
             j.wicket.takenBy = [];
           }
@@ -143,7 +145,7 @@ export class DataIngestionService {
     const tossWinningTeam = teams.find((team) => team.name === dataToUpdate["toss.winnerTeam"]);
     const team1PlayingEleven = await this.playerModel.distinct("_id", { name: { $in: dataToUpdate["team1.playingEleven"] } });
     const team2PlayingEleven = await this.playerModel.distinct("_id", { name: { $in: dataToUpdate["team2.playingEleven"] } });
-    const playerOfMatch = await this.playerModel.findOne({ name: dataToUpdate["result.playerOfMatch"] });
+    const playerOfMatches = await this.playerModel.distinct("_id", { name: { $in: dataToUpdate["result.playerOfMatch"] } });
     const onFieldBowlerEndUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.onFieldBowlerEndUmpire"] });
     const onFieldLegUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.onFieldLegUmpire"] });
     const fourthUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.fourthUmpire"] });
@@ -158,7 +160,7 @@ export class DataIngestionService {
       "team1.playingEleven": team1PlayingEleven,
       "team2.playingEleven": team2PlayingEleven,
       "result.winningTeam": winningTeam?._id,
-      "result.playerOfMatch": playerOfMatch?._id,
+      "result.playerOfMatch": playerOfMatches,
       'umpire.onFieldBowlerEndUmpire': onFieldBowlerEndUmpire?._id,
       'umpire.onFieldLegUmpire': onFieldLegUmpire?._id,
       'umpire.thirdUmpire': fourthUmpire?._id,
@@ -400,8 +402,8 @@ export class DataIngestionService {
     const overGroups = new Map<number, Partial<Ball>[]>();
 
     const inningKey = fields["innings"].find((k) => sheetKeys.includes(k));
-    const ballKey = fields["balls.$.ball"].find((k) => sheetKeys.includes(k));
-    const runKey = fields["balls.$.runs_off_bat"]?.find((k) => sheetKeys.includes(k));
+    const ballKey = fields["balls.ball"].find((k) => sheetKeys.includes(k));
+    const runKey = fields["balls.runs_off_bat"]?.find((k) => sheetKeys.includes(k));
     const overKey = fields["over"]?.find((k) => sheetKeys.includes(k));
 
     const keyMappings = Object.entries(fields).map(([dbKey, options]) => {
@@ -584,7 +586,7 @@ export class DataIngestionService {
                 else {
                   dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
                 }
-              } else if (mappingKey?.includes("playingEleven")) {
+              } else if (mappingKey?.includes("playingEleven") || mappingKey?.includes("playerOfMatch")) {
                 mappingKey = mappingKey.replace(".$", "");
                 dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value][0]];
               } else {
@@ -658,14 +660,45 @@ export class DataIngestionService {
       const match_id = this.getMatchId(fileName);
       const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
-      const bulkOperations = mappingsByUser.flatMap((j) => {
-        return Object.keys(j.fields).map((key) => ({
+      // Step 1: Get all relevant collectionNames
+      const collectionNames = mappingsByUser.map(j => j.collectionName);
+
+      // Step 2: Fetch all in one query
+      const existingDocs = await this.mappedDataModel
+        .find({ collectionName: { $in: collectionNames } })
+        .lean(); // plain JS objects for speed
+
+      // Step 3: Index by collectionName
+      const docMap = new Map(
+        existingDocs.map(doc => [doc.collectionName, doc])
+      );
+
+      const bulkOperations = [];
+
+      for (const j of mappingsByUser) {
+        const doc = docMap.get(j.collectionName);
+        if (!doc) continue;
+
+        const fields = doc.fields || {};
+
+        for (const key of Object.keys(j.fields)) {
+          const existing = Array.isArray(fields[key]) ? fields[key] : [];
+          const newValues = j.fields[key];
+
+          // Merge without duplicates
+          const merged = Array.from(new Set([...existing, ...newValues]));
+
+          fields[key] = merged;
+        }
+
+        bulkOperations.push({
           updateOne: {
             filter: { collectionName: j.collectionName },
-            update: { $addToSet: { [`fields.${key}`]: { $each: j.fields[key] } } },
-          },
-        }));
-      });
+            update: { $set: { fields } }
+          }
+        });
+      }
+
       if (bulkOperations.length > 0) {
         await this.mappedDataModel.bulkWrite(bulkOperations);
       }
@@ -688,12 +721,14 @@ export class DataIngestionService {
 
     if (alreadyUpload.length > 0) {
       return res.status(HttpStatus.PARTIAL_CONTENT).json({
+        statusCode: HttpStatus.PARTIAL_CONTENT,
         message: "Mapping performed successfully and files $fileNames are already uploaded, Rest are processing to load data".replace("$fileNames", alreadyUpload.join(", ")),
         data: uploadResult,
       });
     }
 
     return res.status(HttpStatus.OK).json({
+      statusCode: HttpStatus.OK,
       message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"),
       data: uploadResult,
     });

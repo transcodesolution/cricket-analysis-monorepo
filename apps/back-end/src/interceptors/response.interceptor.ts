@@ -7,6 +7,6 @@ import { IApiResponse } from "@cricket-analysis-monorepo/interfaces"
 export class ResponseTransformInterceptor<T> implements NestInterceptor<T, IApiResponse<T>> {
     intercept(context: ExecutionContext, next: CallHandler): Observable<IApiResponse<T>> {
         const response = context.switchToHttp().getResponse();
-        return next.handle().pipe(map(data => ({ data: data?.data ?? {}, statusCode: response.statusCode, message: data?.message })));
+        return next.handle().pipe(map(data => ({ data: data?.data ?? {}, statusCode: response.statusCode ?? response.data.statusCode, message: data?.message })));
     }
 }
