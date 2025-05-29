@@ -12,8 +12,10 @@ export const PERMISSION_CONFIG: { [key: string]: Permission[] } = {
   hasRoleCreate: [Permission.CREATE_ROLE],
   hasRoleUpdate: [Permission.UPDATE_ROLE],
   hasRoleRead: [Permission.VIEW_ROLE],
+  hasRoleDelete: [Permission.DELETE_ROLE],
 
   hasUserCreate: [Permission.CREATE_USER],
   hasUserUpdate: [Permission.UPDATE_USER],
   hasUserRead: [Permission.VIEW_USER],
+  hasUserDelete: [Permission.DELETE_USER],
 };
