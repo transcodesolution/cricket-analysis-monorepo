@@ -10,45 +10,53 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { setUser, useUserStore } from "../../../../libs/store/src/lib/user";
 import { useUpdateUserProfile } from "@/libs/react-query-hooks/src";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { showNotification } from "@mantine/notifications";
-import { IUser } from "@cricket-analysis-monorepo/interfaces";
+import { useEffect } from "react";
 
 export const ProfileDetail = () => {
   const { user } = useUserStore();
   const { mutate: updateUserProfile, isPending: isUpdating } = useUpdateUserProfile();
 
-  const handleSave = () => {
-    updateUserProfile({
-      firstName: user.firstName,
-      lastName: user.lastName,
+  const form = useForm({
+    initialValues: {
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
     },
-      {
-        onSuccess: () => {
-          showNotification({
-            title: "Success",
-            message: "User Updated Successfully",
-            color: "green",
-            icon: <IconCheck size={16} />,
-          });
-        },
-        onError: (error) => {
-          showNotification({
-            title: "Update Failed",
-            message: error instanceof Error ? error.message : "An unexpected error occurred.",
-            color: "red",
-            icon: <IconX size={16} />,
-          });
-        },
-      }
-    );
-  }
+  });
 
-  const handleChange = (field: keyof IUser, value: string) => {
-    setUser({ ...user, [field]: value });
+  const handleSave = () => {
+    updateUserProfile(form.values, {
+      onSuccess: () => {
+        setUser({ ...user, ...form.values });
+        showNotification({
+          title: "Success",
+          message: "User Updated Successfully",
+          color: "green",
+          icon: <IconCheck size={16} />,
+        });
+      },
+      onError: (error) => {
+        showNotification({
+          title: "Update Failed",
+          message: error instanceof Error ? error.message : "An unexpected error occurred.",
+          color: "red",
+          icon: <IconX size={16} />,
+        });
+      },
+    });
   };
+
+  useEffect(() => {
+    form.setValues({
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   if (!user) return <Text>No user data available</Text>;
 
@@ -62,33 +70,33 @@ export const ProfileDetail = () => {
             alt="Profile Image"
             radius="lg"
             size={100}
-            color='primary'
+            color="primary"
           />
         </Flex>
-        <Box w="100%">
+        <Box w="100%" component="form" onSubmit={form.onSubmit(handleSave)}>
           <TextInput
             label="First Name"
-            value={user.firstName || ""}
-            onChange={(e) => handleChange("firstName", e.target.value)}
             mb="md"
+            disabled={isUpdating}
+            {...form.getInputProps("firstName")}
           />
           <TextInput
             label="Last Name"
-            value={user.lastName || ""}
-            onChange={(e) => handleChange("lastName", e.target.value)}
             mb="md"
+            disabled={isUpdating}
+            {...form.getInputProps("lastName")}
           />
           <TextInput
             label="Email"
             value={user.email || ""}
             mb="md"
             disabled
+            styles={{ input: { color: 'black' } }}
           />
           <Flex justify="flex-end">
-            <Button onClick={handleSave} loading={isUpdating}
-              size="md"
-              color="primary"
-              w='fit-content'>Save</Button>
+            <Button type="submit" loading={isUpdating} size="md" color="primary" w="fit-content">
+              Save
+            </Button>
           </Flex>
         </Box>
       </Stack>
