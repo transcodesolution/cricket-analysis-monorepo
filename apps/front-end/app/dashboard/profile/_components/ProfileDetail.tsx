@@ -2,6 +2,7 @@
 import {
   Avatar,
   Box,
+  Button,
   Flex,
   Paper,
   Stack,
@@ -9,56 +10,47 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
-import { useDebouncedCallback } from "@mantine/hooks";
-import { showNotification } from "@mantine/notifications";
-import { IconX } from "@tabler/icons-react";
 import { setUser, useUserStore } from "../../../../libs/store/src/lib/user";
-import { updateUserProfile } from "@/libs/web-apis/src";
+import { useUpdateUserProfile } from "@/libs/react-query-hooks/src";
+import { IconCheck, IconX } from "@tabler/icons-react";
+import { showNotification } from "@mantine/notifications";
 import { IUser } from "@cricket-analysis-monorepo/interfaces";
-import { isEquals } from "@/libs/utils/ui-helper";
 
 export const ProfileDetail = () => {
   const { user } = useUserStore();
-  const [userDetails, setUserDetails] = useState<IUser | null>(null);
+  const { mutate: updateUserProfile, isPending: isUpdating } = useUpdateUserProfile();
 
-  useEffect(() => {
-    setUserDetails(user ? { ...user } : null);
-  }, [user]);
-
-  const debouncedUpdateUser = useDebouncedCallback((updatedUser: IUser) => {
-    if (user && !isEquals(updatedUser, user)) {
-      updateUserProfile({
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-      })
-        .then(() => {
-          setUser(updatedUser);
-        })
-        .catch((error) => {
+  const handleSave = () => {
+    updateUserProfile({
+      firstName: user.firstName,
+      lastName: user.lastName,
+    },
+      {
+        onSuccess: () => {
+          showNotification({
+            title: "Success",
+            message: "User Updated Successfully",
+            color: "green",
+            icon: <IconCheck size={16} />,
+          });
+        },
+        onError: (error) => {
           showNotification({
             title: "Update Failed",
-            message:
-              error instanceof Error
-                ? error.message
-                : "An unexpected error occurred.",
+            message: error instanceof Error ? error.message : "An unexpected error occurred.",
             color: "red",
             icon: <IconX size={16} />,
           });
-        });
-    }
-  }, 600);
+        },
+      }
+    );
+  }
 
   const handleChange = (field: keyof IUser, value: string) => {
-    if (!userDetails) return;
-    const updatedUser = { ...userDetails, [field]: value };
-    setUserDetails(updatedUser);
-    debouncedUpdateUser(updatedUser);
+    setUser({ ...user, [field]: value });
   };
 
-  if (!userDetails) {
-    return <Text>No user data available</Text>;
-  }
+  if (!user) return <Text>No user data available</Text>;
 
   return (
     <Paper withBorder radius="lg" p="lg">
@@ -66,7 +58,7 @@ export const ProfileDetail = () => {
         <Title order={4}>My Profile</Title>
         <Flex direction="column" align="center" gap="sm">
           <Avatar
-            src={userDetails.profileImage || undefined}
+            src={user.profileImage || undefined}
             alt="Profile Image"
             radius="lg"
             size={100}
@@ -76,27 +68,28 @@ export const ProfileDetail = () => {
         <Box w="100%">
           <TextInput
             label="First Name"
-            name="firstName"
-            value={userDetails.firstName || ""}
+            value={user.firstName || ""}
             onChange={(e) => handleChange("firstName", e.target.value)}
             mb="md"
-            required
           />
           <TextInput
             label="Last Name"
-            name="lastName"
-            value={userDetails.lastName || ""}
+            value={user.lastName || ""}
             onChange={(e) => handleChange("lastName", e.target.value)}
             mb="md"
-            required
           />
           <TextInput
             label="Email"
-            name="email"
-            value={userDetails.email || ""}
+            value={user.email || ""}
             mb="md"
             disabled
           />
+          <Flex justify="flex-end">
+            <Button onClick={handleSave} loading={isUpdating}
+              size="md"
+              color="primary"
+              w='fit-content'>Save</Button>
+          </Flex>
         </Box>
       </Stack>
     </Paper>
