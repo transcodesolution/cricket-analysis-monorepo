@@ -1,3 +1,4 @@
+import { WicketType } from '@cricket-analysis-monorepo/constants';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
 
@@ -6,6 +7,7 @@ export class BattingStats {
         type: [{
             over: Number,
             runs: Number,
+            ballsFaced: Number,
             0: Number,
             1: Number,
             2: Number,
@@ -13,11 +15,13 @@ export class BattingStats {
             4: Number,
             5: Number,
             6: Number,
-        }]
+        }],
+        default: [],
     })
-    overPlayedIn?: {
+    overPlayedIn?: Array<{
         over: number,
         runs: number,
+        ballsFaced: number,
         0: number,
         1: number,
         2: number,
@@ -25,7 +29,7 @@ export class BattingStats {
         4: number,
         5: number,
         6: number,
-    }[];
+    }>;
     @Prop()
     runs?: number;
     @Prop()
@@ -49,7 +53,7 @@ export class BattingStats {
     @Prop()
     timeSpend?: number;
     @Prop({
-        type: {
+        type: [{
             over: Number,
             bowler: SchemaTypes.ObjectId,
             angle: Number,
@@ -57,7 +61,7 @@ export class BattingStats {
             runs: Number,
             shotType: String,
             result: String
-        }
+        }]
     })
     shot?: {
         over?: number,
@@ -67,7 +71,7 @@ export class BattingStats {
         runs?: number,
         shotType?: string,
         result?: string
-    };
+    }[];
 }
 
 export class BowlingStats {
@@ -106,8 +110,14 @@ export class FallOfWickets {
     player?: string;
     @Prop()
     bowler?: string;
+    @Prop({ type: String, enum: WicketType })
+    type?: WicketType;
+    @Prop({ type: [String], default: [] })
+    takenBy?: string[];
     @Prop()
     runsScore?: number;
+    @Prop({ type: SchemaTypes.ObjectId })
+    ballReference?: string;
 }
 
 export class PlayerStats {
@@ -131,6 +141,9 @@ export class MatchSummary {
 }
 
 export class TeamAnalytics {
+    @Prop()
+    ballFaced?: number;
+
     @Prop()
     netRunRate?: number;
 
@@ -181,7 +194,7 @@ export class MatchAnalytics {
     @Prop()
     totalRuns: number;
 
-    @Prop({ type: SchemaTypes.ObjectId })
+    @Prop({ type: SchemaTypes.ObjectId, index: true })
     matchId: string;
 
     @Prop({ type: TeamAnalytics })
@@ -200,3 +213,12 @@ export class MatchAnalytics {
 }
 
 export const MatchAnalyticsSchema = SchemaFactory.createForClass(MatchAnalytics);
+
+MatchAnalyticsSchema.index({ 'teamOne.playerStats.batting.overPlayedIn.over': 1 });
+MatchAnalyticsSchema.index({ 'teamOne.playerStats.batting.player': 1 });
+MatchAnalyticsSchema.index({ 'teamOne.team': 1 });
+MatchAnalyticsSchema.index({ 'teamOne.fallOfWickets.ballReference': 1 });
+MatchAnalyticsSchema.index({ 'teamTwo.playerStats.batting.overPlayedIn.over': 1 });
+MatchAnalyticsSchema.index({ 'teamTwo.playerStats.batting.player': 1 });
+MatchAnalyticsSchema.index({ 'teamTwo.team': 1 });
+MatchAnalyticsSchema.index({ 'teamTwo.fallOfWickets.ballReference': 1 });

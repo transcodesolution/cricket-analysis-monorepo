@@ -12,6 +12,7 @@ export class Wicket {
 }
 
 export class Ball {
+    _id?: string;
     over?: number;
 
     @Prop({ type: Number })

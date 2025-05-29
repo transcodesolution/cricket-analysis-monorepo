@@ -35,7 +35,7 @@ export default function Page() {
         email,
         password,
       });
-      router.push('/');
+      router.push('/dashboard');
 
     } catch (error: any) {
       showNotification({

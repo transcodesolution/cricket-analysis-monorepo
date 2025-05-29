@@ -54,7 +54,7 @@ export class MatchInfo {
     @Prop()
     match_number: number;
 
-    @Prop()
+    @Prop({ index: true })
     match_id: string;
 
     @Prop()
@@ -64,9 +64,9 @@ export class MatchInfo {
         type: {
             impactPlayerIn: SchemaTypes.ObjectId,
             impactPlayerOut: SchemaTypes.ObjectId,
-            playingEleven: [SchemaTypes.ObjectId],
+            playingEleven: { type: [SchemaTypes.ObjectId], index: true },
             substitutePlayers: [SchemaTypes.ObjectId],
-            team: SchemaTypes.ObjectId,
+            team: { type: SchemaTypes.ObjectId, index: true },
         }
     })
     team2: {
@@ -77,7 +77,7 @@ export class MatchInfo {
         team?: string;
     };
 
-    @Prop({ type: SchemaTypes.ObjectId })
+    @Prop({ type: SchemaTypes.ObjectId, index: true })
     tournamentId: string;
 
     @Prop({
@@ -97,9 +97,9 @@ export class MatchInfo {
         type: {
             impactPlayerIn: SchemaTypes.ObjectId,
             impactPlayerOut: SchemaTypes.ObjectId,
-            playingEleven: [SchemaTypes.ObjectId],
+            playingEleven: { type: [SchemaTypes.ObjectId], index: true },
             substitutePlayers: [SchemaTypes.ObjectId],
-            team: SchemaTypes.ObjectId,
+            team: { type: SchemaTypes.ObjectId, index: true },
         }
     })
     team1: {
@@ -112,14 +112,14 @@ export class MatchInfo {
 
     @Prop({
         type: {
-            playerOfMatch: SchemaTypes.ObjectId,
+            playerOfMatch: [SchemaTypes.ObjectId],
             status: { type: String, enum: MatchStatus },
             winBy: Number,
             winningTeam: SchemaTypes.ObjectId,
         }
     })
     result: {
-        playerOfMatch: string;
+        playerOfMatch: string[];
         status: MatchStatus;
         winBy: number;
         winningTeam: string;
@@ -161,7 +161,7 @@ export class MatchInfo {
             substitutePlayers: [],
         };
         this.result = {
-            playerOfMatch: '',
+            playerOfMatch: [],
             status: MatchStatus.tie,
             winBy: 0,
             winningTeam: '',

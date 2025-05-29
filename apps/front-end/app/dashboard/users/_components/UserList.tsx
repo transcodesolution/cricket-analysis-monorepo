@@ -1,5 +1,6 @@
 'use client';
 import { useConfirmDelete } from '@/libs/hooks/useConfirmDelete';
+import { usePermissions } from '@/libs/hooks/usePermissions';
 import { useDeleteUsers, useGetUsers } from '@/libs/react-query-hooks/src';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
 import { IUser } from '@cricket-analysis-monorepo/interfaces';
@@ -27,6 +28,7 @@ export const UserList = () => {
   const { deleteUsersMutation } = useDeleteUsers()
   const userData = getUserResponse?.data?.users;
   const confirmDelete = useConfirmDelete();
+  const permission = usePermissions()
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus<IUser>>({
     columnAccessor: sortColumn,
@@ -108,7 +110,7 @@ export const UserList = () => {
 
   return (
     <React.Fragment>
-      {selectedUsers.length > 0 &&
+      {permission?.hasUserDelete && selectedUsers.length > 0 &&
         <ActionIcon color='red' onClick={handleDeleteSelected}>
           <IconTrash size="1.5rem" />
         </ActionIcon>
