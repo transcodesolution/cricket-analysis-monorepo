@@ -27,6 +27,7 @@ export const UserList = () => {
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
   const { deleteUsersMutation } = useDeleteUsers()
   const userData = getUserResponse?.data?.users;
+  const totalData = getUserResponse?.data?.totalData
   const confirmDelete = useConfirmDelete();
   const permission = usePermissions()
 
@@ -124,7 +125,7 @@ export const UserList = () => {
         onSelectedRecordsChange={setSelectedUsers}
         page={page}
         onPageChange={handleChangePage}
-        totalRecords={3}
+        totalRecords={totalData}
         recordsPerPage={pageSize}
         recordsPerPageOptions={PAGE_SIZES}
         onRecordsPerPageChange={handleChangePageSize}
