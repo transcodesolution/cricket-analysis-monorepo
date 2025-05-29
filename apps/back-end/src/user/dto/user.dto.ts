@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
 import { User } from "../../database/model/user.model";
 import { PickType } from "@nestjs/mapped-types";
 import { PaginationDto } from "../../helper/pagination.dto";
@@ -29,3 +29,9 @@ export class UpdateLoginUserDto extends PickType(User, ["firstName", "lastName",
 export class GetUserDto extends PaginationDto { }
 
 export class GetUserByIdDto extends PickType(UpdateUserDto, ["userId"]) { }
+
+export class DeleteUserByIdDto {
+    @IsNotEmpty()
+    @IsString({ each: true })
+    ids: string[];
+}
