@@ -12,6 +12,15 @@ export const getUserProfile = async (): Promise<IApiResponse<IGetUserResponse>> 
   }
 };
 
+export const updateUserProfile = async (params: Partial<IUser>): Promise<IApiResponse<IUpdateUserResponse>> => {
+  try {
+    const result = await http.patch<IApiResponse<IUpdateUserResponse>>(`/user/profile`, params);
+    return result.data;
+  } catch (error) {
+    return apiErrorHandler(error, "updating user");
+  }
+};
+
 export const getUsers = async (params: IGetUsersRequest): Promise<IApiResponse<IGetUsersResponse>> => {
   const query = new URLSearchParams();
   query.set('search', params.search.toString());
