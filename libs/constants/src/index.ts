@@ -11,3 +11,4 @@ export * from './lib/ball';
 export * from './lib/user-role';
 export * from './lib/permission';
 export * from './lib/report-filter';
+export * from './lib/form-element';

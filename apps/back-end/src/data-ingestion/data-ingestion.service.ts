@@ -1,10 +1,10 @@
 import { BadRequestException, HttpStatus, Injectable, Res } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Connection, Model } from 'mongoose';
-import { DatabaseFields } from './dto/constant.dto';
-import { ColumnDto, MappingDetailDto, UploadFileAndMappingUpdateDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
+import { DatabaseFields, UIInputRequiredFieldConfiguration } from './dto/constant.dto';
+import { ColumnDto, MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
 import { responseMessage } from '../helper/response-message.helper';
-import { MappingData } from '../database/model/mapping.model';
+import { CachedInput, MappingData } from '../database/model/mapping.model';
 import { Collection } from "mongoose";
 import { Ball, MatchScoreboard } from '../database/model/match-scoreboard.model';
 import { MatchAnalytics } from '../database/model/match-analytics.model';
@@ -17,7 +17,7 @@ import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
 import { MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
-import { IMatchSheetFormat, IUploadResult } from '@cricket-analysis-monorepo/interfaces';
+import { ICachedInput, IMatchSheetFormat, IUploadResult } from '@cricket-analysis-monorepo/interfaces';
 import { formatCsvFiles, formatExcelFiles, stripExt } from '@cricket-analysis-monorepo/service';
 import { createReadStream, ReadStream } from 'fs';
 import { join } from 'path';
@@ -29,6 +29,8 @@ import { IMulterFileObject } from './dto/interfaces';
 import { CommonHelperService } from '../helper/common.helper';
 import { Response } from 'express';
 
+export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string };
+
 @Injectable()
 export class DataIngestionService {
   private readonly regexToMatchResult = /(wicket|run|tie|draw)/i;
@@ -37,6 +39,10 @@ export class DataIngestionService {
     offFieldUmpireWord: /\b(off[-_ ]?field|tv|third|support|backup|alternate|standby|substitute|spare)([-_ ]?umpire)?\b/i,
   };
   private readonly infoFileMatchingRegex = /info/i;
+
+  private readonly missingInputs: Record<string, { [keyname: string]: string[] }> = {
+    [Tournament.name]: { event: ["matchFormat", "type"] },
+  }
 
   private readonly enumValues: { [keyname: string]: string | null | object } = {
     [MatchInfo.name]: {
@@ -480,6 +486,17 @@ export class DataIngestionService {
 
     const mappedDataCache = new Map<string, Record<string, string[]>>();
 
+    const matchInfoFields = [
+      { collectionName: Venue.name, field: "name", infoRefField: "venue" },
+      { collectionName: Referee.name, field: "name", infoRefField: "referee" },
+      { collectionName: Umpire.name, field: "name", infoRefField: "umpire.onFieldBowlerEndUmpire" },
+      { collectionName: Umpire.name, field: "name", infoRefField: "umpire.onFieldLegUmpire" },
+      { collectionName: Umpire.name, field: "name", infoRefField: "umpire.thirdUmpire" },
+      { collectionName: Umpire.name, field: "name", infoRefField: "umpire.fourthUmpire" },
+      { collectionName: Team.name, field: "name", infoRefField: "team1.team" },
+      { collectionName: Team.name, field: "name", infoRefField: "team2.team" },
+    ];
+
     for (const { fileName, columns } of files as ColumnDto[]) {
       const isInfoFile = regex.test(fileName);
       const matchedColumns = new Set<string>();
@@ -522,120 +539,8 @@ export class DataIngestionService {
     };
   }
 
-  async getAllDBSchemaNameWithFields() {
-    const collections = this.connection.db?.listCollections({}, { nameOnly: true });
-    const collectionNames = await collections?.toArray() as unknown as Collection[];
-
-    const excludedNames = [
-      MappingData.name,
-      MatchAnalytics.name,
-      Report.name,
-      ReportFilter.name,
-      User.name,
-      UserRole.name,
-    ];
-
-    const response = collectionNames.flatMap((i) => {
-      if (excludedNames.includes(i.name)) { return []; }
-      return ({ name: i.name, fields: DatabaseFields[i.name as keyof typeof DatabaseFields]() });
-    });
-
-    return {
-      message: responseMessage.getDataSuccess("Database schema names with fields"),
-      data: response,
-    };
-  }
-
-  async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat) {
-    try {
-      const match_id = this.getMatchId(fileName);
-      const mappings = await this.mappedDataModel.find();
-      const index = mappings.findIndex((i) => i.collectionName === MatchInfo.name);
-      if (index !== -1) {
-        const [removedElement] = mappings.splice(index, 1);
-        mappings.push(removedElement);
-      }
-      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
-      const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
-      for (const j of mappings) {
-        const collection: string[] = DatabaseFields[j.collectionName]();
-        if (isInfoFile) {
-          const dataToUpdate: { [keyname: string]: Record<string, string>[] | string } = {}
-          const dbMappingKeys = Object.keys(j.fields);
-          Object.keys(extractedSheetInfo).forEach((value) => {
-            let mappingKey = dbMappingKeys.find((k) => j.fields[k]?.includes(value));
-            // enum manage for result
-            // if (enumMappingKey) {
-            //   if (enumValue && typeof enumValue === 'object' && enumMappingKey in enumValue) {
-            //     dataToUpdate[enumMappingKey] = enumFunction(value);
-            //   }
-            // }
-            if (mappingKey) {
-              if (j.collectionName === Team.name) {
-                dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { [mappingKey]: extractedSheetInfo[value][0] }] as Record<string, string>[];
-              } else if (j.collectionName === Umpire.name) {
-                if (this.matchUmpireType(value)) {
-                  dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: this.matchUmpireType(value) }] as Record<string, string>[];
-                } else {
-                  dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: UmpireType.onfield, subType: value.includes("1") ? UmpireSubType.BOWLER_END : UmpireSubType.SQUARE_LEG }] as Record<string, string>[];
-                }
-              } else if (j.collectionName === Player.name) {
-                if ((extractedSheetInfo[value] as string[]).length > 1) {
-                  dataToUpdate["registry"] = [...(dataToUpdate["registry"] || []), { name: extractedSheetInfo[value][0], uniqueId: extractedSheetInfo[value][1] }] as Record<string, string>[];
-                }
-                else {
-                  dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
-                }
-              } else if (mappingKey?.includes("playingEleven") || mappingKey?.includes("playerOfMatch")) {
-                mappingKey = mappingKey.replace(".$", "");
-                dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value][0]];
-              } else {
-                const enumValue = this.enumValues[j.collectionName];
-                if (mappingKey === "result.winBy") {
-                  const enumField = "result.status";
-                  const enumFunction = (enumValue)[enumField];
-                  dataToUpdate[enumField] = enumFunction(value);
-                } else if (mappingKey === "method") {
-                  const enumFunction = (enumValue)[mappingKey];
-                  dataToUpdate[mappingKey] = enumFunction(value);
-                }
-                dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
-              }
-            }
-            else if (collection.includes(value)) {
-              const enumValue = this.enumValues[j.collectionName];
-              if (value === "method") {
-                const enumFunction = (enumValue)[value];
-                dataToUpdate[value] = enumFunction(value);
-              }
-              else {
-                dataToUpdate[value] = extractedSheetInfo[value][0];
-              }
-            }
-          });
-          await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields);
-        }
-        else if (j.collectionName === MatchScoreboard.name) {
-          await this.saveMappedDataToDb(j.collectionName, extractedSheetInfo, match_id, scoreboardMappingFields);
-        }
-      }
-      await this.analyticService.generateAnalyticsForMatch(match_id);
-      return Promise.resolve({});
-    } catch (error) {
-      console.error("Date & Time Log : ", new Date());
-      console.error("processMappingSheetDataWithDatabaseKeys error : ", error);
-      return Promise.reject(error.message);
-    }
-  }
-
-  getMatchId(fileName: string) {
-    return fileName.split("_")[0];
-  }
-
-  async updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, sheets: IMulterFileObject[], @Res() res: Response) {
+  async updateMappingAndCheckForUserInputFields(uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, sheets: IMulterFileObject[]) {
     const { userMappingDetail } = uploadFileAndMappingUpdateDto;
-
-    const uploadResult: IUploadResult[] = [];
 
     let mappingDetailRaw = userMappingDetail as unknown as string;
     if (mappingDetailRaw.startsWith("'") && mappingDetailRaw.endsWith("'")) {
@@ -644,21 +549,24 @@ export class DataIngestionService {
 
     const userMappingDetailDto: UserMappingDetailDto = JSON.parse(mappingDetailRaw);
 
+    const cachedData = {
+      [Tournament.name]: await this.mappedDataModel.findOne({ collectionName: Tournament.name }, "fields inputs")
+    }
+
+    const missingInputKeys = Object.keys(this.missingInputs);
+
+    const userInputRequiredFields: Record<string, ICachedInput[]> = {};
+
     for (const i of userMappingDetailDto.files) {
       const { fileName, mappingsByUser } = i;
+
+      userInputRequiredFields[fileName] = userInputRequiredFields[fileName] || [];
 
       const currentSheetData = sheets.find((i) => i.filename.includes(fileName));
 
       if (!currentSheetData) {
         throw new BadRequestException(responseMessage.customMessage("please pass user mapping detail correctly! files uploaded and mapping detail must be equal length"))
       }
-
-      currentSheetData.readStream = createReadStream(join("uploads/", currentSheetData.filename));
-
-      const extractedSheetInfo = await this.readExcelFiles<ReadStream>(currentSheetData);
-
-      const match_id = this.getMatchId(fileName);
-      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
       // Step 1: Get all relevant collectionNames
       const collectionNames = mappingsByUser.map(j => j.collectionName);
@@ -701,6 +609,195 @@ export class DataIngestionService {
 
       if (bulkOperations.length > 0) {
         await this.mappedDataModel.bulkWrite(bulkOperations);
+      }
+
+      currentSheetData.readStream = createReadStream(join("uploads/", currentSheetData.filename));
+
+      const extractedSheetInfo = await this.readExcelFiles<ReadStream>(currentSheetData);
+
+      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+
+      if (isInfoFile) {
+        for (const key of missingInputKeys) {
+          const obj = {};
+          // check input key direct found in sheet information
+          Object.keys(this.missingInputs[key]).forEach((k) => {
+            const mappingKey = Object.keys(extractedSheetInfo[fileName]).find((l) => cachedData[key].fields[k]?.includes(l));
+            obj[mappingKey || k] = extractedSheetInfo[fileName][mappingKey || k][0];
+          });
+          // check input key value direct found in sheet information
+          const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey].toLowerCase().trim() === inputCache.referenceValue.toLowerCase().trim());
+          Object.keys(obj).forEach((mappedKey) => {
+            if (!hasFoundCached) {
+              const inputs = this.missingInputs[key][mappedKey]?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
+              userInputRequiredFields[fileName].push({
+                referenceKey: mappedKey,
+                referenceValue: obj[mappedKey],
+                collectionName: key,
+                inputs,
+              });
+            }
+          });
+        }
+      }
+    }
+
+    return {
+      message: responseMessage.customMessage("mapping updated successfully and user input fields checked successfully"),
+      data: userInputRequiredFields,
+    };
+  }
+
+  async getAllDBSchemaNameWithFields() {
+    const collections = this.connection.db?.listCollections({}, { nameOnly: true });
+    const collectionNames = await collections?.toArray() as unknown as Collection[];
+
+    const excludedNames = [
+      MappingData.name,
+      MatchAnalytics.name,
+      Report.name,
+      ReportFilter.name,
+      User.name,
+      UserRole.name,
+    ];
+
+    const response = collectionNames.flatMap((i) => {
+      if (excludedNames.includes(i.name)) { return []; }
+      return ({ name: i.name, fields: DatabaseFields[i.name as keyof typeof DatabaseFields]() });
+    });
+
+    return {
+      message: responseMessage.getDataSuccess("Database schema names with fields"),
+      data: response,
+    };
+  }
+
+  updateInputToSaveInDatabase(dataToUpdate: IDataToUpdate, mappingKey: string, extractedSheetInfo: IMatchSheetFormat, inputs: CachedInput[], collectionName: string) {
+    const input = inputs?.find((i) => (extractedSheetInfo[mappingKey] && extractedSheetInfo[mappingKey][0].toLowerCase().trim() === i.referenceValue.toLowerCase().trim()));
+    if (input) {
+      this.missingInputs[collectionName][input.referenceKey].forEach((inputValue) => {
+        dataToUpdate[inputValue] = input[inputValue];
+      });
+    }
+  }
+
+  async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat) {
+    try {
+      const match_id = this.getMatchId(fileName);
+      const mappings = await this.mappedDataModel.find();
+      const index = mappings.findIndex((i) => i.collectionName === MatchInfo.name);
+      if (index !== -1) {
+        const [removedElement] = mappings.splice(index, 1);
+        mappings.push(removedElement);
+      }
+      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+      const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
+      for (const j of mappings) {
+        const collection: string[] = DatabaseFields[j.collectionName]();
+        if (isInfoFile) {
+          const dataToUpdate: IDataToUpdate = {};
+          const dbMappingKeys = Object.keys(j.fields);
+          Object.keys(extractedSheetInfo).forEach((value) => {
+            let mappingKey = dbMappingKeys.find((k) => j.fields[k]?.includes(value));
+            // enum manage for result
+            // if (enumMappingKey) {
+            //   if (enumValue && typeof enumValue === 'object' && enumMappingKey in enumValue) {
+            //     dataToUpdate[enumMappingKey] = enumFunction(value);
+            //   }
+            // }
+            if (mappingKey) {
+              if (j.collectionName === Team.name) {
+                dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { [mappingKey]: extractedSheetInfo[value][0] }] as Record<string, string>[];
+              } else if (j.collectionName === Umpire.name) {
+                if (this.matchUmpireType(value)) {
+                  dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: this.matchUmpireType(value) }] as Record<string, string>[];
+                } else {
+                  dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: UmpireType.onfield, subType: value.includes("1") ? UmpireSubType.BOWLER_END : UmpireSubType.SQUARE_LEG }] as Record<string, string>[];
+                }
+              } else if (j.collectionName === Player.name) {
+                if ((extractedSheetInfo[value] as string[]).length > 1) {
+                  dataToUpdate["registry"] = [...(dataToUpdate["registry"] || []), { name: extractedSheetInfo[value][0], uniqueId: extractedSheetInfo[value][1] }] as Record<string, string>[];
+                }
+                else {
+                  dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
+                }
+              } else if (mappingKey?.includes("playingEleven") || mappingKey?.includes("playerOfMatch")) {
+                mappingKey = mappingKey.replace(".$", "");
+                dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value][0]];
+              } else {
+                const enumValue = this.enumValues[j.collectionName];
+                if (mappingKey === "result.winBy") {
+                  const enumField = "result.status";
+                  const enumFunction = (enumValue)[enumField];
+                  dataToUpdate[enumField] = enumFunction(value);
+                } else if (mappingKey === "method") {
+                  const enumFunction = (enumValue)[mappingKey];
+                  dataToUpdate[mappingKey] = enumFunction(value);
+                }
+                dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
+              }
+              this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName);
+            }
+            else if (collection.includes(value)) {
+              const enumValue = this.enumValues[j.collectionName];
+              if (value === "method") {
+                const enumFunction = (enumValue)[value];
+                dataToUpdate[value] = enumFunction(value);
+              }
+              else {
+                dataToUpdate[value] = extractedSheetInfo[value][0];
+              }
+              this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName);
+            }
+          });
+          await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields);
+        }
+        else if (j.collectionName === MatchScoreboard.name) {
+          await this.saveMappedDataToDb(j.collectionName, extractedSheetInfo, match_id, scoreboardMappingFields);
+        }
+      }
+      await this.analyticService.generateAnalyticsForMatch(match_id);
+      return Promise.resolve({});
+    } catch (error) {
+      console.error("Date & Time Log : ", new Date());
+      console.error("processMappingSheetDataWithDatabaseKeys error : ", error);
+      return Promise.reject(error.message);
+    }
+  }
+
+  getMatchId(fileName: string) {
+    return fileName.split("_")[0];
+  }
+
+  async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response) {
+    const { files } = uploadFileDto;
+
+    const uploadResult: IUploadResult[] = [];
+
+    for (const i of files) {
+      const { fileName, inputs } = i;
+
+      const fileNameWithExtension = `${fileName}.csv`;
+
+      const readStream = createReadStream(join("uploads/", fileNameWithExtension));
+
+      const extractedSheetInfo = await this.readExcelFiles<ReadStream>({ filename: fileNameWithExtension, readStream });
+
+      const match_id = this.getMatchId(fileName);
+      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+
+      const bulkInputOps = [];
+      for (const key in inputs) {
+        const { collectionName, ...input }: ICachedInput = inputs[key];
+        bulkInputOps.push({
+          updateOne: {
+            filter: { collectionName },
+            update: { $push: { inputs: input } }
+          }
+        });
+      }
+      if (bulkInputOps.length > 0) {
+        await this.mappedDataModel.bulkWrite(bulkInputOps);
       }
 
       const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });

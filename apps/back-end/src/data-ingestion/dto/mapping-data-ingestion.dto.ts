@@ -1,5 +1,6 @@
-import { ArrayMinSize, IsArray, IsDefined, IsString } from "class-validator";
-import { MappingData } from "../../database/model/mapping.model";
+import { ArrayMinSize, IsArray, IsDefined, IsNotEmpty, IsString, ValidateNested } from "class-validator";
+import { CachedInput, MappingData } from "../../database/model/mapping.model";
+import { Type } from "class-transformer";
 
 export class ColumnDto {
     @IsArray()
@@ -19,9 +20,6 @@ export class ColumnDto {
 
 export class MappingDetailDto {
     files: ColumnDto[];
-    constructor() {
-        this.files = [];
-    }
 }
 
 export class UserMappingDetailDto {
@@ -34,8 +32,22 @@ export class UploadFileAndMappingUpdateDto {
     // @IsArray()
     // @IsString()
     userMappingDetail: UserMappingDetailDto;
+}
 
-    constructor() {
-        this.userMappingDetail = { files: [{ mappingsByUser: [], fileName: "" }] };
-    }
+export class InputUpdateDto {
+    @ValidateNested({ each: true })
+    @IsArray()
+    @Type(() => CachedInput)
+    inputs: CachedInput;
+
+    @IsNotEmpty()
+    @IsString()
+    fileName: string;
+}
+
+export class UploadFileDto {
+    @ValidateNested({ each: true })
+    @IsArray()
+    @Type(() => InputUpdateDto)
+    files: InputUpdateDto[];
 }
