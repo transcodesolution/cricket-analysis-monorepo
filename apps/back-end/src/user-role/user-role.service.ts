@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
-import { CreateUserRoleDto, GetUserRoleByIdDto, GetUserRoleDto, UpdateUserRoleDto } from "./dto/user-role.dto";
+import { CreateUserRoleDto, DeleteUserRoleByIdDto, GetUserRoleByIdDto, GetUserRoleDto, UpdateUserRoleDto } from "./dto/user-role.dto";
 import { IUserRole } from "@cricket-analysis-monorepo/interfaces";
 import { responseMessage } from "../helper/response-message.helper";
 import { UserRole, UserRoleDocument } from "../database/model/user-role.model";
@@ -67,15 +67,17 @@ export class UserRoleService {
         return { message: responseMessage.updateDataSuccess("role"), data: role };
     };
 
-    async deleteUserRole({ userRoleId }: GetUserRoleByIdDto) {
-        const role = await this.userRoleModel.findOneAndUpdate({ _id: userRoleId });
+    async deleteUserRole({ roleIds }: DeleteUserRoleByIdDto) {
+        const roles = await this.userRoleModel.find({ _id: { $in: roleIds } });
 
-        if (!role) {
-            throw new BadRequestException(responseMessage.getDataNotFound("role"));
+        if (roles.length !== roleIds.length) {
+            throw new BadRequestException(responseMessage.getDataNotFound("some roles"));
         }
 
-        await role.softDelete();
+        for (const role of roles) {
+            await role.softDelete();
+        }
 
-        return { message: responseMessage.deleteDataSuccess("user role"), data: { role } };
+        return { message: responseMessage.deleteDataSuccess("user roles"), data: { roles } };
     };
 }

@@ -26,6 +26,7 @@ export const RoleList = () => {
 
   const { data: getRolesResponse, isLoading, refetch } = useGetRoles({ page, limit: pageSize, search });
   const rolesData = getRolesResponse?.data?.roles;
+  const totalData = getRolesResponse?.data?.totalData
   const [selectedRoles, setSelectedRoles] = useState<IUserRole[]>([]);
   const { deleteRolesMutation } = useDeleteRoles();
   const permission = usePermissions()
@@ -120,7 +121,7 @@ export const RoleList = () => {
         onSelectedRecordsChange={setSelectedRoles}
         page={page}
         onPageChange={handleChangePage}
-        totalRecords={3}
+        totalRecords={totalData}
         recordsPerPage={pageSize}
         recordsPerPageOptions={PAGE_SIZES}
         onRecordsPerPageChange={handleChangePageSize}

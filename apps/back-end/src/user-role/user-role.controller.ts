@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, SetMetadata, UseGuards } from "@nestjs/common";
 import { UserRoleService } from "./user-role.service";
-import { CreateUserRoleDto, GetUserRoleDto, UpdateUserRoleDto } from "./dto/user-role.dto";
+import { CreateUserRoleDto, DeleteUserRoleByIdDto, GetUserRoleDto, UpdateUserRoleDto } from "./dto/user-role.dto";
 import { Permission } from "@cricket-analysis-monorepo/constants";
 import { ROUTE_PERMISSION_KEY_NAME } from "../helper/constant.helper";
 import { AuthGuard } from "../guards/auth.guard";
@@ -24,10 +24,10 @@ export class UserRoleController {
         return this.userRoleService.updateUserRole(updateUserRoleDto);
     }
 
-    @Delete("/:userRoleId")
+    @Delete("/")
     @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.DELETE_ROLE])
-    deleteUserRole(@Param("userRoleId") userRoleId: string) {
-        return this.userRoleService.deleteUserRole({ userRoleId });
+    deleteUserRole(@Body() deleteUserRoleByIdDto: DeleteUserRoleByIdDto) {
+        return this.userRoleService.deleteUserRole(deleteUserRoleByIdDto);
     }
 
     @Get("/")
