@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
-import { CreateUserDto, GetUserByIdDto, GetUserDto, UpdateUserDto } from "./dto/user.dto";
+import { CreateUserDto, DeleteUserByIdDto, GetUserByIdDto, GetUserDto, UpdateUserDto } from "./dto/user.dto";
 import { User, UserDocument } from "../database/model/user.model";
 import { CommonHelperService } from "../helper/common.helper";
 import { responseMessage } from "../helper/response-message.helper";
@@ -66,16 +66,18 @@ export class UserService {
         return { message: responseMessage.updateDataSuccess("user"), data: { user } };
     };
 
-    async deleteUser({ userId }: GetUserByIdDto) {
-        const user = await this.userModel.findOne({ _id: userId });
+    async deleteUser({ ids }: DeleteUserByIdDto) {
+        const users = await this.userModel.find({ _id: { $in: ids } });
 
-        if (!user) {
-            throw new BadRequestException(responseMessage.getDataNotFound("user"));
+        if (users.length !== ids.length) {
+            throw new BadRequestException(responseMessage.getDataNotFound("some users"));
         }
 
-        await user.softDelete();
+        for (const user of users) {
+            await user.softDelete();
+        }
 
-        return { message: responseMessage.deleteDataSuccess("user"), data: { user } };
+        return { message: responseMessage.deleteDataSuccess("user"), data: { users } };
     };
 
     getUserById(userIdDto: GetUserByIdDto) {
