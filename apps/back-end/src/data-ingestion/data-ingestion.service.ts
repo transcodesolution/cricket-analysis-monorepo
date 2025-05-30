@@ -628,6 +628,7 @@ export class DataIngestionService {
           });
           // check input key value direct found in sheet information
           const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey]?.toLowerCase().trim() === inputCache.referenceValue.toLowerCase().trim());
+          // final prepare user input required fields
           Object.keys(obj).forEach((mappedKey) => {
             if (!hasFoundCached) {
               const inputs = this.missingInputs[key][mappedKey]?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
@@ -673,12 +674,23 @@ export class DataIngestionService {
     };
   }
 
-  updateInputToSaveInDatabase(dataToUpdate: IDataToUpdate, mappingKey: string, extractedSheetInfo: IMatchSheetFormat, inputs: CachedInput[], collectionName: string) {
-    const input = inputs?.find((i) => (extractedSheetInfo[mappingKey] && extractedSheetInfo[mappingKey][0].toLowerCase().trim() === i.referenceValue.toLowerCase().trim()));
-    if (input) {
-      this.missingInputs[collectionName][input.referenceKey].forEach((inputValue) => {
+  updateInputToSaveInDatabase(
+    dataToUpdate: IDataToUpdate,
+    mappingKey: string,
+    extractedSheetInfo: IMatchSheetFormat,
+    inputs: CachedInput[] = [],
+    collectionName: string
+  ) {
+    if (!mappingKey || !collectionName) return;
+
+    const sheetValue = extractedSheetInfo[mappingKey]?.[0];
+    if (!sheetValue) return;
+
+    const input = inputs.find(i => i.referenceValue?.toLowerCase().trim() === sheetValue?.toLowerCase().trim());
+    if (input && this.missingInputs[collectionName]?.[input.referenceKey]) {
+      for (const inputValue of this.missingInputs[collectionName][input.referenceKey]) {
         dataToUpdate[inputValue] = input[inputValue];
-      });
+      }
     }
   }
 
@@ -748,7 +760,7 @@ export class DataIngestionService {
               else {
                 dataToUpdate[value] = extractedSheetInfo[value][0];
               }
-              this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName);
+              this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName);
             }
           });
           await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields);
@@ -789,10 +801,11 @@ export class DataIngestionService {
       const bulkInputOps = [];
       for (const key in uploadFileObj) {
         const { collectionName, inputs, ...input }: InputUpdateDto = uploadFileObj[key];
+
         bulkInputOps.push({
           updateOne: {
             filter: { collectionName },
-            update: { $push: { inputs: { ...input, ...inputs } } }
+            update: { $addToSet: { inputs: { ...input, ...inputs } } }
           }
         });
       }

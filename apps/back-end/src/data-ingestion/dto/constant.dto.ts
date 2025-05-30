@@ -1,5 +1,4 @@
 import { FormInputElement, MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constants";
-import { MatchAnalytics } from "../../database/model/match-analytics.model";
 import { MatchInfo } from "../../database/model/match-info.model";
 import { Ball, MatchScoreboard } from "../../database/model/match-scoreboard.model";
 import { Player } from "../../database/model/player.model";
@@ -70,10 +69,6 @@ export const DatabaseFields = {
         const ball = new Ball();
         matchScoreboardObj.balls.push(ball);
         return getDeepKeys(matchScoreboardObj, "");
-    },
-    MatchAnalytics: () => {
-        const matchAnalyticsObj = new MatchAnalytics();
-        return Object.keys(matchAnalyticsObj);
     },
     Umpire: () => {
         const umpireObj = new Umpire();
