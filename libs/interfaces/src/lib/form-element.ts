@@ -2,7 +2,7 @@ import { FormInputElement } from "@cricket-analysis-monorepo/constants";
 
 export interface IFormInput {
     label: string;
-    value: string;
+    key: string;
     elementType: FormInputElement;
     options: string[];
 }

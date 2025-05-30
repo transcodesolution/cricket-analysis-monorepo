@@ -2,7 +2,7 @@ import { BadRequestException, HttpStatus, Injectable, Res } from '@nestjs/common
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Connection, Model } from 'mongoose';
 import { DatabaseFields, UIInputRequiredFieldConfiguration } from './dto/constant.dto';
-import { ColumnDto, MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
+import { ColumnDto, InputUpdateDto, MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
 import { responseMessage } from '../helper/response-message.helper';
 import { CachedInput, MappingData } from '../database/model/mapping.model';
 import { Collection } from "mongoose";
@@ -618,15 +618,16 @@ export class DataIngestionService {
       const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
       if (isInfoFile) {
+        const sheetInformationKeys = Object.keys(extractedSheetInfo[fileName]);
         for (const key of missingInputKeys) {
           const obj = {};
-          // check input key direct found in sheet information
+          // check input reference key direct found in sheet information
           Object.keys(this.missingInputs[key]).forEach((k) => {
-            const mappingKey = Object.keys(extractedSheetInfo[fileName]).find((l) => cachedData[key].fields[k]?.includes(l));
+            const mappingKey = sheetInformationKeys.find((l) => cachedData[key].fields[k]?.includes(l));
             obj[mappingKey || k] = extractedSheetInfo[fileName][mappingKey || k][0];
           });
           // check input key value direct found in sheet information
-          const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey].toLowerCase().trim() === inputCache.referenceValue.toLowerCase().trim());
+          const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey]?.toLowerCase().trim() === inputCache.referenceValue.toLowerCase().trim());
           Object.keys(obj).forEach((mappedKey) => {
             if (!hasFoundCached) {
               const inputs = this.missingInputs[key][mappedKey]?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
@@ -770,12 +771,11 @@ export class DataIngestionService {
   }
 
   async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response) {
-    const { files } = uploadFileDto;
-
     const uploadResult: IUploadResult[] = [];
 
-    for (const i of files) {
-      const { fileName, inputs } = i;
+    for (const i of Object.keys(uploadFileDto)) {
+      const fileName = i;
+      const uploadFileObj = uploadFileDto[fileName];
 
       const fileNameWithExtension = `${fileName}.csv`;
 
@@ -787,12 +787,12 @@ export class DataIngestionService {
       const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
       const bulkInputOps = [];
-      for (const key in inputs) {
-        const { collectionName, ...input }: ICachedInput = inputs[key];
+      for (const key in uploadFileObj) {
+        const { collectionName, inputs, ...input }: InputUpdateDto = uploadFileObj[key];
         bulkInputOps.push({
           updateOne: {
             filter: { collectionName },
-            update: { $push: { inputs: input } }
+            update: { $push: { inputs: { ...input, ...inputs } } }
           }
         });
       }
