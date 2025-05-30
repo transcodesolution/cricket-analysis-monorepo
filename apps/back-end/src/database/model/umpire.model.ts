@@ -18,6 +18,9 @@ export class Umpire {
   @Prop()
   dob: string;
 
+  @Prop({ type: String, index: true, unique: true })
+  uniqueId: string;
+
   constructor() {
     this.name = '';
     this.type = UmpireType.onfield;

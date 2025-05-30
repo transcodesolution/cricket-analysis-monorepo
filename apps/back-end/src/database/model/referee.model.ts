@@ -5,6 +5,9 @@ export class Referee {
   @Prop()
   name: string;
 
+  @Prop({ type: String, index: true, unique: true })
+  uniqueId: string;
+
   constructor() {
     this.name = '';
   }

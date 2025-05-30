@@ -211,7 +211,7 @@ export class DataIngestionService {
           }
           return {
             updateOne: {
-              filter: { uniqueId: i.uniqueId, name: i.name },
+              filter: { uniqueId: i.uniqueId },
               update: { $set: { ...i, gender: dataToUpdate.gender } },
               upsert: true,
             },
