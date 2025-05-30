@@ -25,7 +25,7 @@ export class Player {
   @Prop()
   profilePictureUrl: string;
 
-  @Prop({ type: String, index: true })
+  @Prop({ type: String, index: true, unique: true })
   uniqueId: string;
 
   @Prop({ type: String, enum: BowlingStyleType, index: true })
