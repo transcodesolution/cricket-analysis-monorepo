@@ -63,8 +63,6 @@ export const RequiredInputModal = ({
         };
       });
     });
-
-    console.log('Formatted Data:', formattedData);
     onSubmit(formattedData);
   };
 
@@ -121,7 +119,7 @@ export const RequiredInputModal = ({
           w="fit-content"
           mx="auto"
         >
-          Submit Inputs
+          Submit
         </Button>
       </Stack>
     </Modal>

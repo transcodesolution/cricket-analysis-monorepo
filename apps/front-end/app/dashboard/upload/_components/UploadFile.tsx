@@ -96,8 +96,10 @@ export const UploadFile = () => {
             setRequirements(response?.data ?? {});
           } else {
             const inputData: IUpdateAndSaveEntriesRequest = {};
-            files.forEach((file) => {
-              inputData[file.name] = [];
+            const fileNames = Object.keys(response.data ?? {});
+
+            fileNames.forEach((fileName) => {
+              inputData[fileName] = [];
             });
             handleRequirementSubmit(inputData);
           }
