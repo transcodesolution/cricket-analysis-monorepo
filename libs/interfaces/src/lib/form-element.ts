@@ -11,5 +11,5 @@ export interface ICachedInput {
     referenceKey: string;
     referenceValue: string;
     collectionName: string;
-    [keyname: string]: string | IFormInput[];
+    [keyname: string]: string | IFormInput[] | Record<string, string>;
 }

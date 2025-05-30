@@ -1,3 +1,4 @@
+import { ICachedInput } from "@cricket-analysis-monorepo/interfaces";
 
 export interface IFileColumnDataResponse {
   [fileName: string]: string[];
@@ -27,4 +28,13 @@ export interface IMappingByUser {
 export interface IUserMappingDetail {
   fileName: string;
   mappingsByUser: IMappingByUser[];
+}
+
+export interface IUpdateAndSaveEntriesRequest {
+  [fileName: string]: ICachedInput[];
+}
+export interface IUpdateAndSaveEntriesResponse {
+  message: string;
+  fileName: string;
+  hasAlreadyUploaded: boolean,
 }

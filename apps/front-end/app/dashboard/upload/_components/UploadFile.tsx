@@ -7,16 +7,21 @@ import { MappingModal } from './MappingModal';
 import { showNotification } from '@mantine/notifications';
 import { IApiResponse } from '@cricket-analysis-monorepo/interfaces';
 import { readExcelFiles } from '@/libs/utils/ui-helper';
-import { IFileColumnDataResponse, IFileColumns, IUserMappingDetail } from '@/libs/types-api/src';
+import { IFileColumnDataResponse, IFileColumns, IUpdateAndSaveEntriesRequest, IUserMappingDetail } from '@/libs/types-api/src';
 import { useCheckMappingAndUpdate } from '@/libs/react-query-hooks/src';
-import { uploadFileToServiceViaHandler } from '@/libs/web-apis/src';
+import { updateMappingAndCheckRequiredInputs } from '@/libs/web-apis/src';
+import { RequiredInputModal } from './RequiredInputModal';
+import { useUpdateAndSaveEntries } from '@/libs/react-query-hooks/src/libs/upload/useUpdateAndSaveEntries';
 
 export const UploadFile = () => {
-  const [showModal, setShowModal] = useState(false);
+  const [showMappingModal, setShowMappingModal] = useState(false);
+  const [showRequiredInputModal, setShowRequiredInputModal] = useState(false);
   const [fileColumnData, setFileColumnData] = useState<IFileColumns[]>([]);
   const [droppedFiles, setDroppedFiles] = useState<FileWithPath[]>([]);
   const [loading, setLoading] = useState(false);
   const { mutate: checkMappingAndUpdate } = useCheckMappingAndUpdate();
+  const { mutate: updateAndSaveEntries } = useUpdateAndSaveEntries();
+  const [requirements, setRequirements] = useState<IUpdateAndSaveEntriesRequest>({});
 
   const handleDrop = (files: FileWithPath[]) => {
     if (files.length === 0) return;
@@ -54,13 +59,13 @@ export const UploadFile = () => {
               columns,
             }));
             setFileColumnData(mappingDetail);
-            setShowModal(true);
+            setShowMappingModal(true);
           } else {
             const userMappingDetail = structuredData.map(({ fileName }) => ({
               fileName,
               mappingsByUser: [],
             }));
-            uploadFilesToService(files, userMappingDetail);
+            updateMappingAndCheck(files, userMappingDetail);
           }
         },
         onSettled: () => setLoading(false)
@@ -68,7 +73,7 @@ export const UploadFile = () => {
     );
   };
 
-  const uploadFilesToService = (files: FileWithPath[], userMappingDetail: IUserMappingDetail[] = []) => {
+  const updateMappingAndCheck = (files: FileWithPath[], userMappingDetail: IUserMappingDetail[] = []) => {
     setLoading(true);
     const formData = new FormData();
     files.forEach((file) => {
@@ -78,23 +83,27 @@ export const UploadFile = () => {
     formData.append('userMappingDetail', JSON.stringify({ files: userMappingDetail }));
 
     // Upload files
-    uploadFileToServiceViaHandler({ formData })
+    updateMappingAndCheckRequiredInputs({ formData })
       .then((response) => {
-        console.log(response, 'response');
-        setShowModal(false);
+        setShowMappingModal(false);
         setDroppedFiles([]);
-
-        let color = 'orange';
         if (response.statusCode === 200) {
-          color = 'green';
+          const hasInputs = Object.values(response.data ?? {}).some((arr) =>
+            arr.some((item) => item.inputs && Number(item.inputs.length) > 0)
+          );
+          if (hasInputs) {
+            setShowRequiredInputModal(true);
+            setRequirements(response?.data ?? {});
+          } else {
+            const inputData: IUpdateAndSaveEntriesRequest = {};
+            files.forEach((file) => {
+              inputData[file.name] = [];
+            });
+            handleRequirementSubmit(inputData);
+          }
         }
-        showNotification({
-          message: response.message,
-          color,
-        });
       })
       .catch((error) => {
-        console.log(error, 'error')
         showNotification({
           message: error?.message || 'Something went wrong while uploading.',
           color: 'red',
@@ -102,8 +111,28 @@ export const UploadFile = () => {
       }).finally(() => { setLoading(false) })
   };
 
-  const submitFinalUserMapping = async (userMappingDetail: IUserMappingDetail[]) => {
-    uploadFilesToService(droppedFiles, userMappingDetail);
+  const handleMappingSubmit = async (userMappingDetail: IUserMappingDetail[]) => {
+    updateMappingAndCheck(droppedFiles, userMappingDetail);
+  };
+
+  const handleRequirementSubmit = async (inputData: IUpdateAndSaveEntriesRequest) => {
+    updateAndSaveEntries(inputData, {
+      onSuccess: (response) => {
+        showNotification({
+          message: response.message,
+          color: 'green',
+        });
+        setShowRequiredInputModal(false);
+        setRequirements({});
+      },
+      onError: (error) => {
+        showNotification({
+          message: error?.message || 'An error occurred while saving inputs.',
+          color: 'red',
+        });
+      },
+    }
+    );
   };
 
   return (
@@ -133,11 +162,19 @@ export const UploadFile = () => {
         </Paper>
       </Center>
 
-      {showModal && (
+      {showMappingModal && (
         <MappingModal
           keysToMapByFile={fileColumnData}
-          onClose={() => setShowModal(false)}
-          onSubmit={submitFinalUserMapping}
+          onClose={() => setShowMappingModal(false)}
+          onSubmit={handleMappingSubmit}
+        />
+      )}
+
+      {showRequiredInputModal && requirements && (
+        <RequiredInputModal
+          data={requirements}
+          onClose={() => setShowRequiredInputModal(false)}
+          onSubmit={handleRequirementSubmit}
         />
       )}
     </>
