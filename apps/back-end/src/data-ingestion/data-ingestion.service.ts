@@ -183,6 +183,23 @@ export class DataIngestionService {
       this.playerModel.updateMany({ _id: { $in: team1PlayingEleven }, "teams.id": { $ne: team1?._id } }, { $push: { teams: { id: team1?._id } } }),
       this.playerModel.updateMany({ _id: { $in: team2PlayingEleven }, "teams.id": { $ne: team2?._id } }, { $push: { teams: { id: team2?._id } } }),
     ]);
+    const findWhoAreNotPlayerQuery = { "teams.id": { $exists: false } };
+    const umpireOrReferees = await this.playerModel.find(findWhoAreNotPlayerQuery);
+    const refereeDetail = umpireOrReferees.find((i) => (i.name === referee.name));
+    if (refereeDetail) {
+      referee.uniqueId = refereeDetail.uniqueId;
+      await referee.save();
+    }
+    const umpireDetail = umpireOrReferees.filter((i) => (i.name !== referee.name));
+    if (umpireDetail.length > 0) {
+      await this.umpireModel.bulkWrite(umpireDetail.map((i) => ({
+        updateOne: {
+          filter: { name: i.name },
+          update: { $set: { uniqueId: i.uniqueId } },
+        },
+      })));
+    }
+    await this.playerModel.deleteMany(findWhoAreNotPlayerQuery);
     return matchInfo._id;
   }
 
