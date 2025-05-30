@@ -1,4 +1,4 @@
-import { MatchAnalytics } from "../../database/model/match-analytics.model";
+import { FormInputElement, MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constants";
 import { MatchInfo } from "../../database/model/match-info.model";
 import { Ball, MatchScoreboard } from "../../database/model/match-scoreboard.model";
 import { Player } from "../../database/model/player.model";
@@ -7,6 +7,7 @@ import { Team } from "../../database/model/team.model";
 import { Tournament } from "../../database/model/tournament.model";
 import { Umpire } from "../../database/model/umpire.model";
 import { Venue } from "../../database/model/venue.model";
+import { IFormInput } from "@cricket-analysis-monorepo/interfaces";
 
 function getDeepKeys<T>(obj: T, parent = ''): string[] {
     let keys: string[] = [];
@@ -69,12 +70,13 @@ export const DatabaseFields = {
         matchScoreboardObj.balls.push(ball);
         return getDeepKeys(matchScoreboardObj, "");
     },
-    MatchAnalytics: () => {
-        const matchAnalyticsObj = new MatchAnalytics();
-        return Object.keys(matchAnalyticsObj);
-    },
     Umpire: () => {
         const umpireObj = new Umpire();
         return Object.keys(umpireObj);
     },
+}
+
+export const UIInputRequiredFieldConfiguration: Record<string, () => IFormInput> = {
+    matchFormat: () => ({ label: "Match Format", key: "matchFormat", elementType: FormInputElement.dropdown, options: Object.values(MatchFormat) }),
+    type: () => ({ label: "Tournament Type", key: "type", elementType: FormInputElement.dropdown, options: Object.values(TournamentType) }),
 }

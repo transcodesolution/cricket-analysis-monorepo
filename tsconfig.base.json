@@ -17,7 +17,7 @@
     "paths": {
       "@cricket-analysis-monorepo/constants": ["libs/constants/src/index.ts"],
       "@cricket-analysis-monorepo/interfaces": ["libs/interfaces/src/index.ts"],
-      "@cricket-analysis-monorepo/service": ["libs/service/src/index.ts"]
+      "@cricket-analysis-monorepo/service": ["libs/service/src/index.ts"],
     }
   },
   "exclude": ["node_modules", "tmp"]
