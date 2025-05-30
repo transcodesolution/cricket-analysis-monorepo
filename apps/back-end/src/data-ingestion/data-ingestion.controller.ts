@@ -13,7 +13,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { DataIngestionService } from './data-ingestion.service';
-import { MappingDetailDto, UploadFileAndMappingUpdateDto } from './dto/mapping-data-ingestion.dto';
+import { MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto } from './dto/mapping-data-ingestion.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { Permission } from '@cricket-analysis-monorepo/constants';
@@ -43,7 +43,7 @@ export class DataIngestionController {
     return this.dataIngestionService.getAllDBSchemaNameWithFields();
   }
 
-  @Post('/update-mapping-and-save-entries')
+  @Post('/update-mapping-and-check-required-inputs')
   @HttpCode(HttpStatus.OK)
   @SetMetadata(ROUTE_PERMISSION_KEY_NAME, uploadFilePermissions)
   @UseInterceptors(FileFieldsInterceptor([{ name: "sheets" }], {
@@ -56,11 +56,18 @@ export class DataIngestionController {
       },
     }),
   }))
-  async updateMappingAndSaveInformationToDB(@Body() uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, @UploadedFiles() file: { sheets?: IMulterFileObject[] }, @Res() res: Response) {
+  async updateMappingAndCheckForUserInputFields(@Body() uploadFileAndMappingUpdateDto: UploadFileAndMappingUpdateDto, @UploadedFiles() file: { sheets?: IMulterFileObject[] }) {
     const { sheets } = file;
     if (sheets && sheets.length > 0) {
-      return this.dataIngestionService.updateMappingAndSaveInformationToDB(uploadFileAndMappingUpdateDto, sheets, res);
+      return this.dataIngestionService.updateMappingAndCheckForUserInputFields(uploadFileAndMappingUpdateDto, sheets);
     }
     throw new BadRequestException("No files found");
+  }
+
+  @Post('/update-input-and-save-entries')
+  @HttpCode(HttpStatus.OK)
+  @SetMetadata(ROUTE_PERMISSION_KEY_NAME, uploadFilePermissions)
+  async updateMappingAndSaveInformationToDB(@Body() uploadFileDto: UploadFileDto, @Res() res: Response) {
+    return this.dataIngestionService.updateMappingAndSaveInformationToDB(uploadFileDto, res);
   }
 }

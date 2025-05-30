@@ -14,3 +14,4 @@ export * from './lib/file-reader';
 export * from './lib/user';
 export * from './lib/user-role';
 export * from './lib/upload';
+export * from './lib/form-element';

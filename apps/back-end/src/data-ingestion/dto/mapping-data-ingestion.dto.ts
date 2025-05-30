@@ -1,5 +1,7 @@
-import { ArrayMinSize, IsArray, IsDefined, IsString } from "class-validator";
-import { MappingData } from "../../database/model/mapping.model";
+import { ArrayMinSize, IsArray, IsDefined, IsString, ValidateNested } from "class-validator";
+import { CachedInput, MappingData } from "../../database/model/mapping.model";
+import { Type } from "class-transformer";
+import { PickType } from "@nestjs/mapped-types";
 
 export class ColumnDto {
     @IsArray()
@@ -19,9 +21,6 @@ export class ColumnDto {
 
 export class MappingDetailDto {
     files: ColumnDto[];
-    constructor() {
-        this.files = [];
-    }
 }
 
 export class UserMappingDetailDto {
@@ -34,8 +33,18 @@ export class UploadFileAndMappingUpdateDto {
     // @IsArray()
     // @IsString()
     userMappingDetail: UserMappingDetailDto;
+}
 
-    constructor() {
-        this.userMappingDetail = { files: [{ mappingsByUser: [], fileName: "" }] };
-    }
+class CachedInputDto {
+    [keyname: string]: object;
+}
+
+export class InputUpdateDto extends PickType(CachedInput, ["collectionName", "referenceKey", "referenceValue"]) {
+    @ValidateNested()
+    @Type(() => CachedInputDto)
+    inputs: CachedInputDto;
+}
+
+export class UploadFileDto {
+    [keyname: string]: InputUpdateDto[];
 }
