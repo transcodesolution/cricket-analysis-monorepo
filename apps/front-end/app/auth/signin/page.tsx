@@ -37,9 +37,9 @@ export default function Page() {
       });
       router.push('/dashboard');
 
-    } catch (error: any) {
+    } catch (error) {
       showNotification({
-        message: error?.message || 'Login failed',
+        message: (error instanceof Error && error.message) ? error.message : 'Login failed',
         color: 'red',
       });
     }
