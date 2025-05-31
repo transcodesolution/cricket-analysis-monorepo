@@ -17,12 +17,14 @@ interface IRequiredModalData {
   data: IUpdateAndSaveEntriesRequest;
   onClose: () => void;
   onSubmit: (inputData: IUpdateAndSaveEntriesRequest) => Promise<void>;
+  showRequiredInputModal: boolean
 }
 
 export const RequiredInputModal = ({
   data,
   onClose,
   onSubmit,
+  showRequiredInputModal
 }: IRequiredModalData) => {
   const [inputs, setInputs] = useState<Record<string, Record<string, string>>>({});
 
@@ -68,11 +70,12 @@ export const RequiredInputModal = ({
 
   return (
     <Modal
-      opened
+      opened={showRequiredInputModal}
       onClose={onClose}
       title="Provide Required Info"
       size="lg"
       centered
+      transitionProps={{ transition: 'fade-down', duration: 600, timingFunction: 'ease' }}
     >
       <Stack gap="md">
         {Object.entries(data).map(([fileName, entries]) =>
