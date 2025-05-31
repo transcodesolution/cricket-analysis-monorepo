@@ -185,12 +185,12 @@ export class DataIngestionService {
     ]);
     const findWhoAreNotPlayerQuery = { "teams.id": { $exists: false } };
     const umpireOrReferees = await this.playerModel.find(findWhoAreNotPlayerQuery);
-    const refereeDetail = umpireOrReferees.find((i) => (i.name === referee.name));
+    const refereeDetail = umpireOrReferees.find((i) => (i.name === referee?.name));
     if (refereeDetail) {
       referee.uniqueId = refereeDetail.uniqueId;
       await referee.save();
     }
-    const umpireDetail = umpireOrReferees.filter((i) => (i.name !== referee.name));
+    const umpireDetail = umpireOrReferees.filter((i) => (i.name !== referee?.name));
     if (umpireDetail.length > 0) {
       await this.umpireModel.bulkWrite(umpireDetail.map((i) => ({
         updateOne: {
