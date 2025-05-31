@@ -6,7 +6,6 @@ import {
   Flex,
   Group,
   Text,
-  Avatar,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import Image from 'next/image';

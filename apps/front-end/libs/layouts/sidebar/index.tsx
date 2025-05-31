@@ -12,7 +12,7 @@ import { Box, Flex, ThemeIcon } from '@mantine/core';
 import { NavbarLinksGroup } from './components/NavbarLinksGroup';
 import classes from './sidebar.module.scss';
 import Link from 'next/link';
-import { checkPermissions, useUserStore } from '@/libs/store/src';
+import { useUserStore } from '@/libs/store/src';
 import { Permission } from '@cricket-analysis-monorepo/constants';
 
 const linksData = [
