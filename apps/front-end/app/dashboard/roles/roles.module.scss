@@ -1,0 +1,8 @@
+.animatedButton {
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.animatedButton:hover {
+  transform: scale(1.03);
+}

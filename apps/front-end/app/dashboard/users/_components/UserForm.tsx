@@ -3,6 +3,7 @@ import { IUser } from "@cricket-analysis-monorepo/interfaces";
 import { Button, Flex, Paper, PasswordInput, Select, Stack, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect } from "react";
+import classes from '../users.module.scss'
 
 interface IUserFormProps {
   user?: IUser;
@@ -70,9 +71,10 @@ export const UserForm = ({ onSubmit, isSubmitting, user }: IUserFormProps) => {
       </Paper>
       <Button onClick={handleSubmit} loading={isSubmitting}
         size="md"
-        color="primary"
+        color="var(--mantine-color-customBlue-5)"
         w='fit-content'
         ml='auto'
+        className={classes.animatedButton}
       >
         {user ? "Save" : "Create"}
       </Button>
