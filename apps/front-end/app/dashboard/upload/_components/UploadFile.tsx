@@ -50,7 +50,6 @@ export const UploadFile = () => {
       { files: structuredData },
       {
         onSuccess: ({ data }: IApiResponse<IFileColumnDataResponse>) => {
-          console.log(data, 'data')
           const hasMissingMappings = Object.values(data || {}).some(cols => cols.length > 0);
 
           if (hasMissingMappings) {
@@ -74,7 +73,6 @@ export const UploadFile = () => {
   };
 
   const updateMappingAndCheck = (files: FileWithPath[], userMappingDetail: IUserMappingDetail[] = []) => {
-    setLoading(true);
     const formData = new FormData();
     files.forEach((file) => {
       formData.append('sheets', file, file.name);
@@ -164,21 +162,19 @@ export const UploadFile = () => {
         </Paper>
       </Center>
 
-      {showMappingModal && (
-        <MappingModal
-          keysToMapByFile={fileColumnData}
-          onClose={() => setShowMappingModal(false)}
-          onSubmit={handleMappingSubmit}
-        />
-      )}
+      <MappingModal
+        keysToMapByFile={fileColumnData}
+        onClose={() => setShowMappingModal(false)}
+        onSubmit={handleMappingSubmit}
+        showMappingModal={showMappingModal}
+      />
 
-      {showRequiredInputModal && requirements && (
-        <RequiredInputModal
-          data={requirements}
-          onClose={() => setShowRequiredInputModal(false)}
-          onSubmit={handleRequirementSubmit}
-        />
-      )}
+      <RequiredInputModal
+        data={requirements}
+        onClose={() => setShowRequiredInputModal(false)}
+        onSubmit={handleRequirementSubmit}
+        showRequiredInputModal={showRequiredInputModal}
+      />
     </>
   );
 };

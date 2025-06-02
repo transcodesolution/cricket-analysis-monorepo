@@ -19,9 +19,10 @@ interface IMappingModalData {
   keysToMapByFile: IFileColumns[];
   onClose: () => void;
   onSubmit: (userMappingDetail: IUserMappingDetail[]) => Promise<void>;
+  showMappingModal: boolean
 }
 
-export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingModalData) => {
+export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingModal }: IMappingModalData) => {
   const [mapping, setMapping] = useState<Record<string, Record<string, { table: string; key: string }>>>({});
   const { data: getDatabaseTablesAndFieldsResponse } = useGetDatabaseTablesAndFields();
   const tablesAndFields = getDatabaseTablesAndFieldsResponse?.data || [];
@@ -120,7 +121,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingMod
 
 
   return (
-    <Modal opened onClose={onClose} title="Map Your Columns" size="xl" centered>
+    <Modal opened={showMappingModal} onClose={onClose} title="Map Your Columns" size="xl" centered transitionProps={{ transition: 'fade-down', duration: 400, timingFunction: 'ease' }}>
       <Stack gap="md">
         {filteredKeysToMapByFile.length > 0 ? (
           filteredKeysToMapByFile.map(({ fileName, columns }) => (
