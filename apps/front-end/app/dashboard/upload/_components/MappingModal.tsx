@@ -1,7 +1,7 @@
 'use client';
 
 import { useGetDatabaseTablesAndFields } from '@/libs/react-query-hooks/src';
-import { IFileColumns, IMappingByUser, IUserMappingDetail } from '@/libs/types-api/src';
+import { IFileColumns, IMappingByUser, ITableField, IUserMappingDetail } from '@/libs/types-api/src';
 import {
   Modal,
   Button,
@@ -19,9 +19,10 @@ interface IMappingModalData {
   keysToMapByFile: IFileColumns[];
   onClose: () => void;
   onSubmit: (userMappingDetail: IUserMappingDetail[]) => Promise<void>;
+  showMappingModal: boolean
 }
 
-export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingModalData) => {
+export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingModal }: IMappingModalData) => {
   const [mapping, setMapping] = useState<Record<string, Record<string, { table: string; key: string }>>>({});
   const { data: getDatabaseTablesAndFieldsResponse } = useGetDatabaseTablesAndFields();
   const tablesAndFields = getDatabaseTablesAndFieldsResponse?.data || [];
@@ -36,7 +37,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingMod
     }));
   };
 
-  const tableOptions = tablesAndFields?.map((table:any) => ({
+  const tableOptions = tablesAndFields?.map((table: ITableField) => ({
     value: table.name,
     label: table.name,
   }));
@@ -47,7 +48,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingMod
       const selectedKey = mapping[fileName]?.[originalKey]?.key || '';
 
       const fieldOptions =
-        tablesAndFields.find((t:any) => t.name === selectedTable)?.fields.map((f:any) => ({
+        tablesAndFields.find((t: ITableField) => t.name === selectedTable)?.fields.map((f: string) => ({
           value: f,
           label: f,
         })) || [];
@@ -120,7 +121,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingMod
 
 
   return (
-    <Modal opened onClose={onClose} title="Map Your Columns" size="xl" centered>
+    <Modal opened={showMappingModal} onClose={onClose} title="Map Your Columns" size="xl" centered transitionProps={{ transition: 'fade-down', duration: 400, timingFunction: 'ease' }}>
       <Stack gap="md">
         {filteredKeysToMapByFile.length > 0 ? (
           filteredKeysToMapByFile.map(({ fileName, columns }) => (
