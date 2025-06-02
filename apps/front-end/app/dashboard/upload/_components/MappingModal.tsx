@@ -1,7 +1,7 @@
 'use client';
 
 import { useGetDatabaseTablesAndFields } from '@/libs/react-query-hooks/src';
-import { IFileColumns, IMappingByUser, IUserMappingDetail } from '@/libs/types-api/src';
+import { IFileColumns, IMappingByUser, ITableField, IUserMappingDetail } from '@/libs/types-api/src';
 import {
   Modal,
   Button,
@@ -36,7 +36,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingMod
     }));
   };
 
-  const tableOptions = tablesAndFields?.map((table:any) => ({
+  const tableOptions = tablesAndFields?.map((table: ITableField) => ({
     value: table.name,
     label: table.name,
   }));
@@ -47,7 +47,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit }: IMappingMod
       const selectedKey = mapping[fileName]?.[originalKey]?.key || '';
 
       const fieldOptions =
-        tablesAndFields.find((t:any) => t.name === selectedTable)?.fields.map((f:any) => ({
+        tablesAndFields.find((t: ITableField) => t.name === selectedTable)?.fields.map((f: string) => ({
           value: f,
           label: f,
         })) || [];
