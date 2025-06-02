@@ -1,4 +1,4 @@
-import PageLoader from "@/libs/custom/page-loader/PageLoader";
+import PageLoader from "@/libs/custom/loaders/PageLoader";
 
 export default function Loading() {
   return <PageLoader />
