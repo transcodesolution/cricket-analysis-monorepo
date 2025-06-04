@@ -21,11 +21,11 @@ import { UserPermissionCheckerGuard } from '../guards/user-permission-checker.gu
 export class ReportController {
     constructor(private readonly reportService: ReportService) { }
 
-    @Get('/:id')
+    @Get('/:name')
     @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.VIEW_REPORTS, Permission.VIEW_PRE_DEFINED_REPORTS])
     @UseGuards(UserPermissionCheckerGuard)
-    getReportById(@Param("id") id: string, @Query("page", ParseIntPipe) page: number, @Query("limit", ParseIntPipe) limit: number, @Query() queryFilter: GetPreDestinedReportFilterDto) {
-        return this.reportService.getReportById(id, queryFilter, { page, limit });
+    getReportByName(@Param("name") name: string, @Query("page", ParseIntPipe) page: number, @Query("limit", ParseIntPipe) limit: number, @Query() queryFilter: GetPreDestinedReportFilterDto) {
+        return this.reportService.getReportByName(name, queryFilter, { page, limit });
     }
 
     @Get('/')
