@@ -25,6 +25,9 @@ export class Report {
     @Prop({ type: String })
     name: string;
 
+    @Prop({ type: String, index: true, unique: true })
+    uniqueKey: string;
+
     @Prop({ type: String })
     query: string;
 

@@ -56,13 +56,13 @@ export class ReportService {
   async getReports(getPreDestinedReportDto: GetPreDestinedReportDto) {
     const [totalData, reports] = await Promise.all([
       this.reportModel.countDocuments(),
-      this.reportModel.find({}, { name: 1 }).skip((getPreDestinedReportDto.page - 1) * getPreDestinedReportDto.limit).limit(getPreDestinedReportDto.limit),
+      this.reportModel.find({}, { name: 1, uniqueKey: 1 }).skip((getPreDestinedReportDto.page - 1) * getPreDestinedReportDto.limit).limit(getPreDestinedReportDto.limit),
     ]);
     return { data: { reports, totalData, state: { page: getPreDestinedReportDto.page, limit: getPreDestinedReportDto.limit, page_limit: Math.ceil(totalData / getPreDestinedReportDto.limit) } }, message: responseMessage.getDataSuccess("report") };
   }
 
-  async getReportById(id: string, queryFilter: GetPreDestinedReportFilterDto, paginationDto: PaginationDto) {
-    const report = await this.reportModel.findOne({ _id: id });
+  async getReportByName(name: string, queryFilter: GetPreDestinedReportFilterDto, paginationDto: PaginationDto) {
+    const report = await this.reportModel.findOne({ uniqueKey: name });
 
     if (!report) {
       throw new BadRequestException(responseMessage.getDataNotFound("report"));
