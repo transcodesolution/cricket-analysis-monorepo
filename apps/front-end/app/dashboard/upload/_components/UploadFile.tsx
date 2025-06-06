@@ -26,6 +26,7 @@ export const UploadFile = () => {
   const handleDrop = (files: FileWithPath[]) => {
     if (files.length === 0) return;
     setDroppedFiles(files);
+    setLoading(true);
 
     readExcelFiles(files)
       .then((columnsByFile) => {
@@ -41,11 +42,11 @@ export const UploadFile = () => {
           message: error?.message || 'An error occurred while checking mapping.',
           color: 'red',
         });
+        setLoading(false);
       });
   };
 
   const handleMappingCheck = (structuredData: IFileColumns[], files: FileWithPath[]) => {
-    setLoading(true)
     checkMappingAndUpdate(
       { files: structuredData },
       {
