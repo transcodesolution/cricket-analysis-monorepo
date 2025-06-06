@@ -188,7 +188,7 @@ export class AnalyticsService {
         stat.runs += (+ball.runs_off_bat);
 
         const playingOverIn = stat.overPlayedIn.find((i) => (i.over === ball.over));
-        const has0s = ball.runs_off_bat == 0 ? 1 : 0;
+        const has0s = ball.runs_off_bat == 0 && checklegalDelivery ? 1 : 0;
         const has1s = ball.runs_off_bat == 1 ? 1 : 0;
         const has2s = ball.runs_off_bat == 2 ? 1 : 0;
         const has3s = ball.runs_off_bat == 3 ? 1 : 0;
@@ -213,7 +213,9 @@ export class AnalyticsService {
             }
         }
 
-        if (stat[ball.runs_off_bat] !== undefined) {
+        const hasBallRuns = stat[ball.runs_off_bat] !== undefined;
+
+        if ((has0s && hasBallRuns) || (checklegalDelivery && hasBallRuns) || (+ball.runs_off_bat && hasBallRuns)) {
             stat[ball.runs_off_bat]++;
         }
 
