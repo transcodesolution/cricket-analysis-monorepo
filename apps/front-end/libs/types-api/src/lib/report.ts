@@ -7,7 +7,8 @@ export interface IGetReportRequest {
 
 export interface IReport {
   _id: string,
-  name: string
+  name: string,
+  uniqueKey: string
 }
 export interface IGetReportsResponse {
   reports: IReport[];
