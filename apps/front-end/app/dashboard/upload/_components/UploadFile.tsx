@@ -34,7 +34,6 @@ export const UploadFile = () => {
           fileName,
           columns,
         }));
-
         handleMappingCheck(structuredData, files);
       })
       .catch((error) => {
@@ -42,8 +41,7 @@ export const UploadFile = () => {
           message: error?.message || 'An error occurred while checking mapping.',
           color: 'red',
         });
-        setLoading(false);
-      });
+      }).finally(() => { setLoading(false) });
   };
 
   const handleMappingCheck = (structuredData: IFileColumns[], files: FileWithPath[]) => {
