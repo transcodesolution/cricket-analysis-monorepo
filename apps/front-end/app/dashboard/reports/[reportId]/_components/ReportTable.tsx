@@ -132,7 +132,7 @@ export const ReportTable = () => {
               color: 'var(--mantine-color-gray-7)',
             },
           }}
-          height="calc(100vh - 320px)"
+          height="calc(100vh - 408px)"
         />
       </Paper>
     </Stack>
