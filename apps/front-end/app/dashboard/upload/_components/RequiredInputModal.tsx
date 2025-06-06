@@ -121,6 +121,7 @@ export const RequiredInputModal = ({
           color="var(--mantine-color-customBlue-5)"
           w="fit-content"
           mx="auto"
+          size='md'
         >
           Submit
         </Button>

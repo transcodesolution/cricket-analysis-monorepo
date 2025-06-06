@@ -73,7 +73,7 @@ export default function Page() {
                 classNames={{ label: classes.label }}
                 {...form.getInputProps('password')}
               />
-              <Button fullWidth mt="xl" type="submit" loading={form.submitting} disabled={form.submitting}>
+              <Button color="var(--mantine-color-customBlue-5)" fullWidth mt="xl" type="submit" loading={form.submitting} disabled={form.submitting}>
                 Sign in
               </Button>
             </form>

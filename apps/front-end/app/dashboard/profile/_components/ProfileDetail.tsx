@@ -16,6 +16,7 @@ import { useUpdateUserProfile } from "@/libs/react-query-hooks/src";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { showNotification } from "@mantine/notifications";
 import { useEffect } from "react";
+import classes from './profile.module.scss'
 
 export const ProfileDetail = () => {
   const { user } = useUserStore();
@@ -94,7 +95,7 @@ export const ProfileDetail = () => {
             styles={{ input: { color: 'black' } }}
           />
           <Flex justify="flex-end">
-            <Button type="submit" loading={isUpdating} size="md" color="primary" w="fit-content">
+            <Button className={classes.animatedButton} type="submit" loading={isUpdating} size="md" color="var(--mantine-color-customBlue-5)" w="fit-content">
               Save
             </Button>
           </Flex>

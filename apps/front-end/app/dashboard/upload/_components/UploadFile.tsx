@@ -1,6 +1,6 @@
 'use client';
 import { Dropzone, FileWithPath, MIME_TYPES } from '@mantine/dropzone';
-import { Button, Center, Paper, Stack, Text } from '@mantine/core';
+import { Button, Center, Paper, Stack, Text, Transition } from '@mantine/core';
 import { IconCloudUpload } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { MappingModal } from './MappingModal';
@@ -12,6 +12,7 @@ import { useCheckMappingAndUpdate } from '@/libs/react-query-hooks/src';
 import { updateMappingAndCheckRequiredInputs } from '@/libs/web-apis/src';
 import { RequiredInputModal } from './RequiredInputModal';
 import { useUpdateAndSaveEntries } from '@/libs/react-query-hooks/src/libs/upload/useUpdateAndSaveEntries';
+import classes from './upload.module.scss'
 
 export const UploadFile = () => {
   const [showMappingModal, setShowMappingModal] = useState(false);
@@ -138,7 +139,7 @@ export const UploadFile = () => {
   return (
     <>
       <Center>
-        <Paper shadow="xs" radius="lg" withBorder p="xs" w={896} mt="lg">
+        <Paper shadow="xs" radius="lg" withBorder p="xs" w={896} mt="lg" className={classes.zoomUpDropzone}>
           <Dropzone
             onDrop={handleDrop}
             radius="lg"
