@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { ResponseTransformInterceptor } from './interceptors/response.interceptor';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as bodyParser from 'body-parser';
 
 async function startNestServer() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -17,6 +18,7 @@ async function startNestServer() {
   app.useStaticAssets(uploadsPath, { prefix: "/uploads" });
   app.enableCors({ origin: configService.get("CORS") });
   app.useGlobalPipes(new ValidationPipe());
+  app.use(bodyParser.json({ limit: '50mb' }));
   app.useGlobalInterceptors(new ResponseTransformInterceptor())
   const port = process.env.PORT || 3000;
   await app.listen(port);
