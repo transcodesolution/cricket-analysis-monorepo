@@ -35,7 +35,7 @@ export class ReportService {
     @InjectModel(Player.name) private readonly playerModel: Model<Player>,
     @InjectModel(Tournament.name) private readonly tournamentModel: Model<Tournament>,
     @InjectModel(MatchScoreboard.name) private readonly scoreboardModel: Model<MatchScoreboard>,
-    @InjectModel(Tournament.name) private readonly venueModel: Model<Venue>,
+    @InjectModel(Venue.name) private readonly venueModel: Model<Venue>,
     @InjectModel(Team.name) private readonly teamModel: Model<Team>,
     @InjectModel(Report.name) private readonly reportModel: Model<Report>,
     @InjectModel(ReportFilter.name) private readonly reportFilterModel: Model<ReportFilter>,
