@@ -11,6 +11,10 @@ class ReportDto {
 
     @IsNotEmpty()
     @IsString()
+    uniqueKey: string;
+
+    @IsNotEmpty()
+    @IsString()
     collectionName: string;
 
     @IsNotEmpty()
@@ -21,13 +25,6 @@ class ReportDto {
     @ValidateNested()
     @Type(() => FilterConfiguration)
     filters: FilterConfiguration[];
-
-    constructor() {
-        this.name = "";
-        this.collectionName = "";
-        this.query = "";
-        this.filters = [];
-    }
 }
 
 class ReportFilterDto extends ReportFilter { }

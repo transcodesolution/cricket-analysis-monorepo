@@ -11,6 +11,8 @@ import { ReportFilter } from '../database/model/report-filters.model';
 import { Team } from '../database/model/team.model';
 import { IReport, IReportFilter } from '@cricket-analysis-monorepo/interfaces';
 import { PaginationDto } from '../helper/pagination.dto';
+import { MatchScoreboard } from '../database/model/match-scoreboard.model';
+import { Venue } from '../database/model/venue.model';
 
 interface IFilterExecutionParameter {
   schema: string;
@@ -21,6 +23,8 @@ interface IFilterExecutionParameter {
 export class ReportService {
   private readonly collections = {
     player: this.playerModel,
+    scoreboard: this.scoreboardModel,
+    venue: this.venueModel,
     tournament: this.tournamentModel,
     team: this.teamModel,
   }
@@ -30,6 +34,8 @@ export class ReportService {
   constructor(
     @InjectModel(Player.name) private readonly playerModel: Model<Player>,
     @InjectModel(Tournament.name) private readonly tournamentModel: Model<Tournament>,
+    @InjectModel(MatchScoreboard.name) private readonly scoreboardModel: Model<MatchScoreboard>,
+    @InjectModel(Tournament.name) private readonly venueModel: Model<Venue>,
     @InjectModel(Team.name) private readonly teamModel: Model<Team>,
     @InjectModel(Report.name) private readonly reportModel: Model<Report>,
     @InjectModel(ReportFilter.name) private readonly reportFilterModel: Model<ReportFilter>,
@@ -73,12 +79,12 @@ export class ReportService {
       return ${report.query.match(this.getFunctionNameRegex)[1]}(executionParameters) 
     })()`;
 
-    const [reports]: IReport[] = await new Function("executionParameters", parsedQuery)({ mongoose, schema: this.collections[report.collectionName], queryFilter, paginationDto });
+    const [reports]: IReport[] = await new Function("executionParameters", parsedQuery)({ mongoose, schema: this.collections[report.collectionName], scoreboardSchema: this.collections["scoreboard"], queryFilter, paginationDto });
 
     const { totalData, ...details } = reports;
 
     const filterIds = report.filters.map((i) => i.id);
-    const filters = await this.reportFilterModel.find({ _id: { $in: filterIds } });
+    const filters = await this.reportFilterModel.find({ _id: { $in: filterIds } }).lean();
 
     const filterWithValues: Partial<IReportFilter>[] = await Promise.all(
       filters.map(async (filter) => {
@@ -104,11 +110,9 @@ export class ReportService {
         const values = await new Function("filterExecutionParameters", parsedFn)(filterExecutionParameters);
 
         return {
-          label: filter.label,
           values,
-          isMultiSelectOption: filter.isMultiSelectOption,
-          queryParameterKey: filter.queryParameterKey,
-          type: filter.type
+          ...filter,
+          singleFilterConfig: filterConfig,
         };
       })
     );
