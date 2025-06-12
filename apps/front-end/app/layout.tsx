@@ -35,7 +35,7 @@ export default async function RootLayout({
       <body>
         <ReactQueryClientProvider>
           <MantineProvider theme={theme}>
-            <Notification position='bottom-right' />
+            <Notification position='bottom-right' styles={{ notification: { overflow: 'scroll' } }} />
             {children}
           </MantineProvider>
         </ReactQueryClientProvider>
