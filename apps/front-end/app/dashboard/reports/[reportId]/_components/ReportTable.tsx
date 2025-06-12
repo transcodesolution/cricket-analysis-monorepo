@@ -9,6 +9,7 @@ import { useGetReportById } from '@/libs/react-query-hooks/src';
 import { ITableHeader, ITableRow } from '@/libs/types-api/src';
 import { ReportFilter } from './ReportFilter';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
+import classes from './report.module.scss'
 
 const PAGE_SIZES = [10, 20, 50, 100];
 
@@ -56,9 +57,10 @@ export const ReportTable = () => {
   });
 
   const report = getReportResponse?.data?.report;
+  const reportDetails = report?.details;
   const reportFilters = getReportResponse?.data?.report?.filters || [];
-  const reportData = report?.details?.tableBody ?? [];
-  const tableHeaders = report?.details?.tableHeader ?? [];
+  const reportData = reportDetails && 'tableBody' in reportDetails ? reportDetails.tableBody : [];
+  const tableHeaders = reportDetails && 'tableHeader' in reportDetails ? reportDetails.tableHeader : [];
   const totalRecords = getReportResponse?.data?.totalData ?? 0;
 
   const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header: ITableHeader) => ({
@@ -100,6 +102,7 @@ export const ReportTable = () => {
             size="sm"
             color="var(--mantine-color-customBlue-5)"
             onClick={downloadExcel}
+            className={classes.animatedButton}
           >
             Download
           </Button>
@@ -132,7 +135,7 @@ export const ReportTable = () => {
               color: 'var(--mantine-color-gray-7)',
             },
           }}
-          height="calc(100vh - 320px)"
+          height="calc(100vh - 408px)"
         />
       </Paper>
     </Stack>

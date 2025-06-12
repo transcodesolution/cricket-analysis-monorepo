@@ -65,8 +65,8 @@ export const ReportList = () => {
               ellipsis: true,
               sortable: true,
               width: 250,
-              render: ({ _id, name }) => (
-                <Anchor component={Link} href={`/dashboard/reports/${_id}`} style={{ position: 'relative' }}>
+              render: ({ uniqueKey, name }) => (
+                <Anchor component={Link} href={`/dashboard/reports/${uniqueKey}`} style={{ position: 'relative' }}>
                   {name}
                 </Anchor>
               ),

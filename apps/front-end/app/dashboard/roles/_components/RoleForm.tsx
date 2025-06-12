@@ -16,6 +16,7 @@ import { RolePermissionsList } from "./RolePermissionsList";
 import { IUserRole } from "@cricket-analysis-monorepo/interfaces";
 import { UserRoleType } from "@cricket-analysis-monorepo/constants";
 import { useEffect } from "react";
+import classes from '../roles.module.scss'
 
 interface IRoleForm {
   role: IUserRole | null;
@@ -83,9 +84,10 @@ export const RoleForm = ({
         onClick={handleSubmit}
         loading={isSubmitting}
         size="md"
-        color="primary"
         w='fit-content'
         ml='auto'
+        color="var(--mantine-color-customBlue-5)"
+        className={classes.animatedButton}
       >
         {role ? "Update" : "Create"}
       </Button>

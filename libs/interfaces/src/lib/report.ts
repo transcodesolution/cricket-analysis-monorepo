@@ -15,9 +15,12 @@ export interface IReportFilter {
     isMultiSelectOption: boolean;
     queryParameterKey: string;
     type: ReportFilterType;
+    singleFilterConfig?: {
+        id?: string, selectedPlayer?: string;
+    }
 }
 
 export interface IFilterValue {
-    label: string;
+    label?: string;
     value: string;
 }

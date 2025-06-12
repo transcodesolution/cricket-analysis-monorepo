@@ -12,6 +12,7 @@ import { useCheckMappingAndUpdate } from '@/libs/react-query-hooks/src';
 import { updateMappingAndCheckRequiredInputs } from '@/libs/web-apis/src';
 import { RequiredInputModal } from './RequiredInputModal';
 import { useUpdateAndSaveEntries } from '@/libs/react-query-hooks/src/libs/upload/useUpdateAndSaveEntries';
+import classes from './upload.module.scss'
 
 export const UploadFile = () => {
   const [showMappingModal, setShowMappingModal] = useState(false);
@@ -26,6 +27,7 @@ export const UploadFile = () => {
   const handleDrop = (files: FileWithPath[]) => {
     if (files.length === 0) return;
     setDroppedFiles(files);
+    setLoading(true);
 
     readExcelFiles(files)
       .then((columnsByFile) => {
@@ -33,7 +35,6 @@ export const UploadFile = () => {
           fileName,
           columns,
         }));
-
         handleMappingCheck(structuredData, files);
       })
       .catch((error) => {
@@ -41,11 +42,10 @@ export const UploadFile = () => {
           message: error?.message || 'An error occurred while checking mapping.',
           color: 'red',
         });
-      });
+      }).finally(() => { setLoading(false) });
   };
 
   const handleMappingCheck = (structuredData: IFileColumns[], files: FileWithPath[]) => {
-    setLoading(true)
     checkMappingAndUpdate(
       { files: structuredData },
       {
@@ -138,7 +138,7 @@ export const UploadFile = () => {
   return (
     <>
       <Center>
-        <Paper shadow="xs" radius="lg" withBorder p="xs" w={896} mt="lg">
+        <Paper shadow="xs" radius="lg" withBorder p="xs" w={896} mt="lg" className={classes.zoomUpDropzone}>
           <Dropzone
             onDrop={handleDrop}
             radius="lg"

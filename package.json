@@ -53,6 +53,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@mantine/charts": "^8.0.2",
     "@mantine/core": "^8.0.0",
     "@mantine/dates": "^8.0.0",
     "@mantine/dropzone": "^8.0.0",
@@ -89,6 +90,7 @@
     "papaparse": "^5.5.2",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "recharts": "^2.15.3",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.2",
     "xlsx": "^0.18.5",

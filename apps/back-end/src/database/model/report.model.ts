@@ -2,6 +2,7 @@ import { MatchFormat } from '@cricket-analysis-monorepo/constants';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { SchemaTypes } from 'mongoose';
+import { Player } from './player.model';
 
 export class FilterConfiguration {
     @Prop({ type: SchemaTypes.ObjectId })
@@ -18,12 +19,20 @@ export class FilterConfiguration {
     @IsString()
     @IsOptional()
     overValue?: number;
+
+    @Prop({ type: SchemaTypes.ObjectId, ref: Player.name })
+    @IsString()
+    @IsOptional()
+    selectedPlayer?: string;
 }
 
 @Schema({ timestamps: true, versionKey: false })
 export class Report {
     @Prop({ type: String })
     name: string;
+
+    @Prop({ type: String, index: true, unique: true })
+    uniqueKey: string;
 
     @Prop({ type: String })
     query: string;

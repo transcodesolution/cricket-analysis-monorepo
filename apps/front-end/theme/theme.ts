@@ -39,11 +39,36 @@ const customBlue: MantineColorsTuple = [
   '#003f8e',
 ];
 
+const orange: MantineColorsTuple = [
+  '#ffe5d0', '#fdd7b5', '#fac897', '#f5b16f', '#f59a42',
+  '#f2801a', '#E87722', '#cba181', '#b75410', '#9c4509',
+];
+
+const yellow: MantineColorsTuple = [
+  '#F6E7B4', '#fff3cc', '#ffeeaa', '#ffe47f', '#ffdb55',
+  '#ffd22b', '#FDF3C0', '#e6c966', '#ccb342', '#b29d1f',
+];
+
+const richBlue: MantineColorsTuple = [
+  '#e0f0ff', '#c2e0ff', '#a3cfff', '#b3e0ff', '#7ec6f7',
+  '#389ee1', '#0074c1', '#0066a8', '#00598f', '#1E88E5',
+];
+
+// Light Blue (Ball 4, 5)
+const lightBlue: MantineColorsTuple = [
+  '#f0f4f8', '#dce6ef', '#c2e8ff', '#ade0ff', '#99d8ff',
+  '#BBDEFB', '#b3e0ff', '#5db1e0', '#3799d1', '#1a83c2',
+];
+
 export const theme: MantineThemeOverride = createTheme({
   colors: {
     primary,
     gray,
-    customBlue
+    customBlue,
+    orange,
+    yellow,
+    richBlue,
+    lightBlue,
   },
   primaryColor: 'primary',
   defaultRadius: 'md',

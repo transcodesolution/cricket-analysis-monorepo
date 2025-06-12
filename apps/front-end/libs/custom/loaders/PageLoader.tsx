@@ -1,8 +1,12 @@
 import { Loader, Center, Box } from '@mantine/core';
 
-const PageLoader = () => {
+interface IPageLoader {
+  height?: string | number;
+}
+
+const PageLoader = ({ height = 'calc(100vh - 96px)' }: IPageLoader) => {
   return (
-    <Box w="100%" h="calc(100vh - 96px)">
+    <Box w="100%" h={height}>
       <Center h="100%">
         <Loader />
       </Center>

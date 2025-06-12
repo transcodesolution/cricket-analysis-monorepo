@@ -1,0 +1,15 @@
+.zoomUpDropzone{
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s ease,
+    opacity 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.zoomUpDropzone:hover {
+  transform: translateY(-3px) scale(1.02);
+  opacity: 0.95;
+}
