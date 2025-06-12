@@ -29,13 +29,11 @@ export class AnalyticsService {
             analytics.teamTwo = this.calculateTeamAnalytics(inningsTwoBalls, matchInfo.team2.playingEleven);
             analytics.teamTwo.team = matchInfo.team2.team;
 
-            analytics.totalBallFaced = inningsOneBalls.length + inningsTwoBalls.length;
-
             const team1TotalRuns = this.calculateTotalRuns(inningsOneBalls);
             const team2TotalRuns = this.calculateTotalRuns(inningsTwoBalls);
 
             analytics.totalRuns = team1TotalRuns + team2TotalRuns;
-            analytics.totalBallFaced = analytics.teamOne.ballFaced + analytics.teamTwo.ballFaced;
+            analytics.totalBallFaced = (analytics.teamOne.ballFaced + analytics.teamTwo.ballFaced) || 0;
 
             const team1NRR = this.calculateNetRunRate(team1TotalRuns, inningsOneBalls.length);
             const team2NRR = this.calculateNetRunRate(team2TotalRuns, inningsTwoBalls.length);
