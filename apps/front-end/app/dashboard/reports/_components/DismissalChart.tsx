@@ -14,52 +14,59 @@ export default function DismissalChart({ dismissalData }: { dismissalData: IDism
     .sort((a, b) => b.value - a.value);
 
   const renderLabel = (props: LabelProps) => {
-    const {
-      value,
-      x,
-      y,
-      width,
-      height,
-    } = props;
+    {
+      const { value, x, y, width, height } = props;
+      if (value === undefined || value === null || x === undefined || y === undefined || width === undefined || height === undefined) {
+        return null;
+      }
+      const item = chartData.find(d => d.value === value);
+      if (!item) return null;
 
-    const numericValue =
-      typeof value === 'number' ? value :
-        typeof value === 'string' ? parseFloat(value) :
-          0;
 
-    const numX = typeof x === 'number' ? x : parseFloat(x ?? '0');
-    const numY = typeof y === 'number' ? y : parseFloat(y ?? '0');
-    const numWidth = typeof width === 'number' ? width : parseFloat(width ?? '0');
-    const numHeight = typeof height === 'number' ? height : parseFloat(height ?? '0');
+      const label = item.label;
+      const val = `${value}%`;
+      const isWide = parseFloat(String(value)) >= 15;
 
-    const isWide = numericValue >= 15;
+      const textColor = isWide ? 'white' : 'black';
+      const textAnchor = isWide ? 'middle' : 'start';
+      const textX = isWide ? parseFloat(String(x)) + parseFloat(String(width)) / 2 : parseFloat(String(x)) + 6;
 
-    return (
-      <g transform={`translate(${isWide ? numX + numWidth / 2 : numX + 6}, ${numY + numHeight / 2})`}>
-        <text
-          fontSize={16}
-          fill={isWide ? 'white' : 'black'}
-          textAnchor={isWide ? 'middle' : 'start'}
-          dominantBaseline="central"
-          fontWeight={600}
-          y={-8}
-        >
-          {`${numericValue}%`}
-        </text>
-      </g>
-    );
-  };
+      return (
+        <g transform={`translate(${textX}, ${parseFloat(String(y)) + parseFloat(String(height)) / 2})`}>
+          <text
+            fontSize={16}
+            fill={textColor}
+            textAnchor={textAnchor}
+            dominantBaseline="central"
+            fontWeight={600}
+            y={-8}
+          >
+            {label}
+          </text>
+          <text
+            fontSize={12}
+            fill={textColor}
+            textAnchor={textAnchor}
+            dominantBaseline="central"
+            y={10}
+          >
+            {val}
+          </text>
+        </g>
+      );
+    }
+  }
 
   return (
     <React.Fragment>
       <Paper
         p="xs"
-        bg="#3a4651"
+        bg="var(--mantine-color-gray-9)"
         my="sm"
         styles={{
           root: {
             textAlign: 'center',
-            color: '#fff',
+            color: 'white',
             fontWeight: 600,
             fontSize: 18,
             borderBottom: '1px solid #bfc9d1',
@@ -76,7 +83,6 @@ export default function DismissalChart({ dismissalData }: { dismissalData: IDism
           dataKey="label"
           series={[{
             name: 'value',
-            color: '#2196f3',
             label: 'Dismissals (%)',
           }]}
           gridAxis="y"
@@ -85,15 +91,15 @@ export default function DismissalChart({ dismissalData }: { dismissalData: IDism
           valueFormatter={(v) => `${v}%`}
           valueLabelProps={{
             position: 'inside',
-            content: renderLabel,
+            content: renderLabel
           }}
           withBarValueLabel
-          tickLine="none"
+          tickLine='none'
           withTooltip={false}
           withXAxis={false}
           withYAxis={false}
           getBarColor={(value: number) => getColorByValue(value)}
-          barChartProps={{ barCategoryGap: 0 }}
+          barChartProps={{ barCategoryGap: 0, }}
         />
       </Paper>
     </React.Fragment>

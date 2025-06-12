@@ -62,7 +62,7 @@ export const getColumns = (): DataTableColumn<IRecentGame>[] => [
         fw={600}
         style={{
           backgroundColor: getScoreColor(row.runs),
-          color: '#fff',
+          color: 'white',
           borderRadius: 4,
           padding: '2px 8px',
           textAlign: 'center',

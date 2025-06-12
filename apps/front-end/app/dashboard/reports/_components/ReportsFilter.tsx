@@ -14,16 +14,16 @@ interface IReportFilters {
 
 const styleThemes = [
   {
-    bgColor: '#E87722',
-    color: '#fff',
-    selectColor: '#fff',
-    selectBgColor: '#cba181',
+    bgColor: 'var(--mantine-color-orange-5)',
+    color: 'white',
+    selectColor: 'white',
+    selectBgColor: 'var(--mantine-color-orange-7)',
   },
   {
-    bgColor: '#FDF3C0',
-    color: '#222',
-    selectColor: '#222',
-    selectBgColor: '#F6E7B4',
+    bgColor: 'var(--mantine-color-yellow-6)',
+    color: 'black',
+    selectColor: 'black',
+    selectBgColor: 'var(--mantine-color-yellow-0)',
   },
 ];
 

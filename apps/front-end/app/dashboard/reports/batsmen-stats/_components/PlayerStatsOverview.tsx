@@ -4,7 +4,7 @@ import { RunDistributionGrid } from '../../_components/RunDistributionGrid';
 import { PlayerProfileInfo } from './PlayerProfileInfo';
 import { BallByBallStats } from './BallByBallStats';
 import { IBallData, IOversGroupedStat, IRunDistribution } from '@/libs/types-api/src';
-import { PlayerProfileInfoData } from './BatsmenPage';
+import { PlayerProfileInfoData } from './BatsmanStatsReport';
 
 interface IPlayerStatsOverviewData {
   profileInfo: PlayerProfileInfoData;
@@ -24,7 +24,7 @@ export const PlayerStatsOverview = ({
     <Grid gutter="lg" mt="md" align="stretch">
       {/* Left panel */}
       <Grid.Col span={{ base: 9, md: 4.5 }} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <Stack styles={{ root: { flexGrow: 1, justifyContent: 'space-between' } }} >
+        <Stack styles={{ root: { flexGrow: 1, justifyContent: 'space-between' } }} gap={0}>
           <Paper p="sm" radius="md" h='100%' styles={{ root: { display: 'flex', justifyContent: 'center', alignItems: 'center' } }}>
             <PlayerProfileInfo {...profileInfo} />
           </Paper>

@@ -6,8 +6,8 @@ interface IBallByBallStatsGrid {
 };
 
 export const BallByBallStats = ({ data }: IBallByBallStatsGrid) => {
-  const bgColors = ['#0074c1', '#008ee6', '#7ec6f7', '#b3e0ff'];
-  const textColors = ['#fff', '#fff', '#222', '#222'];
+  const bgColors = ['var(--mantine-color-richBlue-7)', 'var(--mantine-color-richBlue-6)', 'var(--mantine-color-richBlue-5)', 'var(--mantine-color-richBlue-4)'];
+  const textColors = ['white', 'white', 'black', 'black'];
 
   return (
     data.map((item, idx) => (
@@ -20,7 +20,7 @@ export const BallByBallStats = ({ data }: IBallByBallStatsGrid) => {
             background: bgColors[idx % bgColors.length],
             color: textColors[idx % textColors.length],
             flex: '1 1 0',
-            border: '1px solid #222',
+            border: '1px solid black',
             textAlign: 'center',
             display: 'flex',
             justifyContent: 'center',

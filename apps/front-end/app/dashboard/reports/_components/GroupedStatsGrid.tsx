@@ -10,8 +10,8 @@ export const GroupedStatsGrid = ({ data }: IGroupedStatsGridData) => {
   const getBoxStyle = (index: number) => {
     const isEven = index % 2 === 0;
     return {
-      backgroundColor: isEven ? '#E87722' : '#FDF3C0',
-      color: isEven ? '#fff' : '#222',
+      backgroundColor: isEven ? 'var(--mantine-color-orange-5)' : 'var(--mantine-color-yellow-6)',
+      color: isEven ? 'white' : 'black',
     };
   };
 

@@ -1,5 +1,6 @@
 import { IRunDistribution } from '@/libs/types-api/src';
 import { Grid, Paper, Text } from '@mantine/core';
+import React from 'react';
 
 interface IRunDistributionGridData {
   title?: string;
@@ -7,21 +8,21 @@ interface IRunDistributionGridData {
 };
 
 export const RunDistributionGrid = ({ runDistData, title }: IRunDistributionGridData) => {
-  const bgColors = ['#0074c1', '#008ee6', '#7ec6f7', '#b3e0ff'];
-  const textColors = ['#fff', '#fff', '#222', '#222'];
+  const bgColors = ['var(--mantine-color-richBlue-7)', 'var(--mantine-color-richBlue-6)', 'var(--mantine-color-richBlue-5)', 'var(--mantine-color-richBlue-4)'];
+  const textColors = ['white', 'white', 'black', 'black'];
 
   const runDistEntries = Object.entries(runDistData);
 
   return (
-    <div>
+    <React.Fragment>
       {title && (
         <Paper
           p="xs"
           radius={0}
           styles={{
             root: {
-              background: '#3a4651',
-              color: '#fff',
+              background: 'var(--mantine-color-gray-9)',
+              color: 'white',
               textAlign: 'center',
               fontWeight: 600,
               fontSize: 18,
@@ -43,7 +44,7 @@ export const RunDistributionGrid = ({ runDistData, title }: IRunDistributionGrid
                   background: bgColors[idx % bgColors.length],
                   color: textColors[idx % textColors.length],
                   height: '100%',
-                  border: '1px solid #222',
+                  border: '1px solid black',
                   textAlign: 'center',
                   display: 'flex',
                   flexDirection: 'column',
@@ -62,6 +63,6 @@ export const RunDistributionGrid = ({ runDistData, title }: IRunDistributionGrid
           </Grid.Col>
         ))}
       </Grid>
-    </div>
+    </React.Fragment>
   );
 };

@@ -22,15 +22,15 @@ export const DismissalAndRecentGames = ({ dismissals, games }: IDismissalAndRece
       <Grid.Col span={{ base: 12, md: 9 }}>
         <Paper
           p="xs"
-          bg='#3a4651'
+          bg='var(--mantine-color-gray-9)'
           my='sm'
           styles={{
             root: {
               textAlign: 'center',
-              color: '#fff',
+              color: 'white',
               fontWeight: 600,
               fontSize: 18,
-              borderBottom: '1px solid #bfc9d1',
+              borderBottom: '1px solid var(--mantine-color-gray-3)',
               borderRadius: 0,
             }
           }}
@@ -44,7 +44,7 @@ export const DismissalAndRecentGames = ({ dismissals, games }: IDismissalAndRece
           height={400}
           striped
           rowStyle={(_, index) => ({
-            backgroundColor: index % 2 === 0 ? '#ffffff' : '#dcebf5',
+            backgroundColor: index % 2 === 0 ? 'white' : 'var(--mantine-color-lightBlue-1)',
           })}
           records={games}
           columns={columns}

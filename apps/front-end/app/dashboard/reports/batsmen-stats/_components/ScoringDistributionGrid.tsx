@@ -33,8 +33,8 @@ export const ScoringDistributionGrid = ({ title, data }: IScoringDistributionGri
           my="sm"
           styles={{
             root: {
-              backgroundColor: '#3a4651',
-              color: '#fff',
+              backgroundColor: 'var(--mantine-color-gray-9)',
+              color: 'white',
               textAlign: 'center',
               fontWeight: 600,
               fontSize: 18,
@@ -55,7 +55,7 @@ export const ScoringDistributionGrid = ({ title, data }: IScoringDistributionGri
       >
         {pairedKeys.map(([mainKey, subKey], idx) => {
           const isEven = idx % 2 === 0;
-          const backgroundColor = isEven ? '#f0f4f8' : '#dce6ef';
+          const backgroundColor = isEven ? 'var(--mantine-color-lightBlue-0)' : 'var(--mantine-color-lightBlue-1)';
 
           const mainValue = data[mainKey];
           const subValue = data[subKey];
@@ -72,8 +72,8 @@ export const ScoringDistributionGrid = ({ title, data }: IScoringDistributionGri
               styles={{
                 root: {
                   backgroundColor,
-                  color: '#000',
-                  border: '1px solid #cbd5e1',
+                  color: 'black',
+                  border: '1px solid var(--mantine-color-gray-5)',
                   minWidth: 100,
                   flex: '1 0 100px',
                   textAlign: 'center',

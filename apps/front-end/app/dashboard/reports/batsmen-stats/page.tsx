@@ -1,12 +1,12 @@
 import { Stack } from "@mantine/core";
 import BackToOverview from "@/libs/custom/back-to-overview";
-import { BatsmenPage } from "./_components/BatsmenPage";
+import { BatsmanStatsReport } from "./_components/BatsmanStatsReport";
 
 export default function Page() {
   return (
     <Stack>
       <BackToOverview title="Reports" backUrl='/dashboard/reports' />
-      <BatsmenPage />
+      <BatsmanStatsReport />
     </Stack>
   )
 }

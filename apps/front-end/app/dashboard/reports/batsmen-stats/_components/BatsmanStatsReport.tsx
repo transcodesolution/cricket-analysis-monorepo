@@ -16,7 +16,7 @@ export type PlayerProfileInfoData = Pick<
   'playerName' | 'innings' | 'rpi' | 'median' | 'strikeRate' | 'sixHitInAvgMatches'
 >;
 
-export const BatsmenPage = () => {
+export const BatsmanStatsReport = () => {
   const pathname = usePathname();
   const pathSegments = pathname.split('/').filter(Boolean);
   const reportType = pathSegments[pathSegments.length - 1];

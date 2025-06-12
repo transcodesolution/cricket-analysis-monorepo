@@ -1,5 +1,5 @@
 import { Stack, Text, Title, Group } from '@mantine/core';
-import { PlayerProfileInfoData } from './BatsmenPage';
+import { PlayerProfileInfoData } from './BatsmanStatsReport';
 
 export const PlayerProfileInfo = ({
   playerName,
