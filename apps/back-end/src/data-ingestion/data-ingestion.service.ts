@@ -802,6 +802,8 @@ export class DataIngestionService {
   async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response) {
     const uploadResult: IUploadResult[] = [];
 
+    const backgroundTask = {};
+
     for (const i of Object.keys(uploadFileDto)) {
       const fileName = i;
       const uploadFileObj = uploadFileDto[fileName];
@@ -838,26 +840,31 @@ export class DataIngestionService {
       }
 
       uploadResult.push({ hasAlreadyUploaded: false, fileName, message: responseMessage.customMessage("Process started to load data in database") });
-      this.processMappingSheetDataWithDatabaseKeys(fileName, extractedSheetInfo[fileName])
-        .catch((err) => {
-          console.error("processMappingSheetDataWithDatabaseKeys method: Background processing task failed:", err);
-        });
+      backgroundTask[fileName] = extractedSheetInfo[fileName];
     }
 
     const alreadyUpload = uploadResult.filter((i) => i.hasAlreadyUploaded).map((i) => i.fileName);
 
     if (alreadyUpload.length > 0) {
-      return res.status(HttpStatus.PARTIAL_CONTENT).json({
+      res.status(HttpStatus.PARTIAL_CONTENT).json({
         statusCode: HttpStatus.PARTIAL_CONTENT,
         message: "Mapping performed successfully and files $fileNames are already uploaded, Rest are processing to load data".replace("$fileNames", alreadyUpload.join(", ")),
         data: uploadResult,
       });
-    }
-
-    return res.status(HttpStatus.OK).json({
+    } else {
+      res.status(HttpStatus.OK).json({
       statusCode: HttpStatus.OK,
       message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"),
       data: uploadResult,
     });
+    }
+
+    for(const fileName in backgroundTask) {
+      try {
+        await this.processMappingSheetDataWithDatabaseKeys(fileName, backgroundTask[fileName])
+      } catch (error) {
+        console.error("processMappingSheetDataWithDatabaseKeys method: Background processing task failed:", error);
+      }
+    }
   }
 }
