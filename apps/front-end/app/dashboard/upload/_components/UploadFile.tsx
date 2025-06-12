@@ -1,6 +1,6 @@
 'use client';
 import { Dropzone, FileWithPath, MIME_TYPES } from '@mantine/dropzone';
-import { Button, Center, Paper, Stack, Text, Transition } from '@mantine/core';
+import { Button, Center, Paper, Stack, Text } from '@mantine/core';
 import { IconCloudUpload } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { MappingModal } from './MappingModal';

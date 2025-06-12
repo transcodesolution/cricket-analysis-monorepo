@@ -1,5 +1,6 @@
 import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
+import { IBatsmanStatsData, IReportDetails } from "../types-api/src";
 
 export const readExcelFiles = async (
   files: File[]
@@ -51,4 +52,23 @@ export const isEquals = <T>(obj1: T, obj2: T): boolean => {
 
   // rome-ignore lint/suspicious/noExplicitAny: <explanation>
   return keys1.every((key) => isEquals((obj1 as Record<string, unknown>)[key], (obj2 as Record<string, unknown>)[key]));
+};
+
+export const getColorByValue = (value: number): string => {
+  if (value >= 65) return '#1E88E5';   // Dark Blue
+  if (value >= 14) return '#7ec6f7';   // Medium Blue
+  return '#BBDEFB';                    // Light Blue
+};
+
+
+export const isBatsmanStatsData = (details: IReportDetails): details is IBatsmanStatsData => {
+  return 'playerName' in details && 'rpi' in details;
+}
+
+export const getScoreColor = (runs: number) => {
+  if (runs === 0) return '#b71c1c'; // dark red
+  if (runs < 10) return '#d32f2f'; // red
+  if (runs < 30) return '#f57c00'; // orange
+  if (runs < 50) return '#388e3c'; // green
+  return '#2e7d32'; // dark green
 };
