@@ -57,9 +57,10 @@ export const ReportTable = () => {
   });
 
   const report = getReportResponse?.data?.report;
+  const reportDetails = report?.details;
   const reportFilters = getReportResponse?.data?.report?.filters || [];
-  const reportData = report?.details?.tableBody ?? [];
-  const tableHeaders = report?.details?.tableHeader ?? [];
+  const reportData = reportDetails && 'tableBody' in reportDetails ? reportDetails.tableBody : [];
+  const tableHeaders = reportDetails && 'tableHeader' in reportDetails ? reportDetails.tableHeader : [];
   const totalRecords = getReportResponse?.data?.totalData ?? 0;
 
   const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header: ITableHeader) => ({
