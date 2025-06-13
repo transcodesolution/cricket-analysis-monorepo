@@ -1,9 +1,9 @@
-import { IRecentGame } from "@/libs/types-api/src";
-import { getScoreColor } from "@/libs/utils/ui-helper";
+import { IBatsmanRecentGame } from "@/libs/types-api/src";
 import { DataTableColumn } from "mantine-datatable";
+import { getScoreColor } from "@/libs/utils/ui-helper";
 import { Text } from '@mantine/core';
 
-export const getColumns = (): DataTableColumn<IRecentGame>[] => [
+export const batsmanColumns: DataTableColumn<IBatsmanRecentGame>[] = [
   {
     accessor: 'date',
     title: 'Date',
@@ -11,18 +11,8 @@ export const getColumns = (): DataTableColumn<IRecentGame>[] => [
     render: ({ date }) => date ? new Date(date).toLocaleDateString('en-IN') : '-',
     textAlign: 'center'
   },
-  {
-    accessor: 'battingTeam',
-    title: 'Batting Team',
-    width: 100,
-    ellipsis: true
-  },
-  {
-    accessor: 'bowlingTeam',
-    title: 'Bowling Team',
-    width: 100,
-    ellipsis: true
-  },
+  { accessor: 'battingTeam', title: 'Batting Team', width: 100, ellipsis: true },
+  { accessor: 'bowlingTeam', title: 'Bowling Team', width: 100, ellipsis: true },
   {
     accessor: 'dismissal',
     title: 'Dismissal',

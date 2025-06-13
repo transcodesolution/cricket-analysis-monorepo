@@ -1,18 +1,16 @@
 'use client';
 import { Paper, Grid } from '@mantine/core';
-import { DataTable } from 'mantine-datatable';
 import DismissalChart from './DismissalChart';
-import { IDismissalsChart, IRecentGame } from '@/libs/types-api/src';
-import { getColumns } from './Columns';
+import { IDismissalsChart, IBatsmanRecentGame, IBowlerRecentGame } from '@/libs/types-api/src';
+import RecentGamesTable from './RecentGamesTable';
 
 interface IDismissalAndRecentGames {
   dismissals: IDismissalsChart;
-  games: IRecentGame[];
+  games: IBatsmanRecentGame[] | IBowlerRecentGame[];
+  playerType?: 'batsman' | 'bowler';
 };
 
-export const DismissalAndRecentGames = ({ dismissals, games }: IDismissalAndRecentGames) => {
-
-  const columns = getColumns();
+export const DismissalAndRecentGames = ({ dismissals, games, playerType = 'batsman' }: IDismissalAndRecentGames) => {
 
   return (
     <Grid gutter={8} align="stretch" style={{ width: '100%' }}>
@@ -37,18 +35,7 @@ export const DismissalAndRecentGames = ({ dismissals, games }: IDismissalAndRece
         >
           20 Most Recent Games
         </Paper>
-        <DataTable
-          idAccessor="matchInfoId"
-          withTableBorder={false}
-          minHeight={300}
-          height={400}
-          striped
-          rowStyle={(_, index) => ({
-            backgroundColor: index % 2 === 0 ? 'white' : 'var(--mantine-color-lightBlue-1)',
-          })}
-          records={games}
-          columns={columns}
-        />
+        <RecentGamesTable games={games} playerType={playerType} />
       </Grid.Col>
     </Grid >
   )

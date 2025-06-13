@@ -1,4 +1,5 @@
 import { IRunDistribution } from '@/libs/types-api/src';
+import { formatToFixed1OrZero } from '@/libs/utils/ui-helper';
 import { Grid, Paper, Text } from '@mantine/core';
 import React from 'react';
 
@@ -58,7 +59,7 @@ export const RunDistributionGrid = ({ runDistData, title }: IRunDistributionGrid
               </Text>
               <Text fz={15} mb={1}><b>{stats?.balls ?? 0}%</b> of balls</Text>
               <Text fz={15} mb={1}><b>{stats?.runs ?? 0}% </b> of runs</Text>
-              <Text fz={15}><b>{(stats?.runs ?? 0).toFixed(1)}</b> per match</Text>
+              <Text fz={15}><b>{formatToFixed1OrZero(stats?.perMatch)}</b> per match</Text>
             </Paper>
           </Grid.Col>
         ))}

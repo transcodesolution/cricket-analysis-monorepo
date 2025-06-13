@@ -124,22 +124,26 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
       return (
         <MultiSelect
           label={filter.label}
-          placeholder={filter.label}
           data={options}
           size="sm"
           searchable
-          value={values}
+          value={values.length === 0 ? ['all'] : values}
           onChange={(val) => {
-            handleApplyFilter({
-              [key]: val.length === 0 || val.includes('all') ? undefined : val.join(','),
-            });
+            if (val.includes('all') && val.length > 1) {
+              const filtered = val.filter((v) => v !== 'all');
+              handleApplyFilter({ [key]: filtered.join(',') });
+            } else if (val.includes('all')) {
+              handleApplyFilter({ [key]: undefined });
+            } else {
+              handleApplyFilter({ [key]: val.join(',') });
+            }
           }}
           maw={370}
           styles={{
             input: {
               height: '2.2em',
               background: filter.selectBgColor,
-              color: filter.selectColor,
+              color: 'black',
               border: 'none',
               width: '370px',
               overflowX: 'auto',
@@ -147,6 +151,7 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
             },
             pillsList: {
               flexWrap: 'nowrap',
+              height: '1.9em'
             },
             label: {
               color: filter.selectColor,
@@ -159,12 +164,11 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
     return (
       <Select
         label={filter.label}
-        placeholder={filter.label}
         data={options}
         size="sm"
         searchable
         clearable
-        value={defaultSelected === 'all' ? null : defaultSelected}
+        value={defaultSelected || 'all'}
         onChange={(val) => {
           handleApplyFilter({
             [key]: !val || val === 'all' ? undefined : val,
@@ -173,7 +177,7 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
         styles={{
           input: {
             background: filter.selectBgColor,
-            color: filter.selectColor,
+            color: 'black',
             border: 'none',
             width: '100%',
           },
