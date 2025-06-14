@@ -92,6 +92,36 @@ export interface IOutcomeDistributionItem {
   title: string;
   subtext: string;
 }
+
+export interface IVenueProfile {
+  name: string;
+  innings: number;
+}
+
+export interface IVenueInnings {
+  title: string;
+  subtext: string;
+}
+
+
+export interface IVenueRecentGames {
+  matchInfoId: string;
+  date: string;
+  match: string;
+  inningOneRuns: number;
+  inningOneWickets: number;
+  inningTwoRuns: number;
+  inningTwoWickets: number;
+  winner: string;
+  bowled: number;
+  caught: number;
+  '0s': string;
+  '4s': string;
+  '6s': string;
+  methodUsed: string;
+  lbw: number;
+}
+
 export interface IBatsmanStatsData {
   playerName: string;
   innings: number;
@@ -120,12 +150,28 @@ export interface IBowlerStatsData {
   recentGames: IBowlerRecentGames[];
 }
 
+export interface IVenueStatsData {
+  _id: string | null;
+  venues: IVenueProfile[];
+  innings: IVenueInnings[];
+  dismissals: IDismissalsBarChartData;
+  overs_phase: IOversPhaseItem[];
+  recentGames: IVenueRecentGames[];
+  runDistribution: IRunDistribution;
+}
+
+
+export interface IVenueRunDistribution {
+  title: string;
+  subtext: string;
+}
+
 export interface ITableReportDetails {
   tableBody: ITableRow[];
   tableHeader: ITableHeader[];
 }
 
-export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | ITableReportDetails;
+export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | IVenueStatsData | ITableReportDetails;
 
 export interface IGetReportByIdResponse {
   report: {

@@ -151,7 +151,7 @@ export const BatsmanStatsReport = () => {
       <ReportsFilter reportFilters={reportFilters} />
       <PlayerStatsOverview profileInfo={profileInfo} runDistData={runDistribution} ballByBallData={ballByBallData} rightPanelStatsData={rightPanelStatsData} />
       <ScoringDistributionGrid title="Scoring Distribution" data={scoringDistribution} />
-      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} playerType='batsman' />
+      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} reportFor='batsman' />
     </Paper>
   )
 };

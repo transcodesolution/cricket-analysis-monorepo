@@ -1,19 +1,16 @@
-'use client';
+'use client'
 import { Paper, Title } from '@mantine/core';
-import { ReportsFilter } from '../../_components/ReportsFilter';
-import { BowlerStatsOverview } from './BowlerStatsOverview';
-import { DistributionGridOverview } from './DistributionGridOverview';
-import { DismissalAndRecentGames } from '../../_components/DismissalAndRecentGames';
 import PageLoader from '@/libs/custom/loaders/PageLoader';
+import { useGetReportById } from '@/libs/react-query-hooks/src';
 import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useGetReportById } from '@/libs/react-query-hooks/src';
-import { isBowlerStatsData } from '@/libs/utils/ui-helper';
-import { IBowlerStatsData } from '@/libs/types-api/src';
+import { ReportsFilter } from '../../_components/ReportsFilter';
+import { isVenueStatsData } from '@/libs/utils/ui-helper';
+import { VenueStatsOverview } from './VenueStatsOverview';
+import { RunDistributionGrid } from '../../_components/RunDistributionGrid';
+import { DismissalAndRecentGames } from '../../_components/DismissalAndRecentGames';
 
-export type TBowlerProfileInfoData = Pick<IBowlerStatsData, | 'playerName' | 'innings' | 'avg' | 'strikeRate' | 'matchWhichHasLeastWickets'>;
-
-export const BowlerStatsReport = () => {
+export const VenueStatsReport = () => {
   const pathname = usePathname();
   const pathSegments = pathname.split('/').filter(Boolean);
   const reportType = pathSegments[pathSegments.length - 1];
@@ -60,7 +57,7 @@ export const BowlerStatsReport = () => {
     return <PageLoader height={'calc(100vh - 140px)'} />;
   }
 
-  if (!reportDetails || !isBowlerStatsData(reportDetails)) {
+  if (!reportDetails || !isVenueStatsData(reportDetails)) {
     return (
       <Paper withBorder radius="lg" p="md" style={{ textAlign: 'center' }} h='calc(100vh - 140px)' display='flex' styles={{ root: { justifyContent: 'center', alignItems: 'center' } }}>
         <Title order={4} fw={500}>No Report Found</Title>
@@ -69,48 +66,54 @@ export const BowlerStatsReport = () => {
   }
 
   const {
-    playerName,
-    innings,
-    avg,
-    strikeRate,
-    matchWhichHasLeastWickets,
+    venues,
     overs_phase,
-    outcomeDistribution,
-    deliveryOutcomes,
     recentGames,
     dismissals,
+    innings,
+    runDistribution
   } = reportDetails;
 
   const rightPanelStatsData = [
     {
       items: [
-        { title: 'RHB', value: '', subtext: '27.3 AVG\n8.5 RPO\n19.3 SR' },
-        { title: 'LHB', value: '', subtext: '29.0 AVG\n8.7 RPO\n19.9 SR' },
+        {
+          title: 'RHB',
+          subtext: '28.0 AVG\n141.4 SR',
+        },
+        {
+          title: 'LHB',
+          subtext: '29.4 AVG\n141.3 SR',
+        },
       ],
     },
     {
-      items: overs_phase.map((item) => ({
-        title: item.title,
-        subtext: item.subtext,
-      })),
+      items: overs_phase,
+    },
+    {
+      items: [
+        {
+          title: 'Seam',
+          subtext: '29.1 AVG\n9.2 RPO  19.0 SR\n63.3% of balls',
+        },
+        {
+          title: 'Spin',
+          subtext: '30.5 AVG\n8.2 RPO  22.3 SR\n36.7% of balls',
+        },
+      ],
     },
   ];
 
-  const profileInfo: TBowlerProfileInfoData = {
-    playerName,
-    innings,
-    avg,
-    strikeRate,
-    matchWhichHasLeastWickets,
-  };
-
+  const inningsStats = [{
+    items: innings
+  }]
   return (
     <Paper withBorder radius="lg" p="md">
-      <Title order={4} fw={500} mb="md">Bowler stats</Title>
+      <Title order={4} fw={500} mb="md">Venue stats</Title>
       <ReportsFilter reportFilters={reportFilters} />
-      <BowlerStatsOverview profileInfo={profileInfo} rightPanelStatsData={rightPanelStatsData} />
-      <DistributionGridOverview outcomeTitle="Outcome Distribution" outcomeData={outcomeDistribution} deliveryTitle="Delivery Outcomes" deliveryData={deliveryOutcomes} />
-      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} reportFor="bowler" />
+      <VenueStatsOverview venues={venues} inningsStats={inningsStats} rightPanelStatsData={rightPanelStatsData} />
+      <RunDistributionGrid title="Run Distribution" runDistData={runDistribution} />
+      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} reportFor='venue' />
     </Paper>
-  );
+  )
 };

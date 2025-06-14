@@ -2,21 +2,21 @@ import { DataTable, DataTableColumn } from 'mantine-datatable';
 import {
   IBatsmanRecentGames,
   IBowlerRecentGames,
+  IVenueRecentGames,
 } from '@/libs/types-api/src';
 import { batsmanColumns } from './columns/batsmanColumns';
 import { bowlerColumns } from './columns/bowlerColumns';
+import { venueColumns } from './columns/venueColumns';
 interface IRecentGamesTable {
-  playerType: TPlayerType;
-  games: IBatsmanRecentGames[] | IBowlerRecentGames[];
+  reportFor: TPlayerType;
+  games: IBatsmanRecentGames[] | IBowlerRecentGames[] | IVenueRecentGames[];
 }
 
-type TPlayerType = 'batsman' | 'bowler';
-type TPlayerRecord = TPlayerType extends 'batsman' ? IBatsmanRecentGames : IBowlerRecentGames;
+type TPlayerType = 'batsman' | 'bowler' | 'venue';
+type TPlayerRecord = TPlayerType extends 'batsman' ? IBatsmanRecentGames : TPlayerType extends 'bowler' ? IBowlerRecentGames : IVenueRecentGames;
 
-export const RecentGamesTable = ({ playerType, games }: IRecentGamesTable) => {
-  const columns = playerType === 'batsman' ? batsmanColumns : bowlerColumns
-
-
+export const RecentGamesTable = ({ reportFor, games }: IRecentGamesTable) => {
+  const columns = reportFor === 'batsman' ? batsmanColumns : reportFor === 'bowler' ? bowlerColumns : venueColumns;
   const playerRecords = games as TPlayerRecord[];
 
   return (
