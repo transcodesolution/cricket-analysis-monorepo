@@ -1,6 +1,6 @@
 import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
-import { IBatsmanStatsData, IBowlerStatsData, TReportDetails } from "../types-api/src";
+import { IBatsmanStatsData, IBowlerStatsData, TReportDetails, IVenueStatsData } from "../types-api/src";
 
 export const readExcelFiles = async (
   files: File[]
@@ -60,6 +60,10 @@ export const isBatsmanStatsData = (details: TReportDetails): details is IBatsman
 
 export const isBowlerStatsData = (details: TReportDetails): details is IBowlerStatsData => {
   return ('avg' in details && 'deliveryOutcomes' in details);
+};
+
+export const isVenueStatsData = (details: TReportDetails): details is IVenueStatsData => {
+  return 'venues' in details;
 };
 
 export const getScoreColor = (runs: number) => {
