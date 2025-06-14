@@ -1,22 +1,19 @@
-'use client'
+'use client';
 import { Paper, Title } from '@mantine/core';
 import { ReportsFilter } from '../../_components/ReportsFilter';
-import { PlayerStatsOverview } from './PlayerStatsOverview';
-import { ScoringDistributionGrid } from './ScoringDistributionGrid';
+import { BowlerStatsOverview } from './BowlerStatsOverview';
+import { DistributionGridOverview } from './DistributionGridOverview';
 import { DismissalAndRecentGames } from '../../_components/DismissalAndRecentGames';
+import PageLoader from '@/libs/custom/loaders/PageLoader';
+import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useGetReportById } from '@/libs/react-query-hooks/src';
-import { useMemo } from 'react';
-import { IBatsmanStatsData } from '@/libs/types-api/src';
-import { isBatsmanStatsData } from '@/libs/utils/ui-helper';
-import PageLoader from '@/libs/custom/loaders/PageLoader';
+import { isBowlerStatsData } from '@/libs/utils/ui-helper';
+import { IBowlerStatsData } from '@/libs/types-api/src';
 
-export type TBatsmanProfileInfoData = Pick<
-  IBatsmanStatsData,
-  'playerName' | 'innings' | 'rpi' | 'median' | 'strikeRate' | 'sixHitInAvgMatches'
->;
+export type TBowlerProfileInfoData = Pick<IBowlerStatsData, | 'playerName' | 'innings' | 'avg' | 'strikeRate' | 'matchWhichHasLeastWickets'>;
 
-export const BatsmanStatsReport = () => {
+export const BowlerStatsReport = () => {
   const pathname = usePathname();
   const pathSegments = pathname.split('/').filter(Boolean);
   const reportType = pathSegments[pathSegments.length - 1];
@@ -63,7 +60,7 @@ export const BatsmanStatsReport = () => {
     return <PageLoader height={'calc(100vh - 140px)'} />;
   }
 
-  if (!reportDetails || !isBatsmanStatsData(reportDetails)) {
+  if (!reportDetails || !isBowlerStatsData(reportDetails)) {
     return (
       <Paper withBorder radius="lg" p="md" style={{ textAlign: 'center' }} h='calc(100vh - 140px)' display='flex' styles={{ root: { justifyContent: 'center', alignItems: 'center' } }}>
         <Title order={4} fw={500}>No Report Found</Title>
@@ -74,38 +71,21 @@ export const BatsmanStatsReport = () => {
   const {
     playerName,
     innings,
-    rpi,
-    median,
+    avg,
     strikeRate,
-    sixHitInAvgMatches,
-    runDistribution,
-    scoringDistribution,
-    ballByBallData,
+    matchWhichHasLeastWickets,
+    overs_phase,
+    outcomeDistribution,
+    deliveryOutcomes,
     recentGames,
     dismissals,
-    overs_phase
   } = reportDetails;
-
-  const profileInfo: TBatsmanProfileInfoData = {
-    playerName,
-    innings,
-    rpi,
-    median,
-    strikeRate,
-    sixHitInAvgMatches,
-  };
 
   const rightPanelStatsData = [
     {
       items: [
-        {
-          title: 'Seam',
-          subtext: '36.2 AVG\n142.3 SR',
-        },
-        {
-          title: 'Spin',
-          subtext: '37.4 AVG\n142.3 SR',
-        },
+        { title: 'RHB', value: '', subtext: '27.3 AVG\n8.5 RPO\n19.3 SR' },
+        { title: 'LHB', value: '', subtext: '29.0 AVG\n8.7 RPO\n19.9 SR' },
       ],
     },
     {
@@ -114,44 +94,23 @@ export const BatsmanStatsReport = () => {
         subtext: item.subtext,
       })),
     },
-    {
-      items: [
-        {
-          title: 'RFM',
-          subtext: '37.0 AVG\n133.2 SR',
-        },
-        {
-          title: 'RLB',
-          subtext: '44.2 AVG\n137.7 SR',
-        },
-        {
-          title: 'ROB',
-          subtext: '34.4 AVG\n140.3 SR',
-        },
-        {
-          title: 'LOB',
-          subtext: '30.8 AVG\n148.4 SR',
-        },
-        {
-          title: 'LLB',
-          subtext: '34.0 AVG\n148.4 SR',
-        },
-        {
-          title: 'LFM',
-          subtext: '34.2 AVG\n138.1 SR',
-        },
-      ],
-    },
   ];
 
+  const profileInfo: TBowlerProfileInfoData = {
+    playerName,
+    innings,
+    avg,
+    strikeRate,
+    matchWhichHasLeastWickets,
+  };
 
   return (
     <Paper withBorder radius="lg" p="md">
-      <Title order={4} fw={500} mb="md">Batsmen stats</Title>
+      <Title order={4} fw={500} mb="md">Bowler stats</Title>
       <ReportsFilter reportFilters={reportFilters} />
-      <PlayerStatsOverview profileInfo={profileInfo} runDistData={runDistribution} ballByBallData={ballByBallData} rightPanelStatsData={rightPanelStatsData} />
-      <ScoringDistributionGrid title="Scoring Distribution" data={scoringDistribution} />
-      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} playerType='batsman' />
+      <BowlerStatsOverview profileInfo={profileInfo} rightPanelStatsData={rightPanelStatsData} />
+      <DistributionGridOverview outcomeTitle="Outcome Distribution" outcomeData={outcomeDistribution} deliveryTitle="Delivery Outcomes" deliveryData={deliveryOutcomes} />
+      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} playerType="bowler" />
     </Paper>
-  )
+  );
 };

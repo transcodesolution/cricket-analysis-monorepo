@@ -2,9 +2,9 @@ import { Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { ReactNode } from 'react';
 
-type ConfirmModalOptions = Parameters<typeof modals.openConfirmModal>[0];
+type TConfirmModalOptions = Parameters<typeof modals.openConfirmModal>[0];
 
-interface IUseConfirmDeleteOptions extends Omit<ConfirmModalOptions, 'children'> {
+interface IUseConfirmDeleteOptions extends Omit<TConfirmModalOptions, 'children'> {
   itemName?: string;
   children?: ReactNode;
 }

@@ -5,7 +5,7 @@ export interface IApiResponse<T = object | object[]> {
     error?: { message?: string, stack?: string }
 }
 
-export type PaginationApiResponseType<T, U = IPaginationApiResponseState> = {
+export type TPaginationApiResponseType<T, U = IPaginationApiResponseState> = {
     state: U
     totalData: number,
 } & { [key: string]: T }

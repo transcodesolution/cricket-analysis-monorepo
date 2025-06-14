@@ -34,6 +34,7 @@ export interface ITableRow {
 export interface IRunTypeStats {
   runs: number;
   balls: number;
+  perMatch: number;
 }
 
 export interface IRunDistribution {
@@ -44,7 +45,7 @@ export interface IScoringDistribution {
   [range: string]: number; // e.g., "0+": 100, "10+": 62.5
 }
 
-export interface IRecentGame {
+export interface IBatsmanRecentGames {
   date: string;
   battingTeam: string;
   bowlingTeam: string;
@@ -57,7 +58,23 @@ export interface IRecentGame {
   matchInfoId: string;
 }
 
-export interface IDismissalsChart {
+export interface IBowlerRecentGames {
+  matchInfoId: string;
+  date: string;
+  battingTeam: string;
+  bowlingTeam: string;
+  '0s': number;
+  '4s': number;
+  '6s': number;
+  caught: number;
+  bowled: number;
+  lbw: number;
+  extras: number;
+  overs: number;
+  runsConceded: number;
+  totalWicketTaken: number;
+}
+export interface IDismissalsBarChartData {
   [key: string]: number;
 }
 
@@ -70,6 +87,11 @@ export interface IOversPhaseItem {
   title: string;
   subtext: string;
 }
+
+export interface IOutcomeDistributionItem {
+  title: string;
+  subtext: string;
+}
 export interface IBatsmanStatsData {
   playerName: string;
   innings: number;
@@ -79,10 +101,23 @@ export interface IBatsmanStatsData {
   sixHitInAvgMatches: number;
   runDistribution: IRunDistribution;
   scoringDistribution: IScoringDistribution;
-  recentGames: IRecentGame[];
-  dismissals: IDismissalsChart;
+  recentGames: IBatsmanRecentGames[];
+  dismissals: IDismissalsBarChartData;
   ballByBallData: IBallData[];
   overs_phase: IOversPhaseItem[];
+}
+
+export interface IBowlerStatsData {
+  playerName: string;
+  innings: number;
+  avg: number;
+  strikeRate: number;
+  matchWhichHasLeastWickets: number;
+  dismissals: IDismissalsBarChartData;
+  deliveryOutcomes: IBallData[];
+  outcomeDistribution: IOutcomeDistributionItem[];
+  overs_phase: IOversPhaseItem[];
+  recentGames: IBowlerRecentGames[];
 }
 
 export interface ITableReportDetails {
@@ -90,12 +125,12 @@ export interface ITableReportDetails {
   tableHeader: ITableHeader[];
 }
 
-export type IReportDetails = IBatsmanStatsData | ITableReportDetails;
+export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | ITableReportDetails;
 
 export interface IGetReportByIdResponse {
   report: {
     name: string;
-    details: IReportDetails;
+    details: TReportDetails;
     filters: IReportFilter[];
   };
   totalData: number;

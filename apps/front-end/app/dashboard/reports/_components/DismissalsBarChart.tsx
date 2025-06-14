@@ -1,27 +1,29 @@
 import { BarChart } from '@mantine/charts';
 import { Paper } from '@mantine/core';
 import React from 'react';
-import { getColorByValue } from '@/libs/utils/ui-helper';
-import { IDismissalsChart } from '@/libs/types-api/src';
+import { IDismissalsBarChartData } from '@/libs/types-api/src';
 import { LabelProps } from 'recharts';
 
-export default function DismissalChart({ dismissalData }: { dismissalData: IDismissalsChart }) {
+export const DismissalsBarChart = ({ dismissalData }: { dismissalData: IDismissalsBarChartData }) => {
   const chartData = Object.entries(dismissalData)
     .map(([key, value]) => ({
       label: key.charAt(0).toUpperCase() + key.slice(1),
       value,
     }))
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => b.value - a.value)
+    .map((item, idx) => ({
+      ...item,
+      color: `var(--mantine-color-richBlue-${Math.max(3, 7 - idx)})`,
+    }));
 
-  const renderLabel = (props: LabelProps) => {
+  const renderLabel = (props: LabelProps & { index?: number }) => {
     {
-      const { value, x, y, width, height } = props;
-      if (value === undefined || value === null || x === undefined || y === undefined || width === undefined || height === undefined) {
+      const { value, x, y, width, height, index } = props;
+      if (value === undefined || value === null || x === undefined || y === undefined || width === undefined || height === undefined || index === undefined) {
         return null;
       }
-      const item = chartData.find(d => d.value === value);
+      const item = chartData[index];
       if (!item) return null;
-
 
       const label = item.label;
       const val = `${value}%`;
@@ -69,7 +71,6 @@ export default function DismissalChart({ dismissalData }: { dismissalData: IDism
             color: 'white',
             fontWeight: 600,
             fontSize: 18,
-            borderBottom: '1px solid #bfc9d1',
             borderRadius: 0,
           },
         }}
@@ -98,7 +99,10 @@ export default function DismissalChart({ dismissalData }: { dismissalData: IDism
           withTooltip={false}
           withXAxis={false}
           withYAxis={false}
-          getBarColor={(value: number) => getColorByValue(value)}
+          getBarColor={(value) => {
+            const match = chartData.find((item) => item.value === value);
+            return match?.color ?? 'var(--mantine-color-blue-3)';
+          }}
           barChartProps={{ barCategoryGap: 0, }}
         />
       </Paper>

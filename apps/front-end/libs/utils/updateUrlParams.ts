@@ -1,7 +1,7 @@
-type FilterValue = string | string[] | undefined;
+type TFilterValue = string | string[] | undefined;
 
 export interface IFilterParams {
-  [key: string]: FilterValue;
+  [key: string]: TFilterValue;
 }
 
 export const updateUrlParams = (filters: IFilterParams): string => {

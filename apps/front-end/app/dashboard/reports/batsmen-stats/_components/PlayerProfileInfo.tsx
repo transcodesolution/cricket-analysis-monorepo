@@ -1,5 +1,5 @@
 import { Stack, Text, Title, Group } from '@mantine/core';
-import { PlayerProfileInfoData } from './BatsmanStatsReport';
+import { TBatsmanProfileInfoData } from './BatsmanStatsReport';
 
 export const PlayerProfileInfo = ({
   playerName,
@@ -8,7 +8,7 @@ export const PlayerProfileInfo = ({
   median,
   strikeRate,
   sixHitInAvgMatches,
-}: PlayerProfileInfoData) => {
+}: TBatsmanProfileInfoData) => {
   return (
     <Stack align="center" gap='0'>
       <Title order={2}>{playerName}</Title>

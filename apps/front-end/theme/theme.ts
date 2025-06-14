@@ -41,12 +41,12 @@ const customBlue: MantineColorsTuple = [
 
 const orange: MantineColorsTuple = [
   '#ffe5d0', '#fdd7b5', '#fac897', '#f5b16f', '#f59a42',
-  '#f2801a', '#E87722', '#cba181', '#b75410', '#9c4509',
+  '#E16D10', '#E87722', '#EFAF7C', '#b75410', '#9c4509',
 ];
 
 const yellow: MantineColorsTuple = [
-  '#F6E7B4', '#fff3cc', '#ffeeaa', '#ffe47f', '#ffdb55',
-  '#ffd22b', '#FDF3C0', '#e6c966', '#ccb342', '#b29d1f',
+  '#F8E2B7', '#fff3cc', '#ffeeaa', '#ffe47f', '#ffdb55',
+  '#ffd22b', '#f2cb7c', '#e6c966', '#ccb342', '#b29d1f',
 ];
 
 const richBlue: MantineColorsTuple = [
