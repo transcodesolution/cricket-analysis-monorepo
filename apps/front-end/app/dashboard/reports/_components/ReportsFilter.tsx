@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Flex, Paper, Select, MultiSelect } from '@mantine/core';
+import { Paper, Select, MultiSelect, SimpleGrid } from '@mantine/core';
 import { DatePickerInput, DatesRangeValue } from '@mantine/dates';
 import dayjs from 'dayjs';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
@@ -124,29 +124,32 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
       return (
         <MultiSelect
           label={filter.label}
-          placeholder={filter.label}
           data={options}
           size="sm"
           searchable
-          value={values}
+          value={values.length === 0 ? ['all'] : values}
           onChange={(val) => {
-            handleApplyFilter({
-              [key]: val.length === 0 || val.includes('all') ? undefined : val.join(','),
-            });
+            if (val.includes('all') && val.length > 1) {
+              const filtered = val.filter((v) => v !== 'all');
+              handleApplyFilter({ [key]: filtered.join(',') });
+            } else if (val.includes('all')) {
+              handleApplyFilter({ [key]: undefined });
+            } else {
+              handleApplyFilter({ [key]: val.join(',') });
+            }
           }}
-          maw={370}
           styles={{
             input: {
               height: '2.2em',
               background: filter.selectBgColor,
-              color: filter.selectColor,
+              color: 'black',
               border: 'none',
-              width: '370px',
               overflowX: 'auto',
               overflowY: 'hidden',
             },
             pillsList: {
               flexWrap: 'nowrap',
+              height: '1.9em',
             },
             label: {
               color: filter.selectColor,
@@ -159,12 +162,11 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
     return (
       <Select
         label={filter.label}
-        placeholder={filter.label}
         data={options}
         size="sm"
         searchable
         clearable
-        value={defaultSelected === 'all' ? null : defaultSelected}
+        value={defaultSelected || 'all'}
         onChange={(val) => {
           handleApplyFilter({
             [key]: !val || val === 'all' ? undefined : val,
@@ -173,7 +175,7 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
         styles={{
           input: {
             background: filter.selectBgColor,
-            color: filter.selectColor,
+            color: 'black',
             border: 'none',
             width: '100%',
           },
@@ -186,7 +188,9 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
   };
 
   return (
-    <Flex gap="sm" wrap={{ md: 'nowrap', base: 'wrap' }}>
+    <SimpleGrid
+      cols={{ base: 1, sm: 2, md: reportFilters.length }}
+    >
       {reportFilters.map((filter, index) => {
         const theme = styleThemes[index % styleThemes.length];
         const styledFilter = { ...filter, ...theme };
@@ -198,12 +202,11 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
             p="xs"
             radius="md"
             withBorder
-            w='100%'
           >
             {renderFilterField(styledFilter)}
           </Paper>
         );
       })}
-    </Flex>
+    </SimpleGrid>
   );
 };

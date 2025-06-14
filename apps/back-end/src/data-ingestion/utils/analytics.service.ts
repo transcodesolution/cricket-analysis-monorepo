@@ -32,6 +32,9 @@ export class AnalyticsService {
             const team1TotalRuns = this.calculateTotalRuns(inningsOneBalls);
             const team2TotalRuns = this.calculateTotalRuns(inningsTwoBalls);
 
+            analytics.teamOne.runsScored = team1TotalRuns;
+            analytics.teamTwo.runsScored = team2TotalRuns;
+
             analytics.totalRuns = team1TotalRuns + team2TotalRuns;
             analytics.totalBallFaced = (analytics.teamOne.ballFaced + analytics.teamTwo.ballFaced) || 0;
 

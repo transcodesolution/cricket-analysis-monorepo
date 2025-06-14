@@ -853,13 +853,13 @@ export class DataIngestionService {
       });
     } else {
       res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
-      message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"),
-      data: uploadResult,
-    });
+        statusCode: HttpStatus.OK,
+        message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"),
+        data: uploadResult,
+      });
     }
 
-    for(const fileName in backgroundTask) {
+    for (const fileName in backgroundTask) {
       try {
         await this.processMappingSheetDataWithDatabaseKeys(fileName, backgroundTask[fileName])
       } catch (error) {

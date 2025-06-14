@@ -1,11 +1,11 @@
 import { IGetRolesRequest } from "@/libs/types-api/src";
 import http from "./http-common";
 import { apiErrorHandler } from "@/libs/utils/apiErrorHandler";
-import { IApiResponse, IUserRole, PaginationApiResponseType } from "@cricket-analysis-monorepo/interfaces";
+import { IApiResponse, IUserRole, TPaginationApiResponseType } from "@cricket-analysis-monorepo/interfaces";
 
-export const getRoles = async (params: IGetRolesRequest): Promise<IApiResponse<PaginationApiResponseType<IUserRole[]>>> => {
+export const getRoles = async (params: IGetRolesRequest): Promise<IApiResponse<TPaginationApiResponseType<IUserRole[]>>> => {
   try {
-    const result = await http.get<IApiResponse<PaginationApiResponseType<IUserRole[]>>>('/user-role?', { params });
+    const result = await http.get<IApiResponse<TPaginationApiResponseType<IUserRole[]>>>('/user-role?', { params });
     return result.data;
   } catch (error) {
     throw new Error(`Error while fetching roles: ${error}`);

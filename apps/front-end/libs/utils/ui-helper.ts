@@ -1,6 +1,6 @@
 import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
-import { IBatsmanStatsData, IReportDetails } from "../types-api/src";
+import { IBatsmanStatsData, IBowlerStatsData, TReportDetails, IVenueStatsData } from "../types-api/src";
 
 export const readExcelFiles = async (
   files: File[]
@@ -54,16 +54,17 @@ export const isEquals = <T>(obj1: T, obj2: T): boolean => {
   return keys1.every((key) => isEquals((obj1 as Record<string, unknown>)[key], (obj2 as Record<string, unknown>)[key]));
 };
 
-export const getColorByValue = (value: number): string => {
-  if (value >= 65) return 'var(--mantine-color-richBlue-9)';   // Dark Blue
-  if (value >= 14) return 'var(--mantine-color-richBlue-5)';   // Medium Blue
-  return 'var(--mantine-color-lightBlue-5)';                    // Light Blue
-};
-
-
-export const isBatsmanStatsData = (details: IReportDetails): details is IBatsmanStatsData => {
+export const isBatsmanStatsData = (details: TReportDetails): details is IBatsmanStatsData => {
   return 'playerName' in details && 'rpi' in details;
 }
+
+export const isBowlerStatsData = (details: TReportDetails): details is IBowlerStatsData => {
+  return ('avg' in details && 'deliveryOutcomes' in details);
+};
+
+export const isVenueStatsData = (details: TReportDetails): details is IVenueStatsData => {
+  return 'venues' in details;
+};
 
 export const getScoreColor = (runs: number) => {
   if (runs === 0) return 'var(--mantine-color-red-9)'; // dark red
@@ -72,3 +73,6 @@ export const getScoreColor = (runs: number) => {
   if (runs < 50) return 'var(--mantine-color-green-8)'; // green
   return 'var(--mantine-color-green-9)'; // dark green
 };
+
+export const getFormattedStatValue = (n: number | undefined | null) =>
+  !n ? 0 : Number(n).toFixed(1);
