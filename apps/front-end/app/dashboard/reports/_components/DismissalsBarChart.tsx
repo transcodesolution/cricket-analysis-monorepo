@@ -1,11 +1,10 @@
 import { BarChart } from '@mantine/charts';
 import { Paper } from '@mantine/core';
 import React from 'react';
-import { IDismissalsChart } from '@/libs/types-api/src';
+import { IDismissalsBarChartData } from '@/libs/types-api/src';
 import { LabelProps } from 'recharts';
 
-export default function DismissalChart({ dismissalData }: { dismissalData: IDismissalsChart }) {
-  const blueShades = ['var(--mantine-color-richBlue-7)', 'var(--mantine-color-richBlue-6)', 'var(--mantine-color-richBlue-5)', 'var(--mantine-color-richBlue-4)', 'var(--mantine-color-richBlue-3)'];
+export const DismissalsBarChart = ({ dismissalData }: { dismissalData: IDismissalsBarChartData }) => {
   const chartData = Object.entries(dismissalData)
     .map(([key, value]) => ({
       label: key.charAt(0).toUpperCase() + key.slice(1),
@@ -14,7 +13,7 @@ export default function DismissalChart({ dismissalData }: { dismissalData: IDism
     .sort((a, b) => b.value - a.value)
     .map((item, idx) => ({
       ...item,
-      color: blueShades[idx] ?? blueShades[blueShades.length - 1],
+      color: `var(--mantine-color-richBlue-${Math.max(3, 7 - idx)})`,
     }));
 
   const renderLabel = (props: LabelProps & { index?: number }) => {

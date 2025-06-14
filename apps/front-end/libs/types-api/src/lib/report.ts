@@ -45,7 +45,7 @@ export interface IScoringDistribution {
   [range: string]: number; // e.g., "0+": 100, "10+": 62.5
 }
 
-export interface IBatsmanRecentGame {
+export interface IBatsmanRecentGames {
   date: string;
   battingTeam: string;
   bowlingTeam: string;
@@ -58,7 +58,7 @@ export interface IBatsmanRecentGame {
   matchInfoId: string;
 }
 
-export interface IBowlerRecentGame {
+export interface IBowlerRecentGames {
   matchInfoId: string;
   date: string;
   battingTeam: string;
@@ -74,7 +74,7 @@ export interface IBowlerRecentGame {
   runsConceded: number;
   totalWicketTaken: number;
 }
-export interface IDismissalsChart {
+export interface IDismissalsBarChartData {
   [key: string]: number;
 }
 
@@ -101,8 +101,8 @@ export interface IBatsmanStatsData {
   sixHitInAvgMatches: number;
   runDistribution: IRunDistribution;
   scoringDistribution: IScoringDistribution;
-  recentGames: IBatsmanRecentGame[];
-  dismissals: IDismissalsChart;
+  recentGames: IBatsmanRecentGames[];
+  dismissals: IDismissalsBarChartData;
   ballByBallData: IBallData[];
   overs_phase: IOversPhaseItem[];
 }
@@ -113,11 +113,11 @@ export interface IBowlerStatsData {
   avg: number;
   strikeRate: number;
   matchWhichHasLeastWickets: number;
-  dismissals: IDismissalsChart;
+  dismissals: IDismissalsBarChartData;
   deliveryOutcomes: IBallData[];
   outcomeDistribution: IOutcomeDistributionItem[];
   overs_phase: IOversPhaseItem[];
-  recentGames: IBowlerRecentGame[];
+  recentGames: IBowlerRecentGames[];
 }
 
 export interface ITableReportDetails {

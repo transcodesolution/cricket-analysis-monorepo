@@ -1,12 +1,12 @@
 'use client';
 import { Paper, Grid } from '@mantine/core';
-import DismissalChart from './DismissalChart';
-import { IDismissalsChart, IBatsmanRecentGame, IBowlerRecentGame } from '@/libs/types-api/src';
+import { IDismissalsBarChartData, IBatsmanRecentGames, IBowlerRecentGames } from '@/libs/types-api/src';
 import RecentGamesTable from './RecentGamesTable';
+import { DismissalsBarChart } from './DismissalsBarChart';
 
 interface IDismissalAndRecentGames {
-  dismissals: IDismissalsChart;
-  games: IBatsmanRecentGame[] | IBowlerRecentGame[];
+  dismissals: IDismissalsBarChartData;
+  games: IBatsmanRecentGames[] | IBowlerRecentGames[];
   playerType?: 'batsman' | 'bowler';
 };
 
@@ -15,7 +15,7 @@ export const DismissalAndRecentGames = ({ dismissals, games, playerType = 'batsm
   return (
     <Grid gutter={8} align="stretch" style={{ width: '100%' }}>
       <Grid.Col span={{ base: 12, md: 3 }}>
-        <DismissalChart dismissalData={dismissals} />
+        <DismissalsBarChart dismissalData={dismissals} />
       </Grid.Col>
       <Grid.Col span={{ base: 12, md: 9 }}>
         <Paper

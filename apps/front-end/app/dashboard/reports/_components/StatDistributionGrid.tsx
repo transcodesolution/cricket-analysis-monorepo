@@ -24,7 +24,7 @@ export const StatDistributionGrid = ({
   data,
 }: IStatDistributionGrid) => {
   return (
-    <>
+    <React.Fragment>
       {title && (
         <Paper
           p="xs"
@@ -73,6 +73,6 @@ export const StatDistributionGrid = ({
           </Grid.Col>
         ))}
       </Grid>
-    </>
+    </React.Fragment>
   );
 };

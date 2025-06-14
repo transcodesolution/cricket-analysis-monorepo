@@ -1,27 +1,28 @@
 import { DataTable, DataTableColumn } from 'mantine-datatable';
 import {
-  IBatsmanRecentGame,
-  IBowlerRecentGame,
+  IBatsmanRecentGames,
+  IBowlerRecentGames,
 } from '@/libs/types-api/src';
-import { getColumns, PlayerType } from './columns/getColumns';
-
-interface IRecentGamesTableData {
+import { batsmanColumns } from './columns/batsmanColumns';
+import { bowlerColumns } from './columns/bowlerColumns';
+interface IRecentGamesTable {
   playerType: PlayerType;
-  games: IBatsmanRecentGame[] | IBowlerRecentGame[];
+  games: IBatsmanRecentGames[] | IBowlerRecentGames[];
 }
 
-export const RecentGamesTable = ({ playerType, games }: IRecentGamesTableData) => {
-  const columns = getColumns(playerType);
+type PlayerType = 'batsman' | 'bowler';
+type PlayerRecord = PlayerType extends 'batsman' ? IBatsmanRecentGames : IBowlerRecentGames;
 
-  type PlayerRecord = PlayerType extends 'batsman' ? IBatsmanRecentGame : IBowlerRecentGame;
+export const RecentGamesTable = ({ playerType, games }: IRecentGamesTable) => {
+  const columns = playerType === 'batsman' ? batsmanColumns : bowlerColumns
 
-  const playerColumns = columns as DataTableColumn<PlayerRecord>[];
+
   const playerRecords = games as PlayerRecord[];
 
   return (
     <DataTable<PlayerRecord>
       records={playerRecords}
-      columns={playerColumns}
+      columns={columns as DataTableColumn<PlayerRecord>[]}
       idAccessor="matchInfoId"
       withTableBorder={false}
       striped

@@ -1,9 +1,9 @@
 import { DataTableColumn } from 'mantine-datatable';
 import { Text } from '@mantine/core';
-import { IBowlerRecentGame } from '@/libs/types-api/src';
-import { formatToFixed1OrZero, getScoreColor } from '@/libs/utils/ui-helper';
+import { IBowlerRecentGames } from '@/libs/types-api/src';
+import { getFormattedStatValue, getScoreColor } from '@/libs/utils/ui-helper';
 
-export const bowlerColumns: DataTableColumn<IBowlerRecentGame>[] = [
+export const bowlerColumns: DataTableColumn<IBowlerRecentGames>[] = [
   {
     accessor: 'date',
     title: 'Date',
@@ -18,21 +18,21 @@ export const bowlerColumns: DataTableColumn<IBowlerRecentGame>[] = [
     accessor: '0%',
     title: '0%',
     width: 60,
-    render: (r) => formatToFixed1OrZero(r['0s']),
+    render: (r) => getFormattedStatValue(r['0s']),
     textAlign: 'center',
   },
   {
     accessor: '4%',
     title: '4%',
     width: 60,
-    render: (r) => formatToFixed1OrZero(r['4s']),
+    render: (r) => getFormattedStatValue(r['4s']),
     textAlign: 'center',
   },
   {
     accessor: '6%',
     title: '6%',
     width: 60,
-    render: (r) => formatToFixed1OrZero(r['6s']),
+    render: (r) => getFormattedStatValue(r['6s']),
     textAlign: 'center',
   },
 
@@ -82,7 +82,7 @@ export const bowlerColumns: DataTableColumn<IBowlerRecentGame>[] = [
           minWidth: 60,
         }}
       >
-        {formatToFixed1OrZero(row.overs)}‑{row.runsConceded}‑{row.totalWicketTaken}
+        {getFormattedStatValue(row.overs)}‑{row.runsConceded}‑{row.totalWicketTaken}
       </Text>
     ),
   },

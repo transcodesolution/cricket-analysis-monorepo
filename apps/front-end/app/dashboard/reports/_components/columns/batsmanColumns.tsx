@@ -1,9 +1,9 @@
-import { IBatsmanRecentGame } from "@/libs/types-api/src";
+import { IBatsmanRecentGames } from "@/libs/types-api/src";
 import { DataTableColumn } from "mantine-datatable";
 import { getScoreColor } from "@/libs/utils/ui-helper";
 import { Text } from '@mantine/core';
 
-export const batsmanColumns: DataTableColumn<IBatsmanRecentGame>[] = [
+export const batsmanColumns: DataTableColumn<IBatsmanRecentGames>[] = [
   {
     accessor: 'date',
     title: 'Date',

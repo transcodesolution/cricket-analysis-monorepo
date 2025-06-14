@@ -70,5 +70,5 @@ export const getScoreColor = (runs: number) => {
   return 'var(--mantine-color-green-9)'; // dark green
 };
 
-export const formatToFixed1OrZero = (n: number | undefined | null) =>
+export const getFormattedStatValue = (n: number | undefined | null) =>
   !n ? 0 : Number(n).toFixed(1);
