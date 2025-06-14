@@ -1,6 +1,6 @@
 import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
-import { IBatsmanStatsData, IBowlerStatsData, IReportDetails } from "../types-api/src";
+import { IBatsmanStatsData, IBowlerStatsData, TReportDetails } from "../types-api/src";
 
 export const readExcelFiles = async (
   files: File[]
@@ -54,11 +54,11 @@ export const isEquals = <T>(obj1: T, obj2: T): boolean => {
   return keys1.every((key) => isEquals((obj1 as Record<string, unknown>)[key], (obj2 as Record<string, unknown>)[key]));
 };
 
-export const isBatsmanStatsData = (details: IReportDetails): details is IBatsmanStatsData => {
+export const isBatsmanStatsData = (details: TReportDetails): details is IBatsmanStatsData => {
   return 'playerName' in details && 'rpi' in details;
 }
 
-export const isBowlerStatsData = (details: IReportDetails): details is IBowlerStatsData => {
+export const isBowlerStatsData = (details: TReportDetails): details is IBowlerStatsData => {
   return ('avg' in details && 'deliveryOutcomes' in details);
 };
 

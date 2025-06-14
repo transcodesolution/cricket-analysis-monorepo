@@ -11,13 +11,13 @@ interface IUserFormProps {
   onSubmit: (values: Partial<IUser>) => void;
 }
 
-type EditableUserFields = Pick<IUser, "firstName" | "lastName" | "email" | "password" | "roleId">;
+type TEditableUserFields = Pick<IUser, "firstName" | "lastName" | "email" | "password" | "roleId">;
 
 export const UserForm = ({ onSubmit, isSubmitting, user }: IUserFormProps) => {
   const { data: rolesResponse } = useGetRoles({ page: 1, limit: 100, search: '' });
   const roles = rolesResponse?.data?.roles || [];
 
-  const form = useForm<EditableUserFields>({
+  const form = useForm<TEditableUserFields>({
     initialValues: {
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",

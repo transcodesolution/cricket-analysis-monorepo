@@ -8,10 +8,10 @@ import {
   createPolymorphicComponent,
 } from '@mantine/core';
 
-type SurfaceProps = { children: ReactNode } & BoxProps & PaperProps;
+type TSurfaceProps = { children: ReactNode } & BoxProps & PaperProps;
 
 // Define the base component with forwardRef
-const _Surface = forwardRef<HTMLDivElement, SurfaceProps>(({ children, ...others }, ref) => (
+const _Surface = forwardRef<HTMLDivElement, TSurfaceProps>(({ children, ...others }, ref) => (
   <Box component="div" {...others} ref={ref}>
     {children}
   </Box>
@@ -20,6 +20,6 @@ const _Surface = forwardRef<HTMLDivElement, SurfaceProps>(({ children, ...others
 _Surface.displayName = 'Surface';
 
 // Then create polymorphic component
-const Surface = createPolymorphicComponent<'div', SurfaceProps>(_Surface);
+const Surface = createPolymorphicComponent<'div', TSurfaceProps>(_Surface);
 
 export default Surface;

@@ -6,23 +6,23 @@ import {
 import { batsmanColumns } from './columns/batsmanColumns';
 import { bowlerColumns } from './columns/bowlerColumns';
 interface IRecentGamesTable {
-  playerType: PlayerType;
+  playerType: TPlayerType;
   games: IBatsmanRecentGames[] | IBowlerRecentGames[];
 }
 
-type PlayerType = 'batsman' | 'bowler';
-type PlayerRecord = PlayerType extends 'batsman' ? IBatsmanRecentGames : IBowlerRecentGames;
+type TPlayerType = 'batsman' | 'bowler';
+type TPlayerRecord = TPlayerType extends 'batsman' ? IBatsmanRecentGames : IBowlerRecentGames;
 
 export const RecentGamesTable = ({ playerType, games }: IRecentGamesTable) => {
   const columns = playerType === 'batsman' ? batsmanColumns : bowlerColumns
 
 
-  const playerRecords = games as PlayerRecord[];
+  const playerRecords = games as TPlayerRecord[];
 
   return (
-    <DataTable<PlayerRecord>
+    <DataTable<TPlayerRecord>
       records={playerRecords}
-      columns={columns as DataTableColumn<PlayerRecord>[]}
+      columns={columns as DataTableColumn<TPlayerRecord>[]}
       idAccessor="matchInfoId"
       withTableBorder={false}
       striped

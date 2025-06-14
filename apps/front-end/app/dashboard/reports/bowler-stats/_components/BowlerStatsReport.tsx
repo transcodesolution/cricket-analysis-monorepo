@@ -11,7 +11,7 @@ import { useGetReportById } from '@/libs/react-query-hooks/src';
 import { isBowlerStatsData } from '@/libs/utils/ui-helper';
 import { IBowlerStatsData } from '@/libs/types-api/src';
 
-export type BowlerProfileInfoData = Pick<IBowlerStatsData, | 'playerName' | 'innings' | 'avg' | 'strikeRate' | 'matchWhichHasLeastWickets'>;
+export type TBowlerProfileInfoData = Pick<IBowlerStatsData, | 'playerName' | 'innings' | 'avg' | 'strikeRate' | 'matchWhichHasLeastWickets'>;
 
 export const BowlerStatsReport = () => {
   const pathname = usePathname();
@@ -96,7 +96,7 @@ export const BowlerStatsReport = () => {
     },
   ];
 
-  const profileInfo: BowlerProfileInfoData = {
+  const profileInfo: TBowlerProfileInfoData = {
     playerName,
     innings,
     avg,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Flex, Paper, Select, MultiSelect } from '@mantine/core';
+import { Paper, Select, MultiSelect, SimpleGrid } from '@mantine/core';
 import { DatePickerInput, DatesRangeValue } from '@mantine/dates';
 import dayjs from 'dayjs';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
@@ -138,20 +138,18 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
               handleApplyFilter({ [key]: val.join(',') });
             }
           }}
-          maw={370}
           styles={{
             input: {
               height: '2.2em',
               background: filter.selectBgColor,
               color: 'black',
               border: 'none',
-              width: '370px',
               overflowX: 'auto',
               overflowY: 'hidden',
             },
             pillsList: {
               flexWrap: 'nowrap',
-              height: '1.9em'
+              height: '1.9em',
             },
             label: {
               color: filter.selectColor,
@@ -190,7 +188,9 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
   };
 
   return (
-    <Flex gap="sm" wrap={{ md: 'nowrap', base: 'wrap' }}>
+    <SimpleGrid
+      cols={{ base: 1, sm: 2, md: reportFilters.length }}
+    >
       {reportFilters.map((filter, index) => {
         const theme = styleThemes[index % styleThemes.length];
         const styledFilter = { ...filter, ...theme };
@@ -202,12 +202,11 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
             p="xs"
             radius="md"
             withBorder
-            w='100%'
           >
             {renderFilterField(styledFilter)}
           </Paper>
         );
       })}
-    </Flex>
+    </SimpleGrid>
   );
 };

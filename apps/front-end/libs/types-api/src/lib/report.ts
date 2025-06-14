@@ -125,12 +125,12 @@ export interface ITableReportDetails {
   tableHeader: ITableHeader[];
 }
 
-export type IReportDetails = IBatsmanStatsData | IBowlerStatsData | ITableReportDetails;
+export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | ITableReportDetails;
 
 export interface IGetReportByIdResponse {
   report: {
     name: string;
-    details: IReportDetails;
+    details: TReportDetails;
     filters: IReportFilter[];
   };
   totalData: number;

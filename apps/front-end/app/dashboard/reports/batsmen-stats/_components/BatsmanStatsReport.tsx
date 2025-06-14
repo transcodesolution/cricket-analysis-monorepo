@@ -11,7 +11,7 @@ import { IBatsmanStatsData } from '@/libs/types-api/src';
 import { isBatsmanStatsData } from '@/libs/utils/ui-helper';
 import PageLoader from '@/libs/custom/loaders/PageLoader';
 
-export type PlayerProfileInfoData = Pick<
+export type TBatsmanProfileInfoData = Pick<
   IBatsmanStatsData,
   'playerName' | 'innings' | 'rpi' | 'median' | 'strikeRate' | 'sixHitInAvgMatches'
 >;
@@ -86,7 +86,7 @@ export const BatsmanStatsReport = () => {
     overs_phase
   } = reportDetails;
 
-  const profileInfo: PlayerProfileInfoData = {
+  const profileInfo: TBatsmanProfileInfoData = {
     playerName,
     innings,
     rpi,

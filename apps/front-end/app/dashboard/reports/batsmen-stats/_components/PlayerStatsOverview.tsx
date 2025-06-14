@@ -4,10 +4,10 @@ import { RunDistributionGrid } from '../../_components/RunDistributionGrid';
 import { PlayerProfileInfo } from './PlayerProfileInfo';
 import { BallByBallStats } from './BallByBallStats';
 import { IBallData, IOversGroupedStat, IRunDistribution } from '@/libs/types-api/src';
-import { PlayerProfileInfoData } from './BatsmanStatsReport';
+import { TBatsmanProfileInfoData } from './BatsmanStatsReport';
 
 interface IPlayerStatsOverviewData {
-  profileInfo: PlayerProfileInfoData;
+  profileInfo: TBatsmanProfileInfoData;
   runDistData: IRunDistribution;
   ballByBallData: IBallData[]
   rightPanelStatsData: IOversGroupedStat[];

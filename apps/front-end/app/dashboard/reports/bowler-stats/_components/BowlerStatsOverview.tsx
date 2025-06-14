@@ -1,11 +1,11 @@
 import { Grid, Paper, Stack } from '@mantine/core';
 import { GroupedStatsGrid } from '../../_components/GroupedStatsGrid';
 import { BowlerProfileInfo } from './BowlerProfileInfo';
-import { BowlerProfileInfoData } from './BowlerStatsReport';
+import { TBowlerProfileInfoData } from './BowlerStatsReport';
 import { IOversGroupedStat } from '@/libs/types-api/src';
 
 interface IBowlerStatsOverview {
-  profileInfo: BowlerProfileInfoData;
+  profileInfo: TBowlerProfileInfoData;
   rightPanelStatsData: IOversGroupedStat[];
 };
 
