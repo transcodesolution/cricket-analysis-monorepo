@@ -142,6 +142,9 @@ export class MatchSummary {
 
 export class TeamAnalytics {
     @Prop()
+    runsScored?: number;
+
+    @Prop()
     ballFaced?: number;
 
     @Prop()
