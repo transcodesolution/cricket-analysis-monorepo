@@ -3,6 +3,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { SchemaTypes } from 'mongoose';
 import { Player } from './player.model';
+import { Venue } from './venue.model';
 
 export class FilterConfiguration {
     @Prop({ type: SchemaTypes.ObjectId })
@@ -24,6 +25,11 @@ export class FilterConfiguration {
     @IsString()
     @IsOptional()
     selectedPlayer?: string;
+
+    @Prop({ type: [SchemaTypes.ObjectId], ref: Venue.name })
+    @IsString({ each: true })
+    @IsOptional()
+    selectedVenues?: string[];
 }
 
 @Schema({ timestamps: true, versionKey: false })
