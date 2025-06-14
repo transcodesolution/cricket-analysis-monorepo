@@ -113,7 +113,7 @@ export const VenueStatsReport = () => {
       <ReportsFilter reportFilters={reportFilters} />
       <VenueStatsOverview venues={venues} inningsStats={inningsStats} rightPanelStatsData={rightPanelStatsData} />
       <RunDistributionGrid title="Run Distribution" runDistData={runDistribution} />
-      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} playerType='venue' />
+      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} reportFor='venue' />
     </Paper>
   )
 };

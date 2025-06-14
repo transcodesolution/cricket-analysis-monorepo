@@ -8,15 +8,15 @@ import { batsmanColumns } from './columns/batsmanColumns';
 import { bowlerColumns } from './columns/bowlerColumns';
 import { venueColumns } from './columns/venueColumns';
 interface IRecentGamesTable {
-  playerType: TPlayerType;
+  reportFor: TPlayerType;
   games: IBatsmanRecentGames[] | IBowlerRecentGames[] | IVenueRecentGames[];
 }
 
 type TPlayerType = 'batsman' | 'bowler' | 'venue';
 type TPlayerRecord = TPlayerType extends 'batsman' ? IBatsmanRecentGames : TPlayerType extends 'bowler' ? IBowlerRecentGames : IVenueRecentGames;
 
-export const RecentGamesTable = ({ playerType, games }: IRecentGamesTable) => {
-  const columns = playerType === 'batsman' ? batsmanColumns : playerType === 'bowler' ? bowlerColumns : venueColumns;
+export const RecentGamesTable = ({ reportFor, games }: IRecentGamesTable) => {
+  const columns = reportFor === 'batsman' ? batsmanColumns : reportFor === 'bowler' ? bowlerColumns : venueColumns;
   const playerRecords = games as TPlayerRecord[];
 
   return (

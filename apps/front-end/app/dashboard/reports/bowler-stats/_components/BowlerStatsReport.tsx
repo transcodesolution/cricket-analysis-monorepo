@@ -110,7 +110,7 @@ export const BowlerStatsReport = () => {
       <ReportsFilter reportFilters={reportFilters} />
       <BowlerStatsOverview profileInfo={profileInfo} rightPanelStatsData={rightPanelStatsData} />
       <DistributionGridOverview outcomeTitle="Outcome Distribution" outcomeData={outcomeDistribution} deliveryTitle="Delivery Outcomes" deliveryData={deliveryOutcomes} />
-      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} playerType="bowler" />
+      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} reportFor="bowler" />
     </Paper>
   );
 };
