@@ -1,6 +1,6 @@
 import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
-import { IBatsmanStatsData, IBowlerStatsData, TReportDetails, IVenueStatsData } from "../types-api/src";
+import { IBatsmanStatsData, IBowlerStatsData, TReportDetails, IVenueStatsData, IStatTileItem } from "../types-api/src";
 
 export const readExcelFiles = async (
   files: File[]
@@ -76,3 +76,18 @@ export const getScoreColor = (runs: number) => {
 
 export const getFormattedStatValue = (n: number | undefined | null) =>
   !n ? 0 : Number(n).toFixed(1);
+
+export const createStatTilesGroup = (items: IStatTileItem[] | undefined | null) => {
+  if (!items || items.length === 0) {
+    return {
+      items: [
+        {
+          title: 'No data available',
+          subtext: '',
+        },
+      ],
+    };
+  }
+
+  return { items };
+}

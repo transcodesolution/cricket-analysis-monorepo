@@ -10,14 +10,14 @@ interface IPlayerStatsOverviewData {
   profileInfo: TBatsmanProfileInfoData;
   runDistData: IRunDistribution;
   ballByBallData: IBallData[]
-  rightPanelStatsData: IOversGroupedStat[];
+  sidePanelStats: IOversGroupedStat[];
 };
 
 export const PlayerStatsOverview = ({
   profileInfo,
   runDistData,
   ballByBallData,
-  rightPanelStatsData,
+  sidePanelStats,
 }: IPlayerStatsOverviewData) => {
 
   return (
@@ -37,7 +37,7 @@ export const PlayerStatsOverview = ({
 
       {/* Right panel */}
       <Grid.Col span={{ base: 12, md: 6 }}>
-        <GroupedStatsGrid data={rightPanelStatsData} />
+        <GroupedStatsGrid data={sidePanelStats} />
       </Grid.Col>
     </Grid>
   );

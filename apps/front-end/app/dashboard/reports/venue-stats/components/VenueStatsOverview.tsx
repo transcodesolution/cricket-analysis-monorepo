@@ -6,28 +6,26 @@ import { VenueProfileInfo } from './VenueProfileInfo';
 interface IVenueStatsOverviewData {
   venues: IVenueProfile[];
   inningsStats: IOversGroupedStat[];
-  rightPanelStatsData: IOversGroupedStat[];
+  sidePanelStats: IOversGroupedStat[];
 };
 
 export const VenueStatsOverview = ({
   venues,
   inningsStats,
-  rightPanelStatsData,
+  sidePanelStats,
 }: IVenueStatsOverviewData) => {
   console.log('venues', venues);
 
   return (
     <Grid gutter="lg" mt="md">
-      {/* Left panel */}
       <Grid.Col span={{ base: 12, md: 6 }} style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column' }}>
         <Paper p="sm" radius="md" mb="lg">
           <VenueProfileInfo VenueProfile={venues} />
         </Paper>
         <GroupedStatsGrid data={inningsStats} />
       </Grid.Col>
-      {/* Right panel */}
       <Grid.Col span={{ base: 12, md: 6 }} >
-        <GroupedStatsGrid data={rightPanelStatsData} />
+        <GroupedStatsGrid data={sidePanelStats} />
       </Grid.Col>
     </Grid>
   );

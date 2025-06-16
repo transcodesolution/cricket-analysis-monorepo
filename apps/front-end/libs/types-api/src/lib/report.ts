@@ -34,7 +34,8 @@ export interface ITableRow {
 export interface IRunTypeStats {
   runs: number;
   balls: number;
-  perMatch: number;
+  perMatch?: number;
+  perInns?: number;
 }
 
 export interface IRunDistribution {
@@ -83,7 +84,7 @@ export interface IBallData {
   stats: string[];
 };
 
-export interface IOversPhaseItem {
+export interface IStatTileItem {
   title: string;
   subtext: string;
 }
@@ -134,7 +135,9 @@ export interface IBatsmanStatsData {
   recentGames: IBatsmanRecentGames[];
   dismissals: IDismissalsBarChartData;
   ballByBallData: IBallData[];
-  overs_phase: IOversPhaseItem[];
+  overs_phase: IStatTileItem[];
+  battingHandStats: IStatTileItem[];
+  bowlingTypeStats: IStatTileItem[];
 }
 
 export interface IBowlerStatsData {
@@ -146,8 +149,9 @@ export interface IBowlerStatsData {
   dismissals: IDismissalsBarChartData;
   deliveryOutcomes: IBallData[];
   outcomeDistribution: IOutcomeDistributionItem[];
-  overs_phase: IOversPhaseItem[];
+  overs_phase: IStatTileItem[];
   recentGames: IBowlerRecentGames[];
+  bowlingTypeStats: IStatTileItem[];
 }
 
 export interface IVenueStatsData {
@@ -155,7 +159,9 @@ export interface IVenueStatsData {
   venues: IVenueProfile[];
   innings: IVenueInnings[];
   dismissals: IDismissalsBarChartData;
-  overs_phase: IOversPhaseItem[];
+  overs_phase: IStatTileItem[];
+  battingHandStats: IStatTileItem[];
+  bowlingTypeStats: IStatTileItem[];
   recentGames: IVenueRecentGames[];
   runDistribution: IRunDistribution;
 }
@@ -183,5 +189,5 @@ export interface IGetReportByIdResponse {
 }
 
 export interface IOversGroupedStat {
-  items: IOversPhaseItem[];
+  items: IStatTileItem[];
 };
