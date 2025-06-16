@@ -1,5 +1,5 @@
 'use client';
-import { Paper, Title } from '@mantine/core';
+import { Box, Center, Paper, Title } from '@mantine/core';
 import { ReportsFilter } from '../../_components/ReportsFilter';
 import { BowlerStatsOverview } from './BowlerStatsOverview';
 import { DistributionGridOverview } from './DistributionGridOverview';
@@ -8,8 +8,8 @@ import PageLoader from '@/libs/custom/loaders/PageLoader';
 import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useGetReportById } from '@/libs/react-query-hooks/src';
-import { isBowlerStatsData } from '@/libs/utils/ui-helper';
-import { IBowlerStatsData } from '@/libs/types-api/src';
+import { createStatTilesGroup, isBowlerStatsData } from '@/libs/utils/ui-helper';
+import { IBowlerStatsData, IOversGroupedStat } from '@/libs/types-api/src';
 
 export type TBowlerProfileInfoData = Pick<IBowlerStatsData, | 'playerName' | 'innings' | 'avg' | 'strikeRate' | 'matchWhichHasLeastWickets'>;
 
@@ -56,61 +56,95 @@ export const BowlerStatsReport = () => {
   const reportDetails = report?.details;
   const reportFilters = getReportResponse?.data?.report?.filters || [];
 
+  let reportStatus: 'loading' | 'noReportData' | 'hasReportData';
+
   if (isLoading) {
-    return <PageLoader height={'calc(100vh - 140px)'} />;
+    reportStatus = 'loading';
+  } else if (!reportDetails || !isBowlerStatsData(reportDetails)) {
+    reportStatus = 'noReportData';
+  } else {
+    reportStatus = 'hasReportData';
   }
 
-  if (!reportDetails || !isBowlerStatsData(reportDetails)) {
-    return (
-      <Paper withBorder radius="lg" p="md" style={{ textAlign: 'center' }} h='calc(100vh - 140px)' display='flex' styles={{ root: { justifyContent: 'center', alignItems: 'center' } }}>
-        <Title order={4} fw={500}>No Report Found</Title>
-      </Paper>
-    );
+  let reportContent: React.ReactNode;
+
+  switch (reportStatus) {
+    case 'loading':
+      reportContent = <PageLoader height="calc(100vh - 215px)" />;
+      break;
+
+    case 'noReportData':
+      reportContent = (
+        <Box h="calc(100vh - 298px)">
+          <Center h="100%">
+            <Title order={4} fw={500}>
+              No Report Found
+            </Title>
+          </Center>
+        </Box>
+      );
+      break;
+
+    case 'hasReportData': {
+      const {
+        playerName,
+        innings,
+        avg,
+        strikeRate,
+        matchWhichHasLeastWickets,
+        overs_phase,
+        outcomeDistribution,
+        deliveryOutcomes,
+        recentGames,
+        dismissals,
+        bowlingTypeStats
+      } = reportDetails as IBowlerStatsData;
+
+      const profileInfo: TBowlerProfileInfoData = {
+        playerName,
+        innings,
+        avg,
+        strikeRate,
+        matchWhichHasLeastWickets,
+      };
+
+      const sidePanelStats: IOversGroupedStat[] = [
+        createStatTilesGroup(bowlingTypeStats),
+        createStatTilesGroup(overs_phase),
+      ];
+
+      reportContent = (
+        <>
+          <BowlerStatsOverview
+            profileInfo={profileInfo}
+            sidePanelStats={sidePanelStats}
+          />
+
+          <DistributionGridOverview
+            outcomeTitle="Outcome Distribution"
+            outcomeData={outcomeDistribution}
+            deliveryTitle="Delivery Outcomes"
+            deliveryData={deliveryOutcomes}
+          />
+
+          <DismissalAndRecentGames
+            dismissals={dismissals}
+            games={recentGames}
+            reportFor="bowler"
+          />
+        </>
+      );
+      break;
+    }
   }
-
-  const {
-    playerName,
-    innings,
-    avg,
-    strikeRate,
-    matchWhichHasLeastWickets,
-    overs_phase,
-    outcomeDistribution,
-    deliveryOutcomes,
-    recentGames,
-    dismissals,
-  } = reportDetails;
-
-  const rightPanelStatsData = [
-    {
-      items: [
-        { title: 'RHB', value: '', subtext: '27.3 AVG\n8.5 RPO\n19.3 SR' },
-        { title: 'LHB', value: '', subtext: '29.0 AVG\n8.7 RPO\n19.9 SR' },
-      ],
-    },
-    {
-      items: overs_phase.map((item) => ({
-        title: item.title,
-        subtext: item.subtext,
-      })),
-    },
-  ];
-
-  const profileInfo: TBowlerProfileInfoData = {
-    playerName,
-    innings,
-    avg,
-    strikeRate,
-    matchWhichHasLeastWickets,
-  };
 
   return (
     <Paper withBorder radius="lg" p="md">
-      <Title order={4} fw={500} mb="md">Bowler stats</Title>
+      <Title order={4} fw={500} mb="md">
+        Bowler stats
+      </Title>
       <ReportsFilter reportFilters={reportFilters} />
-      <BowlerStatsOverview profileInfo={profileInfo} rightPanelStatsData={rightPanelStatsData} />
-      <DistributionGridOverview outcomeTitle="Outcome Distribution" outcomeData={outcomeDistribution} deliveryTitle="Delivery Outcomes" deliveryData={deliveryOutcomes} />
-      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} reportFor="bowler" />
+      {reportContent}
     </Paper>
   );
 };

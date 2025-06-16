@@ -1,14 +1,15 @@
 'use client'
-import { Paper, Title } from '@mantine/core';
+import { Box, Center, Paper, Title } from '@mantine/core';
 import PageLoader from '@/libs/custom/loaders/PageLoader';
 import { useGetReportById } from '@/libs/react-query-hooks/src';
 import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { ReportsFilter } from '../../_components/ReportsFilter';
-import { isVenueStatsData } from '@/libs/utils/ui-helper';
+import { createStatTilesGroup, isVenueStatsData } from '@/libs/utils/ui-helper';
 import { VenueStatsOverview } from './VenueStatsOverview';
 import { RunDistributionGrid } from '../../_components/RunDistributionGrid';
 import { DismissalAndRecentGames } from '../../_components/DismissalAndRecentGames';
+import { IOversGroupedStat, IVenueStatsData } from '@/libs/types-api/src';
 
 export const VenueStatsReport = () => {
   const pathname = usePathname();
@@ -53,67 +54,77 @@ export const VenueStatsReport = () => {
   const reportDetails = report?.details;
   const reportFilters = getReportResponse?.data?.report?.filters || [];
 
+  let reportStatus: 'loading' | 'noReportData' | 'hasReportData';
+
   if (isLoading) {
-    return <PageLoader height={'calc(100vh - 140px)'} />;
+    reportStatus = 'loading';
+  } else if (!reportDetails || !isVenueStatsData(reportDetails)) {
+    reportStatus = 'noReportData';
+  } else {
+    reportStatus = 'hasReportData';
   }
 
-  if (!reportDetails || !isVenueStatsData(reportDetails)) {
-    return (
-      <Paper withBorder radius="lg" p="md" style={{ textAlign: 'center' }} h='calc(100vh - 140px)' display='flex' styles={{ root: { justifyContent: 'center', alignItems: 'center' } }}>
-        <Title order={4} fw={500}>No Report Found</Title>
-      </Paper>
-    );
+  let reportContent: React.ReactNode;
+
+  switch (reportStatus) {
+    case 'loading':
+      reportContent = <PageLoader height="calc(100vh - 215px)" />;
+      break;
+
+    case 'noReportData':
+      reportContent = (
+        <Box h="calc(100vh - 298px)">
+          <Center h="100%">
+            <Title order={4} fw={500}>
+              No Report Found
+            </Title>
+          </Center>
+        </Box>
+      );
+      break;
+
+    case 'hasReportData': {
+      const {
+        venues,
+        overs_phase,
+        recentGames,
+        dismissals,
+        innings,
+        runDistribution,
+        battingHandStats,
+        bowlingTypeStats
+      } = reportDetails as IVenueStatsData;
+
+      const sidePanelStats: IOversGroupedStat[] = [
+        createStatTilesGroup(bowlingTypeStats),
+        createStatTilesGroup(overs_phase),
+        createStatTilesGroup(battingHandStats),
+      ];
+
+      const inningsStats = [{ items: innings }];
+
+      reportContent = (
+        <>
+          <VenueStatsOverview venues={venues} inningsStats={inningsStats} sidePanelStats={sidePanelStats} />
+          <RunDistributionGrid title="Run Distribution" runDistData={runDistribution} />
+          <DismissalAndRecentGames
+            dismissals={dismissals}
+            games={recentGames}
+            reportFor="venue"
+          />
+        </>
+      );
+      break;
+    }
   }
 
-  const {
-    venues,
-    overs_phase,
-    recentGames,
-    dismissals,
-    innings,
-    runDistribution
-  } = reportDetails;
-
-  const rightPanelStatsData = [
-    {
-      items: [
-        {
-          title: 'RHB',
-          subtext: '28.0 AVG\n141.4 SR',
-        },
-        {
-          title: 'LHB',
-          subtext: '29.4 AVG\n141.3 SR',
-        },
-      ],
-    },
-    {
-      items: overs_phase,
-    },
-    {
-      items: [
-        {
-          title: 'Seam',
-          subtext: '29.1 AVG\n9.2 RPO  19.0 SR\n63.3% of balls',
-        },
-        {
-          title: 'Spin',
-          subtext: '30.5 AVG\n8.2 RPO  22.3 SR\n36.7% of balls',
-        },
-      ],
-    },
-  ];
-
-  const inningsStats = [{
-    items: innings
-  }]
   return (
     <Paper withBorder radius="lg" p="md">
-      <Title order={4} fw={500} mb="md">Venue stats</Title>
+      <Title order={4} fw={500} mb="md">
+        Venue stats
+      </Title>
       <ReportsFilter reportFilters={reportFilters} />
-      <VenueStatsOverview venues={venues} inningsStats={inningsStats} rightPanelStatsData={rightPanelStatsData} />
-      <RunDistributionGrid title="Run Distribution" runDistData={runDistribution} />
-      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} reportFor='venue' />
+      {reportContent}
     </Paper>
-  )
+  );
 };

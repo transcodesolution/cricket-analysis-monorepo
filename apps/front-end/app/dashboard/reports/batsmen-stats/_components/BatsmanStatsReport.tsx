@@ -1,5 +1,5 @@
 'use client'
-import { Paper, Title } from '@mantine/core';
+import { Box, Center, Paper, Title } from '@mantine/core';
 import { ReportsFilter } from '../../_components/ReportsFilter';
 import { PlayerStatsOverview } from './PlayerStatsOverview';
 import { ScoringDistributionGrid } from './ScoringDistributionGrid';
@@ -7,8 +7,8 @@ import { DismissalAndRecentGames } from '../../_components/DismissalAndRecentGam
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useGetReportById } from '@/libs/react-query-hooks/src';
 import { useMemo } from 'react';
-import { IBatsmanStatsData } from '@/libs/types-api/src';
-import { isBatsmanStatsData } from '@/libs/utils/ui-helper';
+import { IBatsmanStatsData, IOversGroupedStat } from '@/libs/types-api/src';
+import { createStatTilesGroup, isBatsmanStatsData } from '@/libs/utils/ui-helper';
 import PageLoader from '@/libs/custom/loaders/PageLoader';
 
 export type TBatsmanProfileInfoData = Pick<
@@ -59,99 +59,92 @@ export const BatsmanStatsReport = () => {
   const reportDetails = report?.details;
   const reportFilters = getReportResponse?.data?.report?.filters || [];
 
+  let reportStatus: 'loading' | 'noReportData' | 'hasReportData';
+
   if (isLoading) {
-    return <PageLoader height={'calc(100vh - 140px)'} />;
+    reportStatus = 'loading';
+  } else if (!reportDetails || !isBatsmanStatsData(reportDetails)) {
+    reportStatus = 'noReportData';
+  } else {
+    reportStatus = 'hasReportData';
   }
 
-  if (!reportDetails || !isBatsmanStatsData(reportDetails)) {
-    return (
-      <Paper withBorder radius="lg" p="md" style={{ textAlign: 'center' }} h='calc(100vh - 140px)' display='flex' styles={{ root: { justifyContent: 'center', alignItems: 'center' } }}>
-        <Title order={4} fw={500}>No Report Found</Title>
-      </Paper>
-    );
+  let reportContent: React.ReactNode;
+
+  switch (reportStatus) {
+    case 'loading':
+      reportContent = <PageLoader height="calc(100vh - 215px)" />;
+      break;
+
+    case 'noReportData':
+      reportContent = (
+        <Box h="calc(100vh - 298px)">
+          <Center h='100%'>
+            <Title order={4} fw={500}>No Report Found</Title>
+          </Center>
+        </Box>
+      );
+      break;
+    case 'hasReportData': {
+      const {
+        playerName,
+        innings,
+        rpi,
+        median,
+        strikeRate,
+        sixHitInAvgMatches,
+        runDistribution,
+        scoringDistribution,
+        ballByBallData,
+        recentGames,
+        dismissals,
+        overs_phase,
+        bowlingTypeStats,
+        battingHandStats
+      } = reportDetails as IBatsmanStatsData;
+
+      const profileInfo: TBatsmanProfileInfoData = {
+        playerName,
+        innings,
+        rpi,
+        median,
+        strikeRate,
+        sixHitInAvgMatches,
+      };
+
+      const sidePanelStats: IOversGroupedStat[] = [
+        createStatTilesGroup(bowlingTypeStats),
+        createStatTilesGroup(overs_phase),
+        createStatTilesGroup(battingHandStats),
+      ];
+
+      reportContent = (
+        <>
+          <PlayerStatsOverview
+            profileInfo={profileInfo}
+            runDistData={runDistribution}
+            ballByBallData={ballByBallData}
+            sidePanelStats={sidePanelStats}
+          />
+          <ScoringDistributionGrid title="Scoring Distribution" data={scoringDistribution} />
+          <DismissalAndRecentGames
+            dismissals={dismissals}
+            games={recentGames}
+            reportFor="batsman"
+          />
+        </>
+      );
+      break;
+    }
   }
-
-  const {
-    playerName,
-    innings,
-    rpi,
-    median,
-    strikeRate,
-    sixHitInAvgMatches,
-    runDistribution,
-    scoringDistribution,
-    ballByBallData,
-    recentGames,
-    dismissals,
-    overs_phase
-  } = reportDetails;
-
-  const profileInfo: TBatsmanProfileInfoData = {
-    playerName,
-    innings,
-    rpi,
-    median,
-    strikeRate,
-    sixHitInAvgMatches,
-  };
-
-  const rightPanelStatsData = [
-    {
-      items: [
-        {
-          title: 'Seam',
-          subtext: '36.2 AVG\n142.3 SR',
-        },
-        {
-          title: 'Spin',
-          subtext: '37.4 AVG\n142.3 SR',
-        },
-      ],
-    },
-    {
-      items: overs_phase.map((item) => ({
-        title: item.title,
-        subtext: item.subtext,
-      })),
-    },
-    {
-      items: [
-        {
-          title: 'RFM',
-          subtext: '37.0 AVG\n133.2 SR',
-        },
-        {
-          title: 'RLB',
-          subtext: '44.2 AVG\n137.7 SR',
-        },
-        {
-          title: 'ROB',
-          subtext: '34.4 AVG\n140.3 SR',
-        },
-        {
-          title: 'LOB',
-          subtext: '30.8 AVG\n148.4 SR',
-        },
-        {
-          title: 'LLB',
-          subtext: '34.0 AVG\n148.4 SR',
-        },
-        {
-          title: 'LFM',
-          subtext: '34.2 AVG\n138.1 SR',
-        },
-      ],
-    },
-  ];
-
 
   return (
     <Paper withBorder radius="lg" p="md">
-      <Title order={4} fw={500} mb="md">Batsmen stats</Title>
+      <Title order={4} fw={500} mb="md">
+        Batsmen stats
+      </Title>
       <ReportsFilter reportFilters={reportFilters} />
-      <PlayerStatsOverview profileInfo={profileInfo} runDistData={runDistribution} ballByBallData={ballByBallData} rightPanelStatsData={rightPanelStatsData} />
-      <ScoringDistributionGrid title="Scoring Distribution" data={scoringDistribution} />
-      <DismissalAndRecentGames dismissals={dismissals} games={recentGames} reportFor='batsman' />
+      {reportContent}
     </Paper>
-  )
+  );
 };
