@@ -29,11 +29,11 @@ import { IMulterFileObject } from './dto/interfaces';
 import { CommonHelperService } from '../helper/common.helper';
 import { Response } from 'express';
 
-export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string };
+export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string | string[] };
 
 @Injectable()
 export class DataIngestionService {
-  private readonly regexToMatchResult = /(wicket|run|tie|draw)/i;
+  private readonly regexToMatchResult = /(wicket|run|tie|draw|noresult|suspend)/i;
   private readonly umpireMatchingRegexs = {
     reserveUmpireWord: /\b(reserve|standby|backup|alternate|fourth|support|substitute|spare)([_-]?umpire)?\b/i,
     offFieldUmpireWord: /\b(off[-_ ]?field|tv|third|support|backup|alternate|standby|substitute|spare)([-_ ]?umpire)?\b/i,
@@ -147,11 +147,9 @@ export class DataIngestionService {
     const teams = await this.teamModel.find({ name: { $in: [dataToUpdate["team1.team"], dataToUpdate["team2.team"]] } });
     const team1 = teams.find((team) => team.name === dataToUpdate["team1.team"]);
     const team2 = teams.find((team) => team.name === dataToUpdate["team2.team"]);
+    const eliminator = teams.find((team) => team.name === dataToUpdate["result.eliminator"]);
     const winningTeam = teams.find((team) => team.name === dataToUpdate["result.winningTeam"]);
     const tossWinningTeam = teams.find((team) => team.name === dataToUpdate["toss.winnerTeam"]);
-    const team1PlayingEleven = await this.playerModel.distinct("_id", { name: { $in: dataToUpdate["team1.playingEleven"] } });
-    const team2PlayingEleven = await this.playerModel.distinct("_id", { name: { $in: dataToUpdate["team2.playingEleven"] } });
-    const playerOfMatches = await this.playerModel.distinct("_id", { name: { $in: dataToUpdate["result.playerOfMatch"] } });
     const onFieldBowlerEndUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.onFieldBowlerEndUmpire"] });
     const onFieldLegUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.onFieldLegUmpire"] });
     const fourthUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.fourthUmpire"] });
@@ -159,14 +157,26 @@ export class DataIngestionService {
     const venue = await this.venueModel.findOne({ name: dataToUpdate["venue"] });
     const tournament = await this.tournamentModel.findOne({ event: dataToUpdate["tournamentId"] });
     const referee = await this.refereeModel.findOne({ name: dataToUpdate["referee"] });
+    dataToUpdate["team1.playingEleven"] = dataToUpdate["team1.playingEleven"] || [];
+    dataToUpdate["team2.playingEleven"] = dataToUpdate["team2.playingEleven"] || [];
+    dataToUpdate["result.playerOfMatch"] = dataToUpdate["result.playerOfMatch"] || [];
+    let team1PlayingEleven = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[1] === team1.name ? i[0] : []));
+    let team2PlayingEleven = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[1] === team2.name ? i[0] : []));
+    team1PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[0]) ? i[1] : []));
+    team2PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[0]) ? i[1] : []));
+    const playerOfMatches = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (dataToUpdate["result.playerOfMatch"] as string[]).find((k) => i.includes(k[0])) ? i[1] : []);
+    const playerOfMatchIds = await this.playerModel.distinct("_id", { uniqueId: { $in: playerOfMatches } });
+    const team1PlayingElevenIds = await this.playerModel.distinct("_id", { uniqueId: { $in: team1PlayingEleven } });
+    const team2PlayingElevenIds = await this.playerModel.distinct("_id", { uniqueId: { $in: team2PlayingEleven } });
     const matchInfoObj = {
       ...dataToUpdate,
       "team1.team": team1?._id,
       "team2.team": team2?._id,
-      "team1.playingEleven": team1PlayingEleven,
-      "team2.playingEleven": team2PlayingEleven,
+      "team1.playingEleven": team1PlayingElevenIds,
+      "team2.playingEleven": team2PlayingElevenIds,
       "result.winningTeam": winningTeam?._id,
-      "result.playerOfMatch": playerOfMatches,
+      "result.playerOfMatch": playerOfMatchIds,
+      "result.eliminator": eliminator,
       'umpire.onFieldBowlerEndUmpire': onFieldBowlerEndUmpire?._id,
       'umpire.onFieldLegUmpire': onFieldLegUmpire?._id,
       'umpire.thirdUmpire': fourthUmpire?._id,
@@ -180,8 +190,8 @@ export class DataIngestionService {
     const matchInfo = new this.matchInfoModel(matchInfoObj);
     await Promise.all([
       matchInfo.save(),
-      this.playerModel.updateMany({ _id: { $in: team1PlayingEleven }, "teams.id": { $ne: team1?._id } }, { $push: { teams: { id: team1?._id } } }),
-      this.playerModel.updateMany({ _id: { $in: team2PlayingEleven }, "teams.id": { $ne: team2?._id } }, { $push: { teams: { id: team2?._id } } }),
+      this.playerModel.updateMany({ _id: { $in: team1PlayingElevenIds }, "teams.id": { $ne: team1?._id } }, { $push: { teams: { id: team1?._id } } }),
+      this.playerModel.updateMany({ _id: { $in: team2PlayingElevenIds }, "teams.id": { $ne: team2?._id } }, { $push: { teams: { id: team2?._id } } }),
     ]);
     const findWhoAreNotPlayerQuery = { "teams.id": { $exists: false } };
     const umpireOrReferees = await this.playerModel.find(findWhoAreNotPlayerQuery);
@@ -753,7 +763,7 @@ export class DataIngestionService {
                 }
               } else if (mappingKey?.includes("playingEleven") || mappingKey?.includes("playerOfMatch")) {
                 mappingKey = mappingKey.replace(".$", "");
-                dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value][0]];
+                dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
               } else {
                 const enumValue = this.enumValues[j.collectionName];
                 if (mappingKey === "result.winBy") {
@@ -763,6 +773,9 @@ export class DataIngestionService {
                 } else if (mappingKey === "method") {
                   const enumFunction = (enumValue)[mappingKey];
                   dataToUpdate[mappingKey] = enumFunction(value);
+                } else if (mappingKey === "result.status") {
+                  const enumFunction = (enumValue)[mappingKey];
+                  extractedSheetInfo[value][0] = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
                 }
                 dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
               }
