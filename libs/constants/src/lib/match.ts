@@ -28,6 +28,8 @@ export enum MatchStatus {
     draw = 'Draw',
     run = 'WinByRun',
     wicket = 'WinByWicket',
+    noresult = 'NoResult',
+    suspended = 'Suspended',
 }
 
 export enum BowlingStyleType {

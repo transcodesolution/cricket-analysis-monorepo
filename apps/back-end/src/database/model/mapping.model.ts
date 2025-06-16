@@ -29,7 +29,7 @@ export class CachedInput {
     matchFormat: MatchFormat;
 
     @IsString()
-    collectionName: string;
+    collectionName?: string;
 }
 
 @Schema({ timestamps: true, versionKey: false })
