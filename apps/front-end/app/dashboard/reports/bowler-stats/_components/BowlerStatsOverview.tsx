@@ -6,13 +6,13 @@ import { IOversGroupedStat } from '@/libs/types-api/src';
 
 interface IBowlerStatsOverview {
   profileInfo: TBowlerProfileInfoData;
-  rightPanelStatsData: IOversGroupedStat[];
+  sidePanelStats: IOversGroupedStat[];
 };
 
 
 export const BowlerStatsOverview = ({
   profileInfo,
-  rightPanelStatsData,
+  sidePanelStats,
 }: IBowlerStatsOverview) => {
 
   return (
@@ -27,7 +27,7 @@ export const BowlerStatsOverview = ({
       </Grid.Col>
       {/* Right panel */}
       <Grid.Col span={{ base: 12, md: 6 }}>
-        <GroupedStatsGrid data={rightPanelStatsData} />
+        <GroupedStatsGrid data={sidePanelStats} />
       </Grid.Col>
     </Grid>
   );

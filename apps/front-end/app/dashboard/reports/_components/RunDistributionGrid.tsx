@@ -59,7 +59,14 @@ export const RunDistributionGrid = ({ runDistData, title }: IRunDistributionGrid
               </Text>
               <Text fz={15} mb={1}><b>{stats?.balls ?? 0}%</b> of balls</Text>
               <Text fz={15} mb={1}><b>{stats?.runs ?? 0}% </b> of runs</Text>
-              <Text fz={15}><b>{getFormattedStatValue(stats?.perMatch)}</b> per match</Text>
+              <Text fz={15}>
+                <b>
+                  {getFormattedStatValue(
+                    stats?.perMatch ?? stats?.perInns ?? 0
+                  )}
+                </b>{' '}
+                {stats?.perMatch !== undefined ? 'per match' : 'per inns'}
+              </Text>
             </Paper>
           </Grid.Col>
         ))}
