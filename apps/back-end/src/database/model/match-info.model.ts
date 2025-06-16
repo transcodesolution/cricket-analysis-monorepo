@@ -116,6 +116,7 @@ export class MatchInfo {
             status: { type: String, enum: MatchStatus },
             winBy: Number,
             winningTeam: SchemaTypes.ObjectId,
+            eliminator: SchemaTypes.ObjectId
         }
     })
     result: {
@@ -123,6 +124,7 @@ export class MatchInfo {
         status: MatchStatus;
         winBy: number;
         winningTeam: string;
+        eliminator: string;
     };
 
     @Prop()
@@ -165,6 +167,7 @@ export class MatchInfo {
             status: MatchStatus.tie,
             winBy: 0,
             winningTeam: '',
+            eliminator: ""
         };
     }
 }
