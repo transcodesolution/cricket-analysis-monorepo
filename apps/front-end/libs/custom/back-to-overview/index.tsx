@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Anchor, Flex, Title } from "@mantine/core";
+import { Anchor, Title } from "@mantine/core";
 import { IconChevronLeft } from "@tabler/icons-react";
 
 interface IBackToOverview {

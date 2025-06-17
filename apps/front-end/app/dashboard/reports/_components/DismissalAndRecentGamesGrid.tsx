@@ -4,18 +4,18 @@ import { IDismissalsBarChartData, IBatsmanRecentGames, IBowlerRecentGames, IVenu
 import RecentGamesTable from './RecentGamesTable';
 import { DismissalsBarChart } from './DismissalsBarChart';
 
-interface IDismissalAndRecentGames {
-  dismissals: IDismissalsBarChartData;
-  games: IBatsmanRecentGames[] | IBowlerRecentGames[] | IVenueRecentGames[];
+interface IDismissalAndRecentGamesGrid {
+  dismissalChartData: IDismissalsBarChartData;
+  recentGames: IBatsmanRecentGames[] | IBowlerRecentGames[] | IVenueRecentGames[];
   reportFor?: 'batsman' | 'bowler' | 'venue';
 };
 
-export const DismissalAndRecentGames = ({ dismissals, games, reportFor = 'batsman' }: IDismissalAndRecentGames) => {
+export const DismissalAndRecentGamesGrid = ({ dismissalChartData, recentGames, reportFor = 'batsman' }: IDismissalAndRecentGamesGrid) => {
 
   return (
     <Grid gutter={8} align="stretch" style={{ width: '100%' }}>
       <Grid.Col span={{ base: 12, md: 3 }}>
-        <DismissalsBarChart dismissalData={dismissals} />
+        <DismissalsBarChart dismissalData={dismissalChartData} />
       </Grid.Col>
       <Grid.Col span={{ base: 12, md: 9 }}>
         <Paper
@@ -35,7 +35,7 @@ export const DismissalAndRecentGames = ({ dismissals, games, reportFor = 'batsma
         >
           20 Most Recent Games
         </Paper>
-        <RecentGamesTable games={games} reportFor={reportFor} />
+        <RecentGamesTable recentGames={recentGames} reportFor={reportFor} />
       </Grid.Col>
     </Grid >
   )

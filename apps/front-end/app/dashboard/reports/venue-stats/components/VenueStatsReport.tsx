@@ -8,8 +8,8 @@ import { ReportsFilter } from '../../_components/ReportsFilter';
 import { createStatTilesGroup, isVenueStatsData } from '@/libs/utils/ui-helper';
 import { VenueStatsOverview } from './VenueStatsOverview';
 import { RunDistributionGrid } from '../../_components/RunDistributionGrid';
-import { DismissalAndRecentGames } from '../../_components/DismissalAndRecentGames';
 import { IOversGroupedStat, IVenueStatsData } from '@/libs/types-api/src';
+import { DismissalAndRecentGamesGrid } from '../../_components/DismissalAndRecentGamesGrid';
 
 export const VenueStatsReport = () => {
   const pathname = usePathname();
@@ -107,9 +107,9 @@ export const VenueStatsReport = () => {
         <>
           <VenueStatsOverview venues={venues} inningsStats={inningsStats} sidePanelStats={sidePanelStats} />
           <RunDistributionGrid title="Run Distribution" runDistData={runDistribution} />
-          <DismissalAndRecentGames
-            dismissals={dismissals}
-            games={recentGames}
+          <DismissalAndRecentGamesGrid
+            dismissalChartData={dismissals}
+            recentGames={recentGames}
             reportFor="venue"
           />
         </>

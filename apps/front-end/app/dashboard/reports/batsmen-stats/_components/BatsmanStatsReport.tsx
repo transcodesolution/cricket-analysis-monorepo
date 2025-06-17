@@ -3,7 +3,7 @@ import { Box, Center, Paper, Title } from '@mantine/core';
 import { ReportsFilter } from '../../_components/ReportsFilter';
 import { PlayerStatsOverview } from './PlayerStatsOverview';
 import { ScoringDistributionGrid } from './ScoringDistributionGrid';
-import { DismissalAndRecentGames } from '../../_components/DismissalAndRecentGames';
+import { DismissalAndRecentGamesGrid } from '../../_components/DismissalAndRecentGamesGrid';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useGetReportById } from '@/libs/react-query-hooks/src';
 import { useMemo } from 'react';
@@ -127,9 +127,9 @@ export const BatsmanStatsReport = () => {
             sidePanelStats={sidePanelStats}
           />
           <ScoringDistributionGrid title="Scoring Distribution" data={scoringDistribution} />
-          <DismissalAndRecentGames
-            dismissals={dismissals}
-            games={recentGames}
+          <DismissalAndRecentGamesGrid
+            dismissalChartData={dismissals}
+            recentGames={recentGames}
             reportFor="batsman"
           />
         </>
