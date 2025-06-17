@@ -259,7 +259,7 @@ export class AnalyticsService {
         if (checklegalDelivery) {
             stat.ballsBowled++;
         }
-        stat.runsConceded += ball.runs_off_bat + +(ball.extras?.total ?? 0);
+        stat.runsConceded += ball.runs_off_bat + (!checklegalDelivery ? +(ball.extras?.total ?? 0) : 0);
 
         if (ball.extras?.noballs) stat.totalNoBall++;
         if (ball.extras?.wides) stat.totalWide++;

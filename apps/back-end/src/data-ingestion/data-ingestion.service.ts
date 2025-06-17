@@ -155,7 +155,7 @@ export class DataIngestionService {
     const fourthUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.fourthUmpire"] });
     const thirdUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.thirdUmpire"] });
     const venue = await this.venueModel.findOne({ name: dataToUpdate["venue"] });
-    const tournament = await this.tournamentModel.findOne({ event: dataToUpdate["tournamentId"] });
+    const tournament = await this.tournamentModel.findOne({ event: dataToUpdate["tournamentId"], season: dataToUpdate["season"] });
     const referee = await this.refereeModel.findOne({ name: dataToUpdate["referee"] });
     dataToUpdate["team1.playingEleven"] = dataToUpdate["team1.playingEleven"] || [];
     dataToUpdate["team2.playingEleven"] = dataToUpdate["team2.playingEleven"] || [];
@@ -213,11 +213,15 @@ export class DataIngestionService {
     return matchInfo._id;
   }
 
+  extractSeason(season: string) {
+    return season.toString().slice(0, 4);
+  }
+
   async saveMappedDataToDb(collectionName: string, dataToUpdate: IMatchSheetFormat, match_id: string, scoreboardMappingFields: Record<string, string[]>, scoreboardDetail?: IMatchSheetFormat) {
     switch (collectionName) {
       case Tournament.name:
         if (dataToUpdate?.event && dataToUpdate?.season) {
-          dataToUpdate.season = dataToUpdate.season.toString().slice(0, 4);
+          dataToUpdate.season = this.extractSeason(dataToUpdate.season as string);
           await this.tournamentModel.updateOne({ event: dataToUpdate.event, season: dataToUpdate.season }, { $set: dataToUpdate }, { upsert: true });
         }
         break;
@@ -732,19 +736,15 @@ export class DataIngestionService {
       }
       const isInfoFile = this.infoFileMatchingRegex.test(fileName);
       const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
+      const tournamentappingFields = (mappings.find((key) => key.collectionName === Tournament.name)).fields;
+      const sheetKeys = Object.keys(extractedSheetInfo);
       for (const j of mappings) {
         const collection: string[] = DatabaseFields[j.collectionName]();
         if (isInfoFile) {
           const dataToUpdate: IDataToUpdate = {};
           const dbMappingKeys = Object.keys(j.fields);
-          Object.keys(extractedSheetInfo).forEach((value) => {
+          sheetKeys.forEach((value) => {
             let mappingKey = dbMappingKeys.find((k) => j.fields[k]?.includes(value));
-            // enum manage for result
-            // if (enumMappingKey) {
-            //   if (enumValue && typeof enumValue === 'object' && enumMappingKey in enumValue) {
-            //     dataToUpdate[enumMappingKey] = enumFunction(value);
-            //   }
-            // }
             if (mappingKey) {
               if (j.collectionName === Team.name) {
                 dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { [mappingKey]: extractedSheetInfo[value][0] }] as Record<string, string>[];
@@ -793,6 +793,15 @@ export class DataIngestionService {
               this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName);
             }
           });
+          if (j.collectionName === MatchInfo.name) {
+            sheetKeys.forEach((value) => {
+              const seasonKeyName = value === "season" ? value : tournamentappingFields["season"].includes(value) ? value : "";
+              if (seasonKeyName) {
+                const season = this.extractSeason(extractedSheetInfo[seasonKeyName] as string);
+                dataToUpdate["season"] = season;
+              }
+            })
+          }
           await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields);
         }
         else if (j.collectionName === MatchScoreboard.name) {

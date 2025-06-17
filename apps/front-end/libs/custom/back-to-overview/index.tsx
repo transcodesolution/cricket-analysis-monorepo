@@ -17,11 +17,9 @@ export const BackToOverview = ({ title = "Back", backUrl }: IBackToOverview) => 
   };
 
   return (
-    <Anchor onClick={handleBack} c="var(--mantine-color-gray-8)" underline='never'>
-      <Flex align="center" gap={4}>
-        <IconChevronLeft size={24} />
-        <Title order={3} fw={600}>{title}</Title>
-      </Flex>
+    <Anchor onClick={handleBack} c="var(--mantine-color-gray-8)" underline='never' display='flex' styles={{ root: { alignItems: 'center', gap: '4px' } }} w='fit-content'>
+      <IconChevronLeft size={24} />
+      <Title order={3} fw={600}>{title}</Title>
     </Anchor>
   );
 }
