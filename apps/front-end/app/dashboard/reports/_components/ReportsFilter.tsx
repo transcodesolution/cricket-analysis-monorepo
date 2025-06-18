@@ -114,20 +114,22 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
     }
 
     const options = buildOptions(filter.values);
-    const defaultSelected =
-      searchParams.get(key) ?? filter.singleFilterConfig?.selectedPlayer ?? '';
+    const defaultSelectedValues = filter.singleFilterConfig?.selectedValues;
+    const param = searchParams.get(key);
+
+    const activeSingleValue = param ?? defaultSelectedValues?.[0] ?? 'all';
+    const activeMultiValues =
+      param?.split(',') ??
+      (defaultSelectedValues?.length ? defaultSelectedValues : ['all']);
 
     if (filter.isMultiSelectOption) {
-      const values = (searchParams.get(key)?.split(',') ||
-        (defaultSelected ? [defaultSelected] : [])) as string[];
-
       return (
         <MultiSelect
           label={filter.label}
           data={options}
           size="sm"
           searchable
-          value={values.length === 0 ? ['all'] : values}
+          value={activeMultiValues}
           onChange={(val) => {
             if (val.includes('all') && val.length > 1) {
               const filtered = val.filter((v) => v !== 'all');
@@ -166,7 +168,7 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
         size="sm"
         searchable
         clearable
-        value={defaultSelected || 'all'}
+        value={activeSingleValue}
         onChange={(val) => {
           handleApplyFilter({
             [key]: !val || val === 'all' ? undefined : val,
@@ -188,9 +190,7 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
   };
 
   return (
-    <SimpleGrid
-      cols={{ base: 1, sm: 2, md: reportFilters.length }}
-    >
+    <SimpleGrid cols={{ base: 1, sm: 2, md: reportFilters.length }}>
       {reportFilters.map((filter, index) => {
         const theme = styleThemes[index % styleThemes.length];
         const styledFilter = { ...filter, ...theme };
