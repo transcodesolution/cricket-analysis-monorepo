@@ -18,7 +18,7 @@ async function startNestServer() {
   app.useStaticAssets(uploadsPath, { prefix: "/uploads" });
   app.enableCors({ origin: configService.get("CORS") });
   app.useGlobalPipes(new ValidationPipe());
-  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.json({ limit: '500mb' }));
   app.useGlobalInterceptors(new ResponseTransformInterceptor())
   const port = process.env.PORT || 3000;
   await app.listen(port);
