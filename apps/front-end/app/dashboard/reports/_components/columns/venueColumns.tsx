@@ -1,7 +1,6 @@
 import { IVenueRecentGames } from "@/libs/types-api/src";
 import { DataTableColumn } from "mantine-datatable";
-import { Badge, Group, Text } from "@mantine/core";
-import { IconInfoCircle } from "@tabler/icons-react";
+import { Text } from "@mantine/core";
 
 export const venueColumns: DataTableColumn<IVenueRecentGames>[] = [
   {

@@ -9,15 +9,18 @@ export interface IReport {
     tableFooter: IPaginationApiResponseState;
 }
 
+export interface ISingleFilterConfig {
+    id?: string;
+    selectedValues?: string[];
+}
+
 export interface IReportFilter {
     label: string;
     values: number[] | IFilterValue[];
     isMultiSelectOption: boolean;
     queryParameterKey: string;
     type: ReportFilterType;
-    singleFilterConfig?: {
-        id?: string, selectedPlayer?: string;
-    }
+    singleFilterConfig?: ISingleFilterConfig;
 }
 
 export interface IFilterValue {

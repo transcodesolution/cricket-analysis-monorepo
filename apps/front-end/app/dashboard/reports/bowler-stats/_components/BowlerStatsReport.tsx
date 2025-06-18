@@ -3,13 +3,13 @@ import { Box, Center, Paper, Title } from '@mantine/core';
 import { ReportsFilter } from '../../_components/ReportsFilter';
 import { BowlerStatsOverview } from './BowlerStatsOverview';
 import { DistributionGridOverview } from './DistributionGridOverview';
-import { DismissalAndRecentGames } from '../../_components/DismissalAndRecentGames';
 import PageLoader from '@/libs/custom/loaders/PageLoader';
 import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useGetReportById } from '@/libs/react-query-hooks/src';
 import { createStatTilesGroup, isBowlerStatsData } from '@/libs/utils/ui-helper';
 import { IBowlerStatsData, IOversGroupedStat } from '@/libs/types-api/src';
+import { DismissalAndRecentGamesGrid } from '../../_components/DismissalAndRecentGamesGrid';
 
 export type TBowlerProfileInfoData = Pick<IBowlerStatsData, | 'playerName' | 'innings' | 'avg' | 'strikeRate' | 'matchWhichHasLeastWickets'>;
 
@@ -127,9 +127,9 @@ export const BowlerStatsReport = () => {
             deliveryData={deliveryOutcomes}
           />
 
-          <DismissalAndRecentGames
-            dismissals={dismissals}
-            games={recentGames}
+          <DismissalAndRecentGamesGrid
+            dismissalChartData={dismissals}
+            recentGames={recentGames}
             reportFor="bowler"
           />
         </>
