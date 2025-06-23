@@ -6,6 +6,7 @@ import { ResponseTransformInterceptor } from './interceptors/response.intercepto
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as bodyParser from 'body-parser';
+import { WsCustomExceptionFilter } from './helper/ws-exception.filter';
 
 async function startNestServer() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,6 +19,7 @@ async function startNestServer() {
   app.useStaticAssets(uploadsPath, { prefix: "/uploads" });
   app.enableCors({ origin: configService.get("CORS") });
   app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalFilters(new WsCustomExceptionFilter());
   app.use(bodyParser.json({ limit: '500mb' }));
   app.useGlobalInterceptors(new ResponseTransformInterceptor())
   const port = process.env.PORT || 3000;
