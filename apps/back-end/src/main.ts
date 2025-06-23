@@ -7,6 +7,7 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as bodyParser from 'body-parser';
 import { WsCustomExceptionFilter } from './helper/ws-exception.filter';
+import { RequestIdMiddleware } from './helper/request-id.middleware';
 
 async function startNestServer() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -21,6 +22,7 @@ async function startNestServer() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new WsCustomExceptionFilter());
   app.use(bodyParser.json({ limit: '500mb' }));
+  app.use(new RequestIdMiddleware().use);
   app.useGlobalInterceptors(new ResponseTransformInterceptor())
   const port = process.env.PORT || 3000;
   await app.listen(port);
