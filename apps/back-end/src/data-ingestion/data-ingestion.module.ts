@@ -8,11 +8,12 @@ import { AuthenticateUserRequest } from '../helper/jwt.helper';
 import { CommonHelperService } from '../helper/common.helper';
 import { BullModule } from '@nestjs/bullmq';
 import { QUEUES } from '../helper/constant.helper';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   imports: [DatabaseModule, EnvConfigModule, BullModule.registerQueue({
     name: QUEUES.fileUpload,
-  })],
+  }), RedisModule],
   controllers: [DataIngestionController],
   providers: [DataIngestionService, AnalyticsService, AuthenticateUserRequest, CommonHelperService],
   exports: [DataIngestionService]
