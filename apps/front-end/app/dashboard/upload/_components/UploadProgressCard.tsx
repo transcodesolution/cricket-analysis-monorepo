@@ -8,10 +8,16 @@ interface IUploadProgressCard {
 }
 
 export const UploadProgressCard = ({ uploadState, onUploadComplete }: IUploadProgressCard) => {
-  const { requestUniqueId, totalFiles, totalFilesProcessed, totalErroredFiles } = uploadState;
-  const percent = totalFiles ? (totalFilesProcessed / totalFiles) * 100 : 0;
+  const { requestUniqueId, totalFiles, totalFilesProcessed, totalErroredFiles, totalAlreadyUploadedFiles, } = uploadState;
 
-  const isComplete = Number(totalFilesProcessed) + Number(totalErroredFiles) === totalFiles;
+  const alreadyUploadedFiles = Number(totalAlreadyUploadedFiles);
+  const processed = Number(totalFilesProcessed);
+  const errored = Number(totalErroredFiles);
+
+  const totalDoneFiles = alreadyUploadedFiles + processed + errored;
+  const percent = totalFiles ? (totalDoneFiles / totalFiles) * 100 : 0;
+
+  const isComplete = totalDoneFiles === totalFiles;
 
   if (isComplete) {
     onUploadComplete(requestUniqueId);
@@ -29,12 +35,18 @@ export const UploadProgressCard = ({ uploadState, onUploadComplete }: IUploadPro
         </Group>
 
         <Text size="xs">
-          {totalFilesProcessed}/{totalFiles} files processed
+          {alreadyUploadedFiles + processed}/{totalFiles} Files Processed
         </Text>
 
-        {totalErroredFiles > 0 && (
+        {alreadyUploadedFiles > 0 && (
+          <Text size="xs" >
+            Already Uploaded Files: {alreadyUploadedFiles}
+          </Text>
+        )}
+
+        {errored > 0 && (
           <Text size="xs" c="red">
-            Errors: {totalErroredFiles}
+            Errors: {errored}
           </Text>
         )}
 
@@ -44,7 +56,7 @@ export const UploadProgressCard = ({ uploadState, onUploadComplete }: IUploadPro
           radius="xl"
           striped
           animated
-          color={totalErroredFiles > 0 ? 'red' : 'var(--mantine-color-customBlue-5)'}
+          color={errored > 0 ? 'red' : 'var(--mantine-color-customBlue-5)'}
         />
       </Stack>
     </Paper>

@@ -41,7 +41,8 @@ export interface IUpdateAndSaveEntriesResponse {
 
 export interface IFileProgressEvent {
   totalFiles: number;
-  totalFilesProcessed: number;
-  totalErroredFiles: number;
+  totalFilesProcessed: string;
+  totalErroredFiles: string;
   requestUniqueId: string;
+  totalAlreadyUploadedFiles: string;
 }
