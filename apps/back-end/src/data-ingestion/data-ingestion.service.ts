@@ -28,6 +28,9 @@ import { UserRole } from '../database/model/user-role.model';
 import { IMulterFileObject } from './dto/interfaces';
 import { CommonHelperService } from '../helper/common.helper';
 import { Response } from 'express';
+import { Queue } from 'bullmq';
+import { QUEUES, TASKS } from '../helper/constant.helper';
+import { InjectQueue } from '@nestjs/bullmq';
 
 export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string | string[] };
 
@@ -69,6 +72,7 @@ export class DataIngestionService {
     @InjectModel(Team.name) private readonly teamModel: Model<Team>,
     @InjectModel(MatchScoreboard.name) private readonly matchScoreboardModel: Model<MatchScoreboard>,
     @InjectModel(MatchInfo.name) private readonly matchInfoModel: Model<MatchInfo>,
+    @InjectQueue(QUEUES.fileUpload) private fileUploadQueue: Queue,
     private readonly analyticService: AnalyticsService,
     private readonly commonHelperService: CommonHelperService) { }
 
@@ -726,107 +730,100 @@ export class DataIngestionService {
   }
 
   async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat) {
-    try {
-      const match_id = this.getMatchId(fileName);
-      const mappings = await this.mappedDataModel.find();
-      const index = mappings.findIndex((i) => i.collectionName === MatchInfo.name);
-      if (index !== -1) {
-        const [removedElement] = mappings.splice(index, 1);
-        mappings.push(removedElement);
-      }
-      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
-      const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
-      const tournamentappingFields = (mappings.find((key) => key.collectionName === Tournament.name)).fields;
-      const sheetKeys = Object.keys(extractedSheetInfo);
-      for (const j of mappings) {
-        const collection: string[] = DatabaseFields[j.collectionName]();
-        if (isInfoFile) {
-          const dataToUpdate: IDataToUpdate = {};
-          const dbMappingKeys = Object.keys(j.fields);
-          sheetKeys.forEach((value) => {
-            let mappingKey = dbMappingKeys.find((k) => j.fields[k]?.includes(value));
-            if (mappingKey) {
-              if (j.collectionName === Team.name) {
-                dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { [mappingKey]: extractedSheetInfo[value][0] }] as Record<string, string>[];
-              } else if (j.collectionName === Umpire.name) {
-                if (this.matchUmpireType(value)) {
-                  dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: this.matchUmpireType(value) }] as Record<string, string>[];
-                } else {
-                  dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: UmpireType.onfield, subType: value.includes("1") ? UmpireSubType.BOWLER_END : UmpireSubType.SQUARE_LEG }] as Record<string, string>[];
-                }
-              } else if (j.collectionName === Player.name) {
-                if ((extractedSheetInfo[value] as string[]).length > 1) {
-                  dataToUpdate["registry"] = [...(dataToUpdate["registry"] || []), { name: extractedSheetInfo[value][0], uniqueId: extractedSheetInfo[value][1] }] as Record<string, string>[];
-                }
-                else {
-                  dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
-                }
-              } else if (mappingKey?.includes("playingEleven") || mappingKey?.includes("playerOfMatch")) {
-                mappingKey = mappingKey.replace(".$", "");
-                dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
+    const match_id = this.getMatchId(fileName);
+    const mappings = await this.mappedDataModel.find();
+    const index = mappings.findIndex((i) => i.collectionName === MatchInfo.name);
+    if (index !== -1) {
+      const [removedElement] = mappings.splice(index, 1);
+      mappings.push(removedElement);
+    }
+    const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+    const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
+    const tournamentappingFields = (mappings.find((key) => key.collectionName === Tournament.name)).fields;
+    const sheetKeys = Object.keys(extractedSheetInfo);
+    for (const j of mappings) {
+      const collection: string[] = DatabaseFields[j.collectionName]();
+      if (isInfoFile) {
+        const dataToUpdate: IDataToUpdate = {};
+        const dbMappingKeys = Object.keys(j.fields);
+        sheetKeys.forEach((value) => {
+          let mappingKey = dbMappingKeys.find((k) => j.fields[k]?.includes(value));
+          if (mappingKey) {
+            if (j.collectionName === Team.name) {
+              dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { [mappingKey]: extractedSheetInfo[value][0] }] as Record<string, string>[];
+            } else if (j.collectionName === Umpire.name) {
+              if (this.matchUmpireType(value)) {
+                dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: this.matchUmpireType(value) }] as Record<string, string>[];
               } else {
-                const enumValue = this.enumValues[j.collectionName];
-                if (mappingKey === "result.winBy") {
-                  const enumField = "result.status";
-                  const enumFunction = (enumValue)[enumField];
-                  dataToUpdate[enumField] = enumFunction(value);
-                } else if (mappingKey === "method") {
-                  const enumFunction = (enumValue)[mappingKey];
-                  dataToUpdate[mappingKey] = enumFunction(value);
-                } else if (mappingKey === "result.status") {
-                  const enumFunction = (enumValue)[mappingKey];
-                  extractedSheetInfo[value][0] = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
-                }
-                dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
+                dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { [mappingKey]: extractedSheetInfo[value][0], type: UmpireType.onfield, subType: value.includes("1") ? UmpireSubType.BOWLER_END : UmpireSubType.SQUARE_LEG }] as Record<string, string>[];
               }
-              this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName);
-            }
-            else if (collection.includes(value)) {
-              const enumValue = this.enumValues[j.collectionName];
-              if (value === "method") {
-                const enumFunction = (enumValue)[value];
-                dataToUpdate[value] = enumFunction(value);
+            } else if (j.collectionName === Player.name) {
+              if ((extractedSheetInfo[value] as string[]).length > 1) {
+                dataToUpdate["registry"] = [...(dataToUpdate["registry"] || []), { name: extractedSheetInfo[value][0], uniqueId: extractedSheetInfo[value][1] }] as Record<string, string>[];
               }
               else {
-                dataToUpdate[value] = extractedSheetInfo[value][0];
+                dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
               }
-              this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName);
+            } else if (mappingKey?.includes("playingEleven") || mappingKey?.includes("playerOfMatch")) {
+              mappingKey = mappingKey.replace(".$", "");
+              dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
+            } else {
+              const enumValue = this.enumValues[j.collectionName];
+              if (mappingKey === "result.winBy") {
+                const enumField = "result.status";
+                const enumFunction = (enumValue)[enumField];
+                dataToUpdate[enumField] = enumFunction(value);
+              } else if (mappingKey === "method") {
+                const enumFunction = (enumValue)[mappingKey];
+                dataToUpdate[mappingKey] = enumFunction(value);
+              } else if (mappingKey === "result.status") {
+                const enumFunction = (enumValue)[mappingKey];
+                extractedSheetInfo[value][0] = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
+              }
+              dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
             }
-          });
-          if (j.collectionName === MatchInfo.name) {
-            sheetKeys.forEach((value) => {
-              const seasonKeyName = value === "season" ? value : tournamentappingFields["season"].includes(value) ? value : "";
-              if (seasonKeyName) {
-                const season = this.extractSeason(extractedSheetInfo[seasonKeyName] as string);
-                dataToUpdate["season"] = season;
-              }
-            })
+            this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName);
           }
-          await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields);
+          else if (collection.includes(value)) {
+            const enumValue = this.enumValues[j.collectionName];
+            if (value === "method") {
+              const enumFunction = (enumValue)[value];
+              dataToUpdate[value] = enumFunction(value);
+            }
+            else {
+              dataToUpdate[value] = extractedSheetInfo[value][0];
+            }
+            this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName);
+          }
+        });
+        if (j.collectionName === MatchInfo.name) {
+          sheetKeys.forEach((value) => {
+            const seasonKeyName = value === "season" ? value : tournamentappingFields["season"].includes(value) ? value : "";
+            if (seasonKeyName) {
+              const season = this.extractSeason(extractedSheetInfo[seasonKeyName] as string);
+              dataToUpdate["season"] = season;
+            }
+          })
         }
-        else if (j.collectionName === MatchScoreboard.name) {
-          await this.saveMappedDataToDb(j.collectionName, extractedSheetInfo, match_id, scoreboardMappingFields);
-        }
+        await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields);
       }
-      await this.analyticService.generateAnalyticsForMatch(match_id);
-      return Promise.resolve({});
-    } catch (error) {
-      console.error("Date & Time Log : ", new Date());
-      console.error("processMappingSheetDataWithDatabaseKeys error : ", error);
-      return Promise.reject(error.message);
+      else if (j.collectionName === MatchScoreboard.name) {
+        await this.saveMappedDataToDb(j.collectionName, extractedSheetInfo, match_id, scoreboardMappingFields);
+      }
     }
+    await this.analyticService.generateAnalyticsForMatch(match_id);
   }
 
   getMatchId(fileName: string) {
     return fileName.split("_")[0];
   }
 
-  async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response) {
+  async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response, requestUniqueId: string, userId: string) {
     const uploadResult: IUploadResult[] = [];
 
-    const backgroundTask = {};
+    const fileUploadDtoKeys = Object.keys(uploadFileDto);
 
-    for (const i of Object.keys(uploadFileDto)) {
+    for (const i of fileUploadDtoKeys) {
       const fileName = i;
       const uploadFileObj = uploadFileDto[fileName];
 
@@ -862,7 +859,7 @@ export class DataIngestionService {
       }
 
       uploadResult.push({ hasAlreadyUploaded: false, fileName, message: responseMessage.customMessage("Process started to load data in database") });
-      backgroundTask[fileName] = extractedSheetInfo[fileName];
+      await this.fileUploadQueue.add(TASKS.processMappingSheetDataWithDatabaseKeys, { requestUniqueId, fileName, totalFiles: fileUploadDtoKeys.length, fileData: extractedSheetInfo[fileName], userId }, { removeOnComplete: true, removeOnFail: true, delay: 10000 });
     }
 
     const alreadyUpload = uploadResult.filter((i) => i.hasAlreadyUploaded).map((i) => i.fileName);
@@ -879,14 +876,6 @@ export class DataIngestionService {
         message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"),
         data: uploadResult,
       });
-    }
-
-    for (const fileName in backgroundTask) {
-      try {
-        await this.processMappingSheetDataWithDatabaseKeys(fileName, backgroundTask[fileName])
-      } catch (error) {
-        console.error("processMappingSheetDataWithDatabaseKeys method: Background processing task failed:", error);
-      }
     }
   }
 }

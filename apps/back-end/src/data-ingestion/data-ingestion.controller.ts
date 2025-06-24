@@ -11,6 +11,7 @@ import {
   SetMetadata,
   UseGuards,
   Res,
+  Req,
 } from '@nestjs/common';
 import { DataIngestionService } from './data-ingestion.service';
 import { MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto } from './dto/mapping-data-ingestion.dto';
@@ -21,7 +22,7 @@ import { ROUTE_PERMISSION_KEY_NAME } from '../helper/constant.helper';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserPermissionCheckerGuard } from '../guards/user-permission-checker.guard';
 import { IMulterFileObject } from './dto/interfaces';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 const uploadFilePermissions = [Permission.UPLOAD_FILES];
 
@@ -67,7 +68,7 @@ export class DataIngestionController {
   @Post('/update-input-and-save-entries')
   @HttpCode(HttpStatus.OK)
   @SetMetadata(ROUTE_PERMISSION_KEY_NAME, uploadFilePermissions)
-  async updateMappingAndSaveInformationToDB(@Body() uploadFileDto: UploadFileDto, @Res() res: Response) {
-    return this.dataIngestionService.updateMappingAndSaveInformationToDB(uploadFileDto, res);
+  async updateMappingAndSaveInformationToDB(@Body() uploadFileDto: UploadFileDto, @Req() req: Request, @Res() res: Response) {
+    return this.dataIngestionService.updateMappingAndSaveInformationToDB(uploadFileDto, res, req.id, req.headers.user._id);
   }
 }

@@ -10,6 +10,7 @@ declare module "express" {
     headers: IncomingHttpHeaders & {
       user: IUser;
     };
+    id: string;
   }
 }
 

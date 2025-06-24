@@ -13,6 +13,7 @@ import { updateMappingAndCheckRequiredInputs } from '@/libs/web-apis/src';
 import { RequiredInputModal } from './RequiredInputModal';
 import { useUpdateAndSaveEntries } from '@/libs/react-query-hooks/src/libs/upload/useUpdateAndSaveEntries';
 import classes from './upload.module.scss'
+import { UploadProgressList } from './UploadProgressList';
 
 export const UploadFile = () => {
   const [showMappingModal, setShowMappingModal] = useState(false);
@@ -175,6 +176,8 @@ export const UploadFile = () => {
         onSubmit={handleRequirementSubmit}
         showRequiredInputModal={showRequiredInputModal}
       />
+
+      <UploadProgressList />
     </>
   );
 };

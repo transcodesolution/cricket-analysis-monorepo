@@ -38,3 +38,10 @@ export interface IUpdateAndSaveEntriesResponse {
   fileName: string;
   hasAlreadyUploaded: boolean,
 }
+
+export interface IFileProgressEvent {
+  totalFiles: number;
+  totalFilesProcessed: number;
+  totalErroredFiles: number;
+  requestUniqueId: string;
+}

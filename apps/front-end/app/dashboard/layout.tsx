@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthProvider } from '@/libs/providers/AuthProvider';
 import { ModalsProvider } from '@mantine/modals';
+import { SocketProvider } from '@/libs/providers/SocketProvider';
 
 export const metadata = {
   title: 'CrickAI - Smart Cricket Insights',
@@ -23,9 +24,11 @@ export default async function RootLayout({
 
   return (
     <AuthProvider token={bearerToken}>
-      <ModalsProvider>
-        <MainLayout>{children}</MainLayout>
-      </ModalsProvider>
+      <SocketProvider token={bearerToken}>
+        <ModalsProvider>
+          <MainLayout>{children}</MainLayout>
+        </ModalsProvider>
+      </SocketProvider>
     </AuthProvider>
   );
 }
