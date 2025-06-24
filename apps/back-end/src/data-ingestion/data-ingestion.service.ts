@@ -31,6 +31,7 @@ import { Response } from 'express';
 import { Queue } from 'bullmq';
 import { QUEUES, TASKS } from '../helper/constant.helper';
 import { InjectQueue } from '@nestjs/bullmq';
+import { RedisService } from '../redis/redis.service';
 
 export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string | string[] };
 
@@ -73,6 +74,7 @@ export class DataIngestionService {
     @InjectModel(MatchScoreboard.name) private readonly matchScoreboardModel: Model<MatchScoreboard>,
     @InjectModel(MatchInfo.name) private readonly matchInfoModel: Model<MatchInfo>,
     @InjectQueue(QUEUES.fileUpload) private fileUploadQueue: Queue,
+    private readonly redisService: RedisService,
     private readonly analyticService: AnalyticsService,
     private readonly commonHelperService: CommonHelperService) { }
 
@@ -822,6 +824,7 @@ export class DataIngestionService {
     const uploadResult: IUploadResult[] = [];
 
     const fileUploadDtoKeys = Object.keys(uploadFileDto);
+    const alreadyUploadCountRedisKey = requestUniqueId + "-" + "alreadyUploadCount";
 
     for (const i of fileUploadDtoKeys) {
       const fileName = i;
@@ -854,6 +857,8 @@ export class DataIngestionService {
       const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
 
       if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
+        const alreadyUploadingCount = await this.redisService.get(alreadyUploadCountRedisKey);
+        this.redisService.set(alreadyUploadCountRedisKey, (+(alreadyUploadingCount || 0) + 1).toString());
         uploadResult.push({ hasAlreadyUploaded: true, fileName, message: responseMessage.dataAlreadyUploaded("file") });
         continue;
       }
