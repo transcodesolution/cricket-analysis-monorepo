@@ -25,20 +25,28 @@ export class FileUploadConsumer extends WorkerHost {
         switch (job.name) {
             case TASKS.processMappingSheetDataWithDatabaseKeys: {
                 const { requestUniqueId, fileName, fileData, userId, totalFiles } = job.data;
+                const alreadyUploadCountRedisKey = requestUniqueId + "-" + "alreadyUploadCount";
+                const processCountRedisKey = requestUniqueId + "-" + "processedCount";
+                const errorCountRedisKey = requestUniqueId + "-" + "errorCount";
                 let totalFilesProcessed: string, totalErroredFiles = "0";
                 try {
                     await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData);
-                    const processCountRedisKey = requestUniqueId + "-" + "processedCount";
                     const processingCount = await this.redisService.get(processCountRedisKey);
                     totalFilesProcessed = (+(processingCount || 0) + 1).toString();
                     this.redisService.set(processCountRedisKey, totalFilesProcessed);
                 } catch (error) {
-                    const errorCountRedisKey = requestUniqueId + "-" + "errorCount";
                     const errorCount = await this.redisService.get(errorCountRedisKey);
                     totalErroredFiles = (+(errorCount || 0) + 1).toString();
                     this.redisService.set(errorCountRedisKey, totalErroredFiles);
                 }
-                this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { totalFilesProcessed, totalErroredFiles, totalFiles, requestUniqueId });
+                let totalAlreadyUploadedFiles = await this.redisService.get(alreadyUploadCountRedisKey);
+                totalAlreadyUploadedFiles = totalAlreadyUploadedFiles || "0";
+                this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { totalFilesProcessed, totalErroredFiles, totalAlreadyUploadedFiles, totalFiles, requestUniqueId });
+                if (+totalFilesProcessed + +totalErroredFiles + +totalAlreadyUploadedFiles === +totalFiles) {
+                    this.redisService.del(alreadyUploadCountRedisKey);
+                    this.redisService.del(processCountRedisKey);
+                    this.redisService.del(errorCountRedisKey);
+                }
             }
         }
     }
