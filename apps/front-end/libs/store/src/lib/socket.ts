@@ -34,8 +34,6 @@ export const useSocketStore = create<ISocketStore>((set, get) => ({
     });
 
     socket.on('file-progress-update', (d: IFileProgressEvent) => {
-      console.log('Progress event:', d);
-
       set((state) => ({
         fileUploadStates: {
           ...state.fileUploadStates,

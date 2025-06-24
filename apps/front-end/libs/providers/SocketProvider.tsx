@@ -19,7 +19,8 @@ export const SocketProvider = ({
     return () => {
       disconnectSocket();
     };
-  }, [token, connectSocket, disconnectSocket]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
-  return <>{children}</>;
+  return children;
 }

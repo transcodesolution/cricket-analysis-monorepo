@@ -1,8 +1,8 @@
-import { Flex, } from '@mantine/core';
+import { Flex } from '@mantine/core';
 import { useSocketStore } from '@/libs/store/src/lib/socket';
 import { UploadProgressCard } from './UploadProgressCard';
 
-export const UploadProgressPopup = () => {
+export const UploadProgressList = () => {
   const fileUploadStates = useSocketStore((s) => s.fileUploadStates);
   const clearSession = useSocketStore((s) => s.clearSession);
 

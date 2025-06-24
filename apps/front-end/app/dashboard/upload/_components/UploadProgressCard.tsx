@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Stack, Text, Group, Progress, Paper } from '@mantine/core';
 import { IconUpload } from '@tabler/icons-react';
 import { IFileProgressEvent } from '@/libs/types-api/src';
@@ -11,17 +10,13 @@ interface IUploadProgressCard {
 export const UploadProgressCard = ({ uploadState, onUploadComplete }: IUploadProgressCard) => {
   const { requestUniqueId, totalFiles, totalFilesProcessed, totalErroredFiles } = uploadState;
   const percent = totalFiles ? (totalFilesProcessed / totalFiles) * 100 : 0;
-  const [visible, setVisible] = useState(true);
 
-  useEffect(() => {
-    const isComplete = Number(totalFilesProcessed) + Number(totalErroredFiles) === totalFiles;
-    if (isComplete) {
-      setVisible(false);
-      onUploadComplete(requestUniqueId);
-    }
-  }, [totalFilesProcessed, totalErroredFiles, totalFiles, requestUniqueId, onUploadComplete]);
+  const isComplete = Number(totalFilesProcessed) + Number(totalErroredFiles) === totalFiles;
 
-  if (!visible) return null;
+  if (isComplete) {
+    onUploadComplete(requestUniqueId);
+    return null;
+  }
 
   return (
     <Paper shadow="xs" radius="lg" withBorder p="md" w={896}>
@@ -33,7 +28,7 @@ export const UploadProgressCard = ({ uploadState, onUploadComplete }: IUploadPro
           </Text>
         </Group>
 
-        <Text size="xs" >
+        <Text size="xs">
           {totalFilesProcessed}/{totalFiles} files processed
         </Text>
 
@@ -54,4 +49,4 @@ export const UploadProgressCard = ({ uploadState, onUploadComplete }: IUploadPro
       </Stack>
     </Paper>
   );
-}
+};
