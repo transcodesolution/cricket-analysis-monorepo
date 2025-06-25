@@ -32,6 +32,7 @@ import { Queue } from 'bullmq';
 import { QUEUES, TASKS } from '../helper/constant.helper';
 import { InjectQueue } from '@nestjs/bullmq';
 import { RedisService } from '../redis/redis.service';
+import { SocketGateway } from '../socket/socket.service';
 
 export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string | string[] };
 
@@ -74,6 +75,7 @@ export class DataIngestionService {
     @InjectModel(MatchScoreboard.name) private readonly matchScoreboardModel: Model<MatchScoreboard>,
     @InjectModel(MatchInfo.name) private readonly matchInfoModel: Model<MatchInfo>,
     @InjectQueue(QUEUES.fileUpload) private fileUploadQueue: Queue,
+    private readonly socketGateway: SocketGateway,
     private readonly redisService: RedisService,
     private readonly analyticService: AnalyticsService,
     private readonly commonHelperService: CommonHelperService) { }
@@ -523,16 +525,16 @@ export class DataIngestionService {
 
     const mappedDataCache = new Map<string, Record<string, string[]>>();
 
-    const matchInfoFields = [
-      { collectionName: Venue.name, field: "name", infoRefField: "venue" },
-      { collectionName: Referee.name, field: "name", infoRefField: "referee" },
-      { collectionName: Umpire.name, field: "name", infoRefField: "umpire.onFieldBowlerEndUmpire" },
-      { collectionName: Umpire.name, field: "name", infoRefField: "umpire.onFieldLegUmpire" },
-      { collectionName: Umpire.name, field: "name", infoRefField: "umpire.thirdUmpire" },
-      { collectionName: Umpire.name, field: "name", infoRefField: "umpire.fourthUmpire" },
-      { collectionName: Team.name, field: "name", infoRefField: "team1.team" },
-      { collectionName: Team.name, field: "name", infoRefField: "team2.team" },
-    ];
+    // const matchInfoFields = [
+    //   { collectionName: Venue.name, field: "name", infoRefField: "venue" },
+    //   { collectionName: Referee.name, field: "name", infoRefField: "referee" },
+    //   { collectionName: Umpire.name, field: "name", infoRefField: "umpire.onFieldBowlerEndUmpire" },
+    //   { collectionName: Umpire.name, field: "name", infoRefField: "umpire.onFieldLegUmpire" },
+    //   { collectionName: Umpire.name, field: "name", infoRefField: "umpire.thirdUmpire" },
+    //   { collectionName: Umpire.name, field: "name", infoRefField: "umpire.fourthUmpire" },
+    //   { collectionName: Team.name, field: "name", infoRefField: "team1.team" },
+    //   { collectionName: Team.name, field: "name", infoRefField: "team2.team" },
+    // ];
 
     for (const { fileName, columns } of files as ColumnDto[]) {
       const isInfoFile = regex.test(fileName);
@@ -826,6 +828,8 @@ export class DataIngestionService {
     const fileUploadDtoKeys = Object.keys(uploadFileDto);
     const alreadyUploadCountRedisKey = requestUniqueId + "-" + "alreadyUploadCount";
 
+    this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { totalFilesProcessed:0, totalErroredFiles:0, totalAlreadyUploadedFiles:0, totalFiles:fileUploadDtoKeys.length, requestUniqueId });
+        
     for (const i of fileUploadDtoKeys) {
       const fileName = i;
       const uploadFileObj = uploadFileDto[fileName];
