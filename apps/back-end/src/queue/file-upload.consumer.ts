@@ -28,10 +28,10 @@ export class FileUploadConsumer extends WorkerHost {
                 const alreadyUploadCountRedisKey = requestUniqueId + "-" + "alreadyUploadCount";
                 const processCountRedisKey = requestUniqueId + "-" + "processedCount";
                 const errorCountRedisKey = requestUniqueId + "-" + "errorCount";
-                let totalFilesProcessed: string, totalErroredFiles = "0";
+                const processingCount = await this.redisService.get(processCountRedisKey);
+                let totalFilesProcessed: string=processingCount, totalErroredFiles = "0";
                 try {
                     await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData);
-                    const processingCount = await this.redisService.get(processCountRedisKey);
                     totalFilesProcessed = (+(processingCount || 0) + 1).toString();
                     this.redisService.set(processCountRedisKey, totalFilesProcessed);
                 } catch (error) {
