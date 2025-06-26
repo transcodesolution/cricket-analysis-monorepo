@@ -7,16 +7,20 @@ export const BowlerProfileInfo = ({
   avg,
   strikeRate,
   matchWhichHasLeastWickets,
+  totalWicketTaken
 }: TBowlerProfileInfoData) => {
 
   return (
     <Stack align="center" gap="md">
       <Title order={2}>{playerName}</Title>
-
-      <Text size="lg">
-        Inns: <Text span fw={600}>{innings}</Text>
-      </Text>
-
+      <Group gap="sm">
+        <Text size="lg">
+          Inns: <Text span fw={600}>{innings}</Text>
+        </Text>
+        <Text size="lg">
+          Total Wickets: <Text span fw={600}>{totalWicketTaken}</Text>
+        </Text>
+      </Group>
       <Group gap="xs">
         <Text size="md" fw={600}>
           {avg} <Text span size="sm">Ave</Text>
