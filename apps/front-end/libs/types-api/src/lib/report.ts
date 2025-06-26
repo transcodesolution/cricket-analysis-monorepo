@@ -152,6 +152,7 @@ export interface IBowlerStatsData {
   overs_phase: IStatTileItem[];
   recentGames: IBowlerRecentGames[];
   bowlingTypeStats: IStatTileItem[];
+  totalWicketTaken: number;
 }
 
 export interface IVenueStatsData {

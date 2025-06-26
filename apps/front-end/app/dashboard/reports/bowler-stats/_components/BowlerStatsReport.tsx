@@ -11,7 +11,7 @@ import { createStatTilesGroup, isBowlerStatsData } from '@/libs/utils/ui-helper'
 import { IBowlerStatsData, IOversGroupedStat } from '@/libs/types-api/src';
 import { DismissalAndRecentGamesGrid } from '../../_components/DismissalAndRecentGamesGrid';
 
-export type TBowlerProfileInfoData = Pick<IBowlerStatsData, | 'playerName' | 'innings' | 'avg' | 'strikeRate' | 'matchWhichHasLeastWickets'>;
+export type TBowlerProfileInfoData = Pick<IBowlerStatsData, | 'playerName' | 'innings' | 'avg' | 'strikeRate' | 'matchWhichHasLeastWickets' | 'totalWicketTaken'>;
 
 export const BowlerStatsReport = () => {
   const pathname = usePathname();
@@ -97,7 +97,8 @@ export const BowlerStatsReport = () => {
         deliveryOutcomes,
         recentGames,
         dismissals,
-        bowlingTypeStats
+        bowlingTypeStats,
+        totalWicketTaken
       } = reportDetails as IBowlerStatsData;
 
       const profileInfo: TBowlerProfileInfoData = {
@@ -106,6 +107,7 @@ export const BowlerStatsReport = () => {
         avg,
         strikeRate,
         matchWhichHasLeastWickets,
+        totalWicketTaken
       };
 
       const sidePanelStats: IOversGroupedStat[] = [
