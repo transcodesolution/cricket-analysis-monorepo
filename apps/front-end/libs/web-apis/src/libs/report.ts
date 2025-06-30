@@ -1,6 +1,6 @@
 import { TPaginationApiResponseType } from '@cricket-analysis-monorepo/interfaces';
 import http from './http-common';
-import { IGetReportsResponse, IGetReportRequest, IGetReportByIdRequest, IGetReportByIdResponse } from '@/libs/types-api/src';
+import { IGetReportsResponse, IGetReportRequest, IGetReportByIdRequest, IGetReportByIdResponse, IGetReportFiltersResponse } from '@/libs/types-api/src';
 
 export const getReports = async (params: IGetReportRequest): Promise<TPaginationApiResponseType<IGetReportsResponse>> => {
   try {
@@ -18,5 +18,14 @@ export const getReportById = async (params: IGetReportByIdRequest): Promise<TPag
     return res.data;
   } catch (error) {
     throw new Error(`Error while fetching player report: ${error}`);
+  }
+};
+
+export const getReportFilters = async (name: string): Promise<TPaginationApiResponseType<IGetReportFiltersResponse>> => {
+  try {
+    const res = await http.get<TPaginationApiResponseType<IGetReportFiltersResponse>>(`/report/filters/${name}`);
+    return res.data;
+  } catch (error) {
+    throw new Error(`Error while fetching filters for report ${name}: ${error}`);
   }
 };
