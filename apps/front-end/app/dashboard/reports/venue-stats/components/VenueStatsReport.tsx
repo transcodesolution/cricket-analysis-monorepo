@@ -1,7 +1,7 @@
 'use client'
 import { Box, Center, Paper, Title } from '@mantine/core';
 import PageLoader from '@/libs/custom/loaders/PageLoader';
-import { useGetReportById } from '@/libs/react-query-hooks/src';
+import { useGetReportById, useGetReportFilters } from '@/libs/react-query-hooks/src';
 import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { ReportsFilter } from '../../_components/ReportsFilter';
@@ -50,9 +50,12 @@ export const VenueStatsReport = () => {
       ...formattedFilters,
     },
   });
+
+  const { data: getFiltersResponse } = useGetReportFilters({ reportName: reportType, enabled: !!reportType });
+
   const report = getReportResponse?.data?.report;
   const reportDetails = report?.details;
-  const reportFilters = getReportResponse?.data?.report?.filters || [];
+  const reportFilters = getFiltersResponse?.data?.report?.filters || [];
 
   let reportStatus: 'loading' | 'noReportData' | 'hasReportData';
 

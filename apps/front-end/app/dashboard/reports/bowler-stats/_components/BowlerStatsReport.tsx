@@ -6,7 +6,7 @@ import { DistributionGridOverview } from './DistributionGridOverview';
 import PageLoader from '@/libs/custom/loaders/PageLoader';
 import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useGetReportById } from '@/libs/react-query-hooks/src';
+import { useGetReportById, useGetReportFilters } from '@/libs/react-query-hooks/src';
 import { createStatTilesGroup, isBowlerStatsData } from '@/libs/utils/ui-helper';
 import { IBowlerStatsData, IOversGroupedStat } from '@/libs/types-api/src';
 import { DismissalAndRecentGamesGrid } from '../../_components/DismissalAndRecentGamesGrid';
@@ -52,9 +52,12 @@ export const BowlerStatsReport = () => {
       ...formattedFilters,
     },
   });
+
+  const { data: getFiltersResponse } = useGetReportFilters({ reportName: reportType, enabled: !!reportType });
+
   const report = getReportResponse?.data?.report;
   const reportDetails = report?.details;
-  const reportFilters = getReportResponse?.data?.report?.filters || [];
+  const reportFilters = getFiltersResponse?.data?.report?.filters || [];
 
   let reportStatus: 'loading' | 'noReportData' | 'hasReportData';
 

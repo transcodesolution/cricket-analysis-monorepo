@@ -5,7 +5,7 @@ import { PlayerStatsOverview } from './PlayerStatsOverview';
 import { ScoringDistributionGrid } from './ScoringDistributionGrid';
 import { DismissalAndRecentGamesGrid } from '../../_components/DismissalAndRecentGamesGrid';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useGetReportById } from '@/libs/react-query-hooks/src';
+import { useGetReportById, useGetReportFilters } from '@/libs/react-query-hooks/src';
 import { useMemo } from 'react';
 import { IBatsmanStatsData, IOversGroupedStat } from '@/libs/types-api/src';
 import { createStatTilesGroup, isBatsmanStatsData } from '@/libs/utils/ui-helper';
@@ -55,9 +55,12 @@ export const BatsmanStatsReport = () => {
       ...formattedFilters,
     },
   });
+
+  const { data: getFiltersResponse } = useGetReportFilters({ reportName: reportType, enabled: !!reportType });
+
   const report = getReportResponse?.data?.report;
   const reportDetails = report?.details;
-  const reportFilters = getReportResponse?.data?.report?.filters || [];
+  const reportFilters = getFiltersResponse?.data?.report?.filters || [];
 
   let reportStatus: 'loading' | 'noReportData' | 'hasReportData';
 

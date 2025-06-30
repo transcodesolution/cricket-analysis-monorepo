@@ -192,3 +192,10 @@ export interface IGetReportByIdResponse {
 export interface IOversGroupedStat {
   items: IStatTileItem[];
 };
+
+export interface IGetReportFiltersResponse {
+  report: {
+    name: string;
+    filters: IReportFilter[];
+  }
+}

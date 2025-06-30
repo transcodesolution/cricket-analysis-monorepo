@@ -5,7 +5,7 @@ import { IconDownload } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useGetReportById } from '@/libs/react-query-hooks/src';
+import { useGetReportById, useGetReportFilters } from '@/libs/react-query-hooks/src';
 import { ITableHeader, ITableRow } from '@/libs/types-api/src';
 import { ReportFilter } from './ReportFilter';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
@@ -56,9 +56,11 @@ export const ReportTable = () => {
     },
   });
 
+  const { data: getFiltersResponse } = useGetReportFilters({ reportName: reportId, enabled: !!reportId });
+
   const report = getReportResponse?.data?.report;
   const reportDetails = report?.details;
-  const reportFilters = getReportResponse?.data?.report?.filters || [];
+  const reportFilters = getFiltersResponse?.data?.report?.filters || [];
   const reportData = reportDetails && 'tableBody' in reportDetails ? reportDetails.tableBody : [];
   const tableHeaders = reportDetails && 'tableHeader' in reportDetails ? reportDetails.tableHeader : [];
   const totalRecords = getReportResponse?.data?.totalData ?? 0;
