@@ -28,6 +28,13 @@ export class ReportController {
         return this.reportService.getReportByName(name, queryFilter, { page, limit });
     }
 
+    @Get('/filters/:name')
+    @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.VIEW_REPORTS, Permission.VIEW_PRE_DEFINED_REPORTS])
+    @UseGuards(UserPermissionCheckerGuard)
+    getReportFiltersByName(@Param("name") name: string) {
+        return this.reportService.getReportFiltersByName(name);
+    }
+
     @Get('/')
     @SetMetadata(ROUTE_PERMISSION_KEY_NAME, [Permission.VIEW_REPORTS, Permission.VIEW_PRE_DEFINED_REPORTS])
     @UseGuards(UserPermissionCheckerGuard)
