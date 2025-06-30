@@ -83,6 +83,16 @@ export class ReportService {
 
     const { totalData, ...details } = reports;
 
+    return { data: { report: { name: report.name, details }, totalData, state: { page: paginationDto.page, limit: paginationDto.limit, page_limit: Math.ceil(totalData / paginationDto.limit) } }, message: responseMessage.getDataSuccess("report") };
+  }
+
+  async getReportFiltersByName(name: string) {
+    const report = await this.reportModel.findOne({ uniqueKey: name });
+
+    if (!report) {
+      throw new BadRequestException(responseMessage.getDataNotFound("report"));
+    }
+
     const filterIds = report.filters.map((i) => i.id);
     const filters = await this.reportFilterModel.find({ _id: { $in: filterIds } }).lean();
 
@@ -117,6 +127,6 @@ export class ReportService {
       })
     );
 
-    return { data: { report: { name: report.name, details, filters: filterWithValues }, totalData, state: { page: paginationDto.page, limit: paginationDto.limit, page_limit: Math.ceil(totalData / paginationDto.limit) } }, message: responseMessage.getDataSuccess("report") };
+    return { data: { report: { name: report.name, filters: filterWithValues } }, message: responseMessage.getDataSuccess("report filters") };
   }
 }
