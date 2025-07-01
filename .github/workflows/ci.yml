@@ -148,9 +148,6 @@ jobs:
 
       - name: Deploy to production server ( backend )
         run: |
-          echo "Transferring build files..."
-          scp -o StrictHostKeyChecking=no build-output.tar.gz $SERVER_URL:~/cricket-analysis/back-end
-
           echo "Extracting and restarting services..."
           ssh -o StrictHostKeyChecking=no $SERVER_URL "
             export NVM_DIR=\$HOME/.nvm
@@ -207,9 +204,6 @@ jobs:
 
       - name: Deploy to production server ( frontend )
         run: |
-          echo "Transferring build files..."
-          scp -o StrictHostKeyChecking=no build-output.tar.gz $SERVER_URL:~/cricket-analysis/front-end
-
           echo "Extracting and restarting services..."
           ssh -o StrictHostKeyChecking=no $SERVER_URL "
             export NVM_DIR=\$HOME/.nvm
