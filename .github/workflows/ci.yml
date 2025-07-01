@@ -37,6 +37,7 @@ jobs:
           path: build-output.tar.gz
 
   deploy-to-development-backend:
+    needs: build-for-development-backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
