@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  build:
+  build-for-development-backend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -36,7 +36,7 @@ jobs:
           name: nx-build-output
           path: build-output.tar.gz
 
-  deploy:
+  deploy-to-development-backend:
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -58,7 +58,7 @@ jobs:
             echo "Server URL is: $SERVER_URL"
           fi
         env:
-          SERVER_URL: ${{ secrets.SERVER_URL }}
+          SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
 
       # Debug: Check SSH Connection Before Deployment
       - name: Debug SSH Connection
@@ -70,8 +70,8 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           echo "chmod done"
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SERVER_URL: ${{ secrets.SERVER_URL }}
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
 
       - name: Deploy to server
         run: |
@@ -102,8 +102,8 @@ jobs:
             cd ~/cricket-analysis-build/dist && npm install &&
             pm2 restart 0"
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SERVER_URL: ${{ secrets.SERVER_URL }}
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
             
       - name: Clean Up server
         run: |
@@ -111,6 +111,124 @@ jobs:
            rm -r ~/cricket-analysis-build/build-output.tar.gz &&
            rm -r ~/cricket-analysis-build/dist/apps
           "
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
+
+  deploy-to-production-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Debug: Check if SERVER_URL is set
+      - name: Debug Server URL
+        run: |
+          if [[ -z "$SERVER_URL" ]]; then
+            echo "Error: SERVER_URL is not set!"
+            exit 1
+          else
+            echo "Server URL is: $SERVER_URL"
+          fi
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+
+      # Debug: Check SSH Connection Before Deployment
+      - name: Debug SSH Connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "ssh folder done"
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          echo "ssh private key save id rsa done"
+          chmod 600 ~/.ssh/id_rsa
+          echo "chmod done"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+
+      - name: Deploy to production server ( backend )
+        run: |
+          echo "Transferring build files..."
+          scp -o StrictHostKeyChecking=no build-output.tar.gz $SERVER_URL:~/cricket-analysis/back-end
+
+          echo "Extracting and restarting services..."
+          ssh -o StrictHostKeyChecking=no $SERVER_URL "
+            export NVM_DIR=\$HOME/.nvm
+            [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+            [ -s \"\$NVM_DIR/bash_completion\" ] && . \"\$NVM_DIR/bash_completion\"  # Optional: Load completion
+            nvm use 22.14.0
+            export PATH=\$NVM_DIR/versions/node/v22.14.0/bin:\$PATH
+
+            # Debugging: Verify installation
+            echo 'Node.js version:'
+            node -v
+            echo 'NPM version:'
+            npm -v
+            
+            cd ~/cricket-analysis/back-end/cricket-analysis-monorepo &&
+            git pull &&
+            npm i &&
+            npx nx build back-end &&
+            pm2 restart 4"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+  
+  deploy-to-production-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Debug: Check if SERVER_URL is set
+      - name: Debug Server URL
+        run: |
+          if [[ -z "$SERVER_URL" ]]; then
+            echo "Error: SERVER_URL is not set!"
+            exit 1
+          else
+            echo "Server URL is: $SERVER_URL"
+          fi
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+
+      # Debug: Check SSH Connection Before Deployment
+      - name: Debug SSH Connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "ssh folder done"
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          echo "ssh private key save id rsa done"
+          chmod 600 ~/.ssh/id_rsa
+          echo "chmod done"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+
+      - name: Deploy to production server ( frontend )
+        run: |
+          echo "Transferring build files..."
+          scp -o StrictHostKeyChecking=no build-output.tar.gz $SERVER_URL:~/cricket-analysis/front-end
+
+          echo "Extracting and restarting services..."
+          ssh -o StrictHostKeyChecking=no $SERVER_URL "
+            export NVM_DIR=\$HOME/.nvm
+            [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+            [ -s \"\$NVM_DIR/bash_completion\" ] && . \"\$NVM_DIR/bash_completion\"  # Optional: Load completion
+            nvm use 22.14.0
+            export PATH=\$NVM_DIR/versions/node/v22.14.0/bin:\$PATH
+
+            # Debugging: Verify installation
+            echo 'Node.js version:'
+            node -v
+            echo 'NPM version:'
+            npm -v
+            
+            cd ~/cricket-analysis/front-end/cricket-analysis-monorepo &&
+            git pull &&
+            npm i &&
+            npx nx build front-end &&
+            pm2 restart 6"
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_URL: ${{ secrets.SERVER_URL }}

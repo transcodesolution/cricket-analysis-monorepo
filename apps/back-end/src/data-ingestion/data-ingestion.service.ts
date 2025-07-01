@@ -828,8 +828,10 @@ export class DataIngestionService {
     const fileUploadDtoKeys = Object.keys(uploadFileDto);
     const alreadyUploadCountRedisKey = requestUniqueId + "-" + "alreadyUploadCount";
 
-    this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { totalFilesProcessed:0, totalErroredFiles:0, totalAlreadyUploadedFiles:0, totalFiles:fileUploadDtoKeys.length, requestUniqueId });
-        
+    const socketUpdateForProcessStartingObject = { totalFilesProcessed: 0, totalErroredFiles: 0, totalAlreadyUploadedFiles: 0, totalFiles: fileUploadDtoKeys.length, requestUniqueId };
+
+    this.socketGateway.server.to(userId.toString()).emit("file-progress-update", socketUpdateForProcessStartingObject);
+
     for (const i of fileUploadDtoKeys) {
       const fileName = i;
       const uploadFileObj = uploadFileDto[fileName];
@@ -861,9 +863,12 @@ export class DataIngestionService {
       const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
 
       if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
-        const alreadyUploadingCount = await this.redisService.get(alreadyUploadCountRedisKey);
-        this.redisService.set(alreadyUploadCountRedisKey, (+(alreadyUploadingCount || 0) + 1).toString());
+        let alreadyUploadingCount: number | string = await this.redisService.get(alreadyUploadCountRedisKey);
+        alreadyUploadingCount = +(alreadyUploadingCount || 0) + 1;
+        this.redisService.set(alreadyUploadCountRedisKey, alreadyUploadingCount.toString()).toString();
         uploadResult.push({ hasAlreadyUploaded: true, fileName, message: responseMessage.dataAlreadyUploaded("file") });
+        socketUpdateForProcessStartingObject.totalAlreadyUploadedFiles = alreadyUploadingCount;
+        this.socketGateway.server.to(userId.toString()).emit("file-progress-update", socketUpdateForProcessStartingObject);
         continue;
       }
 
