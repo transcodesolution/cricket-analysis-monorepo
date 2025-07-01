@@ -35,7 +35,7 @@ export const UploadProgressCard = ({ uploadState, onUploadComplete }: IUploadPro
         </Group>
 
         <Text size="xs">
-          {alreadyUploadedFiles + processed}/{totalFiles} Files Processed
+          {processed}/{totalFiles} Files Processed
         </Text>
 
         {alreadyUploadedFiles > 0 && (
