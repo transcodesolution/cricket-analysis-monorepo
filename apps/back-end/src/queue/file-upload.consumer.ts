@@ -6,6 +6,7 @@ import { DataIngestionService } from '../data-ingestion/data-ingestion.service';
 import { IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
 import { SocketGateway } from '../socket/socket.service';
 import { RedisService } from '../redis/redis.service';
+import { Logger } from '@nestjs/common';
 
 interface IFileProcessToDatabase {
     requestUniqueId: string;
@@ -17,6 +18,8 @@ interface IFileProcessToDatabase {
 
 @Processor(QUEUES.fileUpload)
 export class FileUploadConsumer extends WorkerHost {
+    private readonly logger = new Logger(QUEUES.fileUpload)
+
     constructor(private readonly dataIngestionService: DataIngestionService, private readonly socketGateway: SocketGateway, private readonly redisService: RedisService) {
         super();
     }
@@ -25,16 +28,18 @@ export class FileUploadConsumer extends WorkerHost {
         switch (job.name) {
             case TASKS.processMappingSheetDataWithDatabaseKeys: {
                 const { requestUniqueId, fileName, fileData, userId, totalFiles } = job.data;
+                this.logger.log(`${job.name} is started! with processing file : ${fileName}`);
                 const alreadyUploadCountRedisKey = requestUniqueId + "-" + "alreadyUploadCount";
                 const processCountRedisKey = requestUniqueId + "-" + "processedCount";
                 const errorCountRedisKey = requestUniqueId + "-" + "errorCount";
                 const processingCount = await this.redisService.get(processCountRedisKey);
-                let totalFilesProcessed: string=processingCount, totalErroredFiles = "0";
+                let totalFilesProcessed: string = processingCount, totalErroredFiles = "0";
                 try {
                     await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData);
                     totalFilesProcessed = (+(processingCount || 0) + 1).toString();
                     this.redisService.set(processCountRedisKey, totalFilesProcessed);
                 } catch (error) {
+                    this.logger.error(error);
                     const errorCount = await this.redisService.get(errorCountRedisKey);
                     totalErroredFiles = (+(errorCount || 0) + 1).toString();
                     this.redisService.set(errorCountRedisKey, totalErroredFiles);
