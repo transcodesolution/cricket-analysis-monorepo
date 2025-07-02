@@ -121,8 +121,9 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
     const activeMultiValues =
       param?.split(',') ??
       (defaultSelectedValues?.length ? defaultSelectedValues : ['all']);
+    const isMultiSelect = filter?.singleFilterConfig?.isMultiSelectOption ?? filter.isMultiSelectOption;
 
-    if (filter.isMultiSelectOption) {
+    if (isMultiSelect) {
       return (
         <MultiSelect
           label={filter.label}

@@ -31,8 +31,8 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
         endDate: dayjs(end).format('YYYY-MM-DD'),
       });
     }
-    
-    if(!start && !end){
+
+    if (!start && !end) {
       handleApplyFilter({
         startDate: '',
         endDate: '',
@@ -64,8 +64,9 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
           : { label: String(val), value: String(val) }
       ),
     ];
+    const isMultiSelect = filter?.singleFilterConfig?.isMultiSelectOption ?? filter.isMultiSelectOption;
 
-    if (filter.isMultiSelectOption) {
+    if (isMultiSelect) {
       return (
         <MultiSelect
           label={filter.label}
