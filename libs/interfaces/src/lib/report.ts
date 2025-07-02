@@ -12,6 +12,7 @@ export interface IReport {
 export interface ISingleFilterConfig {
     id?: string;
     selectedValues?: string[];
+    isMultiSelectOption?: boolean
 }
 
 export interface IReportFilter {
