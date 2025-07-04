@@ -20,7 +20,9 @@ export const UploadProgressCard = ({ uploadState, onUploadComplete }: IUploadPro
   const isComplete = totalDoneFiles === totalFiles;
 
   if (isComplete) {
-    onUploadComplete(requestUniqueId);
+    queueMicrotask(() => {
+      onUploadComplete(requestUniqueId);
+    });
     return null;
   }
 
