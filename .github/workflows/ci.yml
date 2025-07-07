@@ -166,7 +166,7 @@ jobs:
             git pull &&
             npm i &&
             npx nx build back-end &&
-            pm2 restart 4"
+            pm2 restart back-end"
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_URL: ${{ secrets.SERVER_URL }}
@@ -222,7 +222,7 @@ jobs:
             git pull &&
             npm i &&
             npx nx build front-end &&
-            pm2 restart 6"
+            pm2 restart front-end"
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_URL: ${{ secrets.SERVER_URL }}

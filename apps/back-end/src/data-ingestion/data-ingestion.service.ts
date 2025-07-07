@@ -733,15 +733,23 @@ export class DataIngestionService {
     }
   }
 
-  async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat) {
+  async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat, alreadyUploadCountRedisKey: string) {
     const match_id = this.getMatchId(fileName);
+    const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+
+    const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
+
+    if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
+      await this.updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey);
+      return { isFileProcessedSuccessfully: false };
+    }
+
     const mappings = await this.mappedDataModel.find();
     const index = mappings.findIndex((i) => i.collectionName === MatchInfo.name);
     if (index !== -1) {
       const [removedElement] = mappings.splice(index, 1);
       mappings.push(removedElement);
     }
-    const isInfoFile = this.infoFileMatchingRegex.test(fileName);
     const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
     const tournamentappingFields = (mappings.find((key) => key.collectionName === Tournament.name)).fields;
     const sheetKeys = Object.keys(extractedSheetInfo);
@@ -816,17 +824,22 @@ export class DataIngestionService {
       }
     }
     await this.analyticService.generateAnalyticsForMatch(match_id);
+    return { isFileProcessedSuccessfully: true }
   }
 
   getMatchId(fileName: string) {
     return fileName.split("_")[0];
   }
 
-  async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response, requestUniqueId: string, userId: string) {
-    const uploadResult: IUploadResult[] = [];
+  async updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey: string) {
+    let alreadyUploadingCount: number | string = await this.redisService.get(alreadyUploadCountRedisKey);
+    alreadyUploadingCount = +(alreadyUploadingCount || 0) + 1;
+    this.redisService.set(alreadyUploadCountRedisKey, alreadyUploadingCount.toString());
+    return alreadyUploadingCount;
+  }
 
+  async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response, requestUniqueId: string, userId: string) {
     const fileUploadDtoKeys = Object.keys(uploadFileDto);
-    const alreadyUploadCountRedisKey = requestUniqueId + "-" + "alreadyUploadCount";
 
     const socketUpdateForProcessStartingObject = { totalFilesProcessed: 0, totalErroredFiles: 0, totalAlreadyUploadedFiles: 0, totalFiles: fileUploadDtoKeys.length, requestUniqueId };
 
@@ -841,9 +854,6 @@ export class DataIngestionService {
       const readStream = createReadStream(join("uploads/", fileNameWithExtension));
 
       const extractedSheetInfo = await this.readExcelFiles<ReadStream>({ filename: fileNameWithExtension, readStream });
-
-      const match_id = this.getMatchId(fileName);
-      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
       const bulkInputOps = [];
       for (const key in uploadFileObj) {
@@ -860,36 +870,12 @@ export class DataIngestionService {
         await this.mappedDataModel.bulkWrite(bulkInputOps);
       }
 
-      const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
-
-      if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
-        let alreadyUploadingCount: number | string = await this.redisService.get(alreadyUploadCountRedisKey);
-        alreadyUploadingCount = +(alreadyUploadingCount || 0) + 1;
-        this.redisService.set(alreadyUploadCountRedisKey, alreadyUploadingCount.toString()).toString();
-        uploadResult.push({ hasAlreadyUploaded: true, fileName, message: responseMessage.dataAlreadyUploaded("file") });
-        socketUpdateForProcessStartingObject.totalAlreadyUploadedFiles = alreadyUploadingCount;
-        this.socketGateway.server.to(userId.toString()).emit("file-progress-update", socketUpdateForProcessStartingObject);
-        continue;
-      }
-
-      uploadResult.push({ hasAlreadyUploaded: false, fileName, message: responseMessage.customMessage("Process started to load data in database") });
-      await this.fileUploadQueue.add(TASKS.processMappingSheetDataWithDatabaseKeys, { requestUniqueId, fileName, totalFiles: fileUploadDtoKeys.length, fileData: extractedSheetInfo[fileName], userId }, { removeOnComplete: true, removeOnFail: true, delay: 10000 });
+      await this.fileUploadQueue.add(TASKS.processMappingSheetDataWithDatabaseKeys, { requestUniqueId, fileName, totalFiles: fileUploadDtoKeys.length, fileData: extractedSheetInfo[fileName], userId }, { removeOnComplete: true, removeOnFail: true, delay: 6000 });
     }
 
-    const alreadyUpload = uploadResult.filter((i) => i.hasAlreadyUploaded).map((i) => i.fileName);
-
-    if (alreadyUpload.length > 0) {
-      res.status(HttpStatus.PARTIAL_CONTENT).json({
-        statusCode: HttpStatus.PARTIAL_CONTENT,
-        message: "Mapping performed successfully and files $fileNames are already uploaded, Rest are processing to load data".replace("$fileNames", alreadyUpload.join(", ")),
-        data: uploadResult,
-      });
-    } else {
-      res.status(HttpStatus.OK).json({
-        statusCode: HttpStatus.OK,
-        message: responseMessage.customMessage("mapping updated successfully and sheet data is processing to load in database"),
-        data: uploadResult,
-      });
-    }
+    return res.status(HttpStatus.PARTIAL_CONTENT).json({
+      message: responseMessage.customMessage("input updated successfully and files are processing to load in database"),
+      data: {},
+    });
   }
 }
