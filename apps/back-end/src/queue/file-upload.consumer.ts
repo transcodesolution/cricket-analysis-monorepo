@@ -1,12 +1,11 @@
-
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
+import { Job, Worker } from 'bullmq';
 import { QUEUES, TASKS } from '../helper/constant.helper';
 import { DataIngestionService } from '../data-ingestion/data-ingestion.service';
 import { IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
 import { SocketGateway } from '../socket/socket.service';
 import { RedisService } from '../redis/redis.service';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 interface IFileProcessToDatabase {
     requestUniqueId: string;
@@ -16,12 +15,29 @@ interface IFileProcessToDatabase {
     totalFiles: number;
 }
 
-@Processor(QUEUES.fileUpload)
-export class FileUploadConsumer extends WorkerHost {
+@Injectable()
+export class FileUploadConsumer implements OnModuleInit {
     private readonly logger = new Logger(QUEUES.fileUpload)
+    public worker: Worker;
 
-    constructor(private readonly dataIngestionService: DataIngestionService, private readonly socketGateway: SocketGateway, private readonly redisService: RedisService) {
-        super();
+    constructor(private readonly dataIngestionService: DataIngestionService, private readonly socketGateway: SocketGateway, private readonly redisService: RedisService, private readonly configService: ConfigService) {
+    }
+
+    onModuleInit() {
+        this.logger.log('Initializing FileUploadConsumer worker...');
+
+        this.worker = new Worker<IFileProcessToDatabase>(
+            QUEUES.fileUpload,
+            async (job: Job<IFileProcessToDatabase>) => {
+                await this.process(job);
+            },
+            {
+                connection: {
+                    host: this.configService.get('REDIS_HOST'),
+                    port: this.configService.get<number>('REDIS_PORT'),
+                },
+            },
+        );
     }
 
     async process(job: Job<IFileProcessToDatabase>) {
@@ -33,11 +49,13 @@ export class FileUploadConsumer extends WorkerHost {
                 const processCountRedisKey = requestUniqueId + "-" + "processedCount";
                 const errorCountRedisKey = requestUniqueId + "-" + "errorCount";
                 const processingCount = await this.redisService.get(processCountRedisKey);
-                let totalFilesProcessed: string = processingCount, totalErroredFiles = "0";
+                let totalFilesProcessed: string = processingCount || "0", totalErroredFiles = "0";
                 try {
-                    await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData);
-                    totalFilesProcessed = (+(processingCount || 0) + 1).toString();
-                    this.redisService.set(processCountRedisKey, totalFilesProcessed);
+                    const response = await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData, alreadyUploadCountRedisKey);
+                    if (response.isFileProcessedSuccessfully) {
+                        totalFilesProcessed = (+(processingCount || 0) + 1).toString();
+                        this.redisService.set(processCountRedisKey, totalFilesProcessed);
+                    }
                 } catch (error) {
                     this.logger.error(error);
                     const errorCount = await this.redisService.get(errorCountRedisKey);
