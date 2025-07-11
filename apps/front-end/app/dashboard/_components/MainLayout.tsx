@@ -37,17 +37,19 @@ export const MainLayout = ({ children }: IMainLayout) => {
       {/* Header */}
       <AppShell.Header bg='var(--mantine-color-gray-1)'>
         <Flex justify="space-between" align="center" h="100%" px="lg">
-          <Group onClick={() => redirect('/dashboard')} styles={{ root: { cursor: 'pointer' } }}>
+          <Group >
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Image
-              src="/assets/images/logo.svg"
-              alt="CrickAI Logo"
-              height={32}
-              width={32}
-            />
-            <Text fw={600} size="24">
-              CrickAI
-            </Text>
+            <Group onClick={() => redirect('/dashboard')} styles={{ root: { cursor: 'pointer' } }}>
+              <Image
+                src="/assets/images/logo.svg"
+                alt="CrickAI Logo"
+                height={32}
+                width={32}
+              />
+              <Text fw={600} size="24">
+                CrickAI
+              </Text>
+            </Group>
           </Group>
           <ProfilePopOver />
         </Flex>
@@ -55,7 +57,7 @@ export const MainLayout = ({ children }: IMainLayout) => {
 
       {/* Sidebar */}
       <AppShell.Navbar p="xs" bg='var(--mantine-color-gray-1)'>
-        <Sidebar />
+        <Sidebar toggle={toggle} />
       </AppShell.Navbar>
 
       {/* Main Content */}

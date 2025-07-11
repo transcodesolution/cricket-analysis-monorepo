@@ -14,6 +14,7 @@ import classes from './sidebar.module.scss';
 import Link from 'next/link';
 import { useUserStore } from '@/libs/store/src';
 import { Permission } from '@cricket-analysis-monorepo/constants';
+import { useMediaQuery } from '@mantine/hooks';
 
 const linksData = [
   {
@@ -48,11 +49,12 @@ const linksData = [
   },
 ];
 
-export const Sidebar = () => {
+export const Sidebar = ({ toggle }: {toggle: () => void}) => {
   const pathname = usePathname();
   const { user } = useUserStore();
   const userPermissions = user?.role?.permissions || [];
   const filteredData = linksData.filter((item) => item.permissions.every((permission) => userPermissions.includes(permission)));
+  const isMobile = useMediaQuery('(max-width: 48em)'); 
 
   return (
     <Flex direction="column" h="100%" gap='xs'>
@@ -64,6 +66,9 @@ export const Sidebar = () => {
             className={clsx(classes.sidebarLink, {
               [classes.active]: pathname.includes(item.link),
             })}
+            onClick={() => {
+              if (isMobile) toggle();
+            }}
           >
             <Flex align='center' py={7} px="xs">
               <ThemeIcon variant='transparent' size={36}>

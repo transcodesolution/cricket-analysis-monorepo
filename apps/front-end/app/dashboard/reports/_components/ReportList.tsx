@@ -78,6 +78,9 @@ export const ReportList = () => {
               backgroundColor: 'var(--mantine-color-gray-1)',
               color: 'var(--mantine-color-gray-7)',
             },
+            pagination: {
+              flexDirection: 'row'
+            }
           }}
           height="calc(100vh - 400px)"
         />

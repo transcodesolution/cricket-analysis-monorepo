@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Center,
+  Container,
   Paper,
   PasswordInput,
   TextInput,
@@ -49,8 +50,9 @@ export default function Page() {
     <>
       <title>Sign in | Cricket Analysis</title>
       <meta name="description" content="Cricket Analysis" />
+      <Container fluid>
       <Center h="100vh">
-        <Box>
+        <Box w={{base:'100%',sm:'auto'}}>
           <Title ta="center">Welcome back!</Title>
           <Surface component={Paper} className={classes.card}>
             <form onSubmit={handleSignInFormSubmit} onKeyDown={(e) => {
@@ -79,7 +81,8 @@ export default function Page() {
             </form>
           </Surface>
         </Box>
-      </Center>
+        </Center>
+        </Container>
     </>
   );
 };
