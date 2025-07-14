@@ -1,6 +1,6 @@
-import { ITableField, ICheckMappingRequest, IFileColumnDataResponse, IUpdateAndSaveEntriesResponse, IUpdateAndSaveEntriesRequest } from '@/libs/types-api/src';
+import { ITableField, ICheckMappingRequest, IFileColumnDataResponse, IUpdateAndSaveEntriesRequest } from '@/libs/types-api/src';
 import http from './http-common';
-import { IApiResponse } from '@cricket-analysis-monorepo/interfaces';
+import { IApiResponse, IUploadResult } from '@cricket-analysis-monorepo/interfaces';
 import { AxiosProgressEvent } from 'axios';
 import { apiErrorHandler } from '@/libs/utils/apiErrorHandler';
 
@@ -39,9 +39,9 @@ export const updateMappingAndCheckRequiredInputs = async ({ formData, onUploadPr
   }
 };
 
-export const updateAndSaveEntries = async (params: IUpdateAndSaveEntriesRequest): Promise<IApiResponse<IUpdateAndSaveEntriesResponse[]>> => {
+export const updateAndSaveEntries = async (params: IUpdateAndSaveEntriesRequest): Promise<IApiResponse<IUploadResult[]>> => {
   try {
-    const result = await http.post<IApiResponse<IUpdateAndSaveEntriesResponse[]>>('/update-input-and-save-entries', params);
+    const result = await http.post<IApiResponse<IUploadResult[]>>('/update-input-and-save-entries', params);
     return result.data;
   } catch (error) {
     throw new Error(`Update input entries: ${error}`)

@@ -33,12 +33,6 @@ export interface IUserMappingDetail {
 export interface IUpdateAndSaveEntriesRequest {
   [fileName: string]: ICachedInput[];
 }
-export interface IUpdateAndSaveEntriesResponse {
-  message: string;
-  fileName: string;
-  hasAlreadyUploaded: boolean,
-}
-
 export interface IFileProgressEvent {
   totalFiles: number;
   totalFilesProcessed: string;
