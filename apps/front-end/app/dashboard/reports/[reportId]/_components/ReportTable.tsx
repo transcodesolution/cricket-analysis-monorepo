@@ -136,6 +136,9 @@ export const ReportTable = () => {
               backgroundColor: 'var(--mantine-color-gray-1)',
               color: 'var(--mantine-color-gray-7)',
             },
+            pagination: {
+              flexDirection: 'row'
+            }
           }}
           height="calc(100vh - 408px)"
         />
