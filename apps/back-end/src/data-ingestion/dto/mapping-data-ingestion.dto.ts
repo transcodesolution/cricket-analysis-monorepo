@@ -36,7 +36,7 @@ export class UploadFileAndMappingUpdateDto {
 }
 
 class CachedInputDto {
-    [keyname: string]: object;
+    [keyname: string]: string;
 }
 
 export class InputUpdateDto extends PickType(CachedInput, ["collectionName", "referenceKey", "referenceValue"]) {

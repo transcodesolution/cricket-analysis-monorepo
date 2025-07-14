@@ -17,7 +17,7 @@ import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
 import { MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
-import { ICachedInput, IMatchSheetFormat, IUploadResult } from '@cricket-analysis-monorepo/interfaces';
+import { ICachedInput, IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
 import { formatCsvFiles, formatExcelFiles, stripExt } from '@cricket-analysis-monorepo/service';
 import { createReadStream, ReadStream } from 'fs';
 import { join } from 'path';
@@ -46,7 +46,7 @@ export class DataIngestionService {
   private readonly infoFileMatchingRegex = /info/i;
 
   private readonly missingInputs: Record<string, { [keyname: string]: string[] }> = {
-    [Tournament.name]: { event: ["matchFormat", "type"] },
+    [Tournament.name]: { event: ["matchFormat", "type", "event"] },
   }
 
   private readonly enumValues: { [keyname: string]: string | null | object } = {
@@ -79,6 +79,11 @@ export class DataIngestionService {
     private readonly redisService: RedisService,
     private readonly analyticService: AnalyticsService,
     private readonly commonHelperService: CommonHelperService) { }
+
+  extractNumbers(str: string) {
+    const matches = str.match(/\d+/g);
+    return matches ? matches.join('') : '';
+  }
 
   matchUmpireType(value: string) {
     const isOffField = this.umpireMatchingRegexs.offFieldUmpireWord.test(value);
@@ -163,7 +168,7 @@ export class DataIngestionService {
     const fourthUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.fourthUmpire"] });
     const thirdUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.thirdUmpire"] });
     const venue = await this.venueModel.findOne({ name: dataToUpdate["venue"] });
-    const tournament = await this.tournamentModel.findOne({ event: dataToUpdate["tournamentId"], season: dataToUpdate["season"] });
+    const tournament = await this.tournamentModel.findOne({ event: dataToUpdate["tournamentId"] });
     const referee = await this.refereeModel.findOne({ name: dataToUpdate["referee"] });
     dataToUpdate["team1.playingEleven"] = dataToUpdate["team1.playingEleven"] || [];
     dataToUpdate["team2.playingEleven"] = dataToUpdate["team2.playingEleven"] || [];
@@ -221,16 +226,11 @@ export class DataIngestionService {
     return matchInfo._id;
   }
 
-  extractSeason(season: string) {
-    return season.toString().slice(0, 4);
-  }
-
-  async saveMappedDataToDb(collectionName: string, dataToUpdate: IMatchSheetFormat, match_id: string, scoreboardMappingFields: Record<string, string[]>, scoreboardDetail?: IMatchSheetFormat) {
+  async saveMappedDataToDb(collectionName: string, dataToUpdate: IMatchSheetFormat, match_id: string, scoreboardMappingFields: Record<string, string[]>, fileName: string) {
     switch (collectionName) {
       case Tournament.name:
-        if (dataToUpdate?.event && dataToUpdate?.season) {
-          dataToUpdate.season = this.extractSeason(dataToUpdate.season as string);
-          await this.tournamentModel.updateOne({ event: dataToUpdate.event, season: dataToUpdate.season }, { $set: dataToUpdate }, { upsert: true });
+        if (dataToUpdate?.event) {
+          await this.tournamentModel.updateOne({ event: dataToUpdate.event }, { $set: dataToUpdate }, { upsert: true });
         }
         break;
       case MatchInfo.name:
@@ -238,7 +238,7 @@ export class DataIngestionService {
           const matchInfoId = await this.saveMatchInformationToDb(dataToUpdate, match_id);
           const scoreboardCount = await this.matchScoreboardModel.countDocuments({ sheet_match_id: match_id });
           if (scoreboardCount !== 0) {
-            const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, scoreboardDetail, scoreboardMappingFields);
+            const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, null, scoreboardMappingFields, fileName);
             await this.updateScoreboardDataToDb(scoreboard, match_id, matchInfoId.toString());
           }
           break;
@@ -312,10 +312,10 @@ export class DataIngestionService {
           if ((dataToUpdate?.length || 0) !== 0) {
             const matchInfo = await this.matchInfoModel.findOne({ match_id });
             if (matchInfo) {
-              const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, dataToUpdate, scoreboardMappingFields);
+              const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, dataToUpdate, scoreboardMappingFields, fileName);
               await this.updateScoreboardDataToDb(scoreboard, match_id, matchInfo._id.toString());
             } else {
-              const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, dataToUpdate, scoreboardMappingFields);
+              const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, dataToUpdate, scoreboardMappingFields, fileName);
               await this.updateScoreboardDataToDb(scoreboard, match_id, null);
             }
           }
@@ -432,14 +432,14 @@ export class DataIngestionService {
   async fetchScoreboardDetailFromSheet(
     sheet_match_id: string,
     sheetScoreboardData: IMatchSheetFormat,
-    fields: Record<string, string[]>
+    fields: Record<string, string[]>,
+    fileName: string
   ) {
     const result = [];
 
     if (!sheetScoreboardData) {
-      const fileName = `${sheet_match_id}.csv`;
-      const fileData = await this.readExcelFiles<ReadStream>({ filename: fileName, readStream: createReadStream(join("uploads/", fileName)) });
-      sheetScoreboardData = fileData[sheet_match_id];
+      const extractedSheetInfoString: string = await this.redisService.get(`${fileName}:data`);
+      sheetScoreboardData = JSON.parse(extractedSheetInfoString);
     }
 
     const rows = sheetScoreboardData;
@@ -654,6 +654,8 @@ export class DataIngestionService {
 
       const extractedSheetInfo = await this.readExcelFiles<ReadStream>(currentSheetData);
 
+      await this.redisService.set(`${fileName}:data`, JSON.stringify(extractedSheetInfo));
+
       const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
       if (isInfoFile) {
@@ -734,13 +736,19 @@ export class DataIngestionService {
   }
 
   async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat, alreadyUploadCountRedisKey: string) {
-    const match_id = this.getMatchId(fileName);
+    const match_id = this.extractNumbers(fileName);
+
+    if (!match_id) {
+      throw new Error("couldn't get unique number value from filename");
+    }
+
     const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
     const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
 
     if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
       await this.updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey);
+      await this.commonHelperService.deleteKeysContainingId(match_id);
       return { isFileProcessedSuccessfully: false };
     }
 
@@ -751,7 +759,6 @@ export class DataIngestionService {
       mappings.push(removedElement);
     }
     const scoreboardMappingFields = (mappings.find((key) => key.collectionName === MatchScoreboard.name)).fields;
-    const tournamentappingFields = (mappings.find((key) => key.collectionName === Tournament.name)).fields;
     const sheetKeys = Object.keys(extractedSheetInfo);
     for (const j of mappings) {
       const collection: string[] = DatabaseFields[j.collectionName]();
@@ -808,27 +815,14 @@ export class DataIngestionService {
             this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName);
           }
         });
-        if (j.collectionName === MatchInfo.name) {
-          sheetKeys.forEach((value) => {
-            const seasonKeyName = value === "season" ? value : tournamentappingFields["season"].includes(value) ? value : "";
-            if (seasonKeyName) {
-              const season = this.extractSeason(extractedSheetInfo[seasonKeyName] as string);
-              dataToUpdate["season"] = season;
-            }
-          })
-        }
-        await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields);
+        await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields, fileName);
       }
       else if (j.collectionName === MatchScoreboard.name) {
-        await this.saveMappedDataToDb(j.collectionName, extractedSheetInfo, match_id, scoreboardMappingFields);
+        await this.saveMappedDataToDb(j.collectionName, extractedSheetInfo, match_id, scoreboardMappingFields, fileName);
       }
     }
     await this.analyticService.generateAnalyticsForMatch(match_id);
     return { isFileProcessedSuccessfully: true }
-  }
-
-  getMatchId(fileName: string) {
-    return fileName.split("_")[0];
   }
 
   async updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey: string) {
@@ -849,11 +843,9 @@ export class DataIngestionService {
       const fileName = i;
       const uploadFileObj = uploadFileDto[fileName];
 
-      const fileNameWithExtension = `${fileName}.csv`;
+      const extractedSheetInfoString: string = await this.redisService.get(`${fileName}:data`);
 
-      const readStream = createReadStream(join("uploads/", fileNameWithExtension));
-
-      const extractedSheetInfo = await this.readExcelFiles<ReadStream>({ filename: fileNameWithExtension, readStream });
+      const extractedSheetInfo: Record<string, IMatchSheetFormat> = JSON.parse(extractedSheetInfoString);
 
       const bulkInputOps = [];
       for (const key in uploadFileObj) {
