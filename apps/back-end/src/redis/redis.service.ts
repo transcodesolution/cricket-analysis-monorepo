@@ -26,7 +26,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         console.log('Redis connection closed');
     }
 
-    async set(key: string, value: string): Promise<string> {
+    async set(key: string, value: string, timeoutInSeconds?: number): Promise<string> {
+        if (timeoutInSeconds) {
+            return this.client.set(key, value, 'EX', timeoutInSeconds);
+        }
         return this.client.set(key, value);
     }
 
