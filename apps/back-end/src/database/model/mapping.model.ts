@@ -1,6 +1,6 @@
-import { MatchFormat, TournamentType } from '@cricket-analysis-monorepo/constants';
+import { MatchFormat, TournamentName, TournamentType } from '@cricket-analysis-monorepo/constants';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 
 export interface IMappingData extends MappingData, Document { }
@@ -17,14 +17,17 @@ export class CachedInput {
     referenceValue: string;
 
     @Prop({ type: String, enum: TournamentType })
-    @IsNotEmpty()
-    @IsString()
+    @IsOptional()
     @IsEnum(TournamentType)
     type: TournamentType;
 
+    @Prop({ type: String, enum: TournamentName })
+    @IsOptional()
+    @IsEnum(TournamentName)
+    event?: TournamentName;
+
     @Prop({ type: String, enum: MatchFormat })
-    @IsNotEmpty()
-    @IsString()
+    @IsOptional()
     @IsEnum(MatchFormat)
     matchFormat: MatchFormat;
 

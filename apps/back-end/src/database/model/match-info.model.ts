@@ -8,7 +8,7 @@ export class MatchInfo {
     @Prop()
     name: string;
 
-    @Prop({ type: Date })
+    @Prop({ type: Date, index:true })
     start_date: string;
 
     @Prop({ type: SchemaTypes.ObjectId })
