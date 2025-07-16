@@ -2,13 +2,29 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
 import { TossResult, WinnerTeamDecision, MatchStatus, MatchMethod } from '@cricket-analysis-monorepo/constants';
 import { BallType, Brand, Color } from '@cricket-analysis-monorepo/constants';
+import { Tournament } from './tournament.model';
+import { Team } from './team.model';
 
-@Schema({ timestamps: true, versionKey: false })
+@Schema({
+    timestamps: true, versionKey: false, virtuals: {
+        tournament: {
+            options: {
+                ref: Tournament.name,
+                localField: 'tournamentId',
+                foreignField: '_id',
+                justOne: true
+            }
+        },
+    },
+    toJSON: {
+        virtuals: true,
+    },
+})
 export class MatchInfo {
     @Prop()
     name: string;
 
-    @Prop({ type: Date })
+    @Prop({ type: Date, index: true })
     start_date: string;
 
     @Prop({ type: SchemaTypes.ObjectId })
@@ -66,7 +82,7 @@ export class MatchInfo {
             impactPlayerOut: SchemaTypes.ObjectId,
             playingEleven: { type: [SchemaTypes.ObjectId], index: true },
             substitutePlayers: [SchemaTypes.ObjectId],
-            team: { type: SchemaTypes.ObjectId, index: true },
+            team: { type: SchemaTypes.ObjectId, ref: Team.name, index: true },
         }
     })
     team2: {
@@ -77,7 +93,7 @@ export class MatchInfo {
         team?: string;
     };
 
-    @Prop({ type: SchemaTypes.ObjectId, index: true })
+    @Prop({ type: SchemaTypes.ObjectId, ref: Tournament.name, index: true })
     tournamentId: string;
 
     @Prop({
@@ -99,7 +115,7 @@ export class MatchInfo {
             impactPlayerOut: SchemaTypes.ObjectId,
             playingEleven: { type: [SchemaTypes.ObjectId], index: true },
             substitutePlayers: [SchemaTypes.ObjectId],
-            team: { type: SchemaTypes.ObjectId, index: true },
+            team: { type: SchemaTypes.ObjectId, ref: Team.name, index: true },
         }
     })
     team1: {

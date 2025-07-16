@@ -48,3 +48,5 @@ front-end/.env
 # Next.js
 .next
 out
+
+apps/back-end/queries
