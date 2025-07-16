@@ -1,4 +1,4 @@
-import { FormInputElement, MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constants";
+import { FormInputElement, MatchFormat, TournamentName, TournamentType } from "@cricket-analysis-monorepo/constants";
 import { MatchInfo } from "../../database/model/match-info.model";
 import { Ball, MatchScoreboard } from "../../database/model/match-scoreboard.model";
 import { Player } from "../../database/model/player.model";
@@ -79,4 +79,5 @@ export const DatabaseFields = {
 export const UIInputRequiredFieldConfiguration: Record<string, () => IFormInput> = {
     matchFormat: () => ({ label: "Match Format", key: "matchFormat", elementType: FormInputElement.dropdown, options: Object.values(MatchFormat) }),
     type: () => ({ label: "Tournament Type", key: "type", elementType: FormInputElement.dropdown, options: Object.values(TournamentType) }),
+    event: () => ({ label: "Tournament Name", key: "event", elementType: FormInputElement.dropdown, options: Object.values(TournamentName) }),
 }

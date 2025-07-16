@@ -47,6 +47,8 @@ export class AnalyticsService {
             // (Optional) Save to DB
             await analytics.save();
 
+            await this.commonHelperService.deleteKeysContainingId(matchId);
+
             return analytics;
         }
 
