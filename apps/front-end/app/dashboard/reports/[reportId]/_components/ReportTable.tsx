@@ -62,10 +62,10 @@ export const ReportTable = () => {
   const reportDetails = report?.details;
   const reportFilters = getFiltersResponse?.data?.report?.filters || [];
   const reportData = reportDetails && 'tableBody' in reportDetails ? reportDetails.tableBody : [];
-  const tableHeaders = reportDetails && 'tableHeader' in reportDetails ? reportDetails.tableHeader : [];
+  const tableHeaders: ITableHeader[] = reportDetails && 'tableHeader' in reportDetails ? reportDetails.tableHeader as ITableHeader[] : [];
   const totalRecords = getReportResponse?.data?.totalData ?? 0;
 
-  const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header: ITableHeader) => ({
+  const columns: DataTableColumn<ITableRow>[] = tableHeaders.map((header) => ({
     accessor: header.value,
     title: header.label,
   }));
