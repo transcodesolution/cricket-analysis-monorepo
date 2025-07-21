@@ -95,7 +95,7 @@ const TeamPerformanceReport = () => {
 
       reportContent = (
         <React.Fragment>
-          <Grid.Col span={9}>
+          <Grid.Col span={{ base: 12, md: 9 }}>
             <TeamFilterTable
               data={filterData.stats}
               tableHeader={filterData.tableHeader}
@@ -121,7 +121,7 @@ const TeamPerformanceReport = () => {
         {reportName}
       </Title>
       <Grid>
-        <Grid.Col span={3}>
+        <Grid.Col span={{ base: 12, md: 3 }}>
           <ScrollArea h="calc(100vh - 37.5rem)" scrollbars="y">
             <ReportFilter reportFilters={reportFilters} width="100%" />
           </ScrollArea>
