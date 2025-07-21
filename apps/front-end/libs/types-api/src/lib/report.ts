@@ -194,7 +194,7 @@ export interface IFilterData {
   tableHeader: ITableHeader[];
 }
 
-export interface ITeamPerformanceStatsData {
+export interface ITeamPerformanceData {
   matches: ITeamPerformanceMatch[];
   tableHeader: (string | number)[];
   filterData: IFilterData
@@ -219,7 +219,7 @@ export interface ITeamStats {
   stats: Record<string, number | string>;
 }
 
-export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | IVenueStatsData | ITableReportDetails | ITeamPerformanceStatsData;
+export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | IVenueStatsData | ITableReportDetails | ITeamPerformanceData;
 
 export interface IGetReportByIdResponse {
   report: {

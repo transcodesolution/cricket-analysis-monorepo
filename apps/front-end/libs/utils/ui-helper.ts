@@ -1,6 +1,6 @@
 import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
-import { IBatsmanStatsData, IBowlerStatsData, TReportDetails, IVenueStatsData, IStatTileItem, ITeamPerformanceStatsData } from "../types-api/src";
+import { IBatsmanStatsData, IBowlerStatsData, TReportDetails, IVenueStatsData, IStatTileItem, ITeamPerformanceData } from "../types-api/src";
 
 export const readExcelFiles = async (
   files: File[]
@@ -92,6 +92,6 @@ export const createStatTilesGroup = (items: IStatTileItem[] | undefined | null) 
   return { items };
 }
 
-export const isTeamPerformanceStatsData = (details: TReportDetails): details is ITeamPerformanceStatsData => {
+export const isTeamPerformanceStatsData = (details: TReportDetails): details is ITeamPerformanceData => {
   return 'matches' in details;
 };

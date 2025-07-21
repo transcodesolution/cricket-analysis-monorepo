@@ -89,11 +89,11 @@ export const ReportFilter = ({ reportFilters, width }: IReportFilters) => {
               [key]: values.length === 0 || values.includes('all') ? undefined : values.join(','),
             });
           }}
-          max={width ?? 207}
+          max={width ?? 208}
           styles={{
             input: {
               height: '2.2em',
-              width: width ?? '207px',
+              width: width ?? '13rem',
               overflowX: 'auto',
               overflowY: 'hidden',
             },

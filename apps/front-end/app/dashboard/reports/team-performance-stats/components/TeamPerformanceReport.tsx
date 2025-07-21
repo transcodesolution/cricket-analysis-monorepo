@@ -7,7 +7,7 @@ import { useGetReportById, useGetReportFilters } from '@/libs/react-query-hooks/
 import { ReportFilter } from '../../[reportId]/_components/ReportFilter';
 import { TeamReportTable } from './TeamReportTable';
 import { isTeamPerformanceStatsData } from '@/libs/utils/ui-helper';
-import { ITeamPerformanceStatsData } from '@/libs/types-api/src';
+import { ITeamPerformanceData } from '@/libs/types-api/src';
 import { teamPerformanceColumns } from '../../_components/columns/teamPerformanceColumns';
 import { TeamFilterTable } from './TeamFilterTable';
 
@@ -73,14 +73,14 @@ const TeamPerformanceReport = () => {
 
   switch (reportStatus) {
     case 'loading':
-      reportContent = <Flex align='start' h="calc(100vh - 550px)" w='100%' justify='center'>
+      reportContent = <Flex align='start' h="calc(100vh - 34.375rem)" w='100%' justify='center'>
         <Loader />
       </Flex >;
       break;
 
     case 'noReportData':
       reportContent = (
-        <Flex align='start' h="calc(100vh - 550px)" w='100%' justify='center'>
+        <Flex align='start' h="calc(100vh - 34.375rem)" w='100%' justify='center'>
           <Title order={4} fw={500}>
             No Report Found
           </Title>
@@ -90,7 +90,7 @@ const TeamPerformanceReport = () => {
 
     case 'hasReportData': {
       const { matches, tableHeader, filterData } =
-        reportDetails as ITeamPerformanceStatsData;
+        reportDetails as ITeamPerformanceData;
       const columns = teamPerformanceColumns(matches, tableHeader);
 
       reportContent = (
@@ -122,7 +122,7 @@ const TeamPerformanceReport = () => {
       </Title>
       <Grid>
         <Grid.Col span={3}>
-          <ScrollArea h="calc(100vh - 600px)" scrollbars="y">
+          <ScrollArea h="calc(100vh - 37.5rem)" scrollbars="y">
             <ReportFilter reportFilters={reportFilters} width="100%" />
           </ScrollArea>
         </Grid.Col>
