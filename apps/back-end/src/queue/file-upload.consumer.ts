@@ -58,7 +58,7 @@ export class FileUploadConsumer implements OnModuleInit {
                         this.redisService.set(processCountRedisKey, totalFilesProcessed);
                     }
                 } catch (error) {
-                    this.logger.error(error);
+                    this.logger.debug(error, error.stack);
                     const errorCount = await this.redisService.get(errorCountRedisKey);
                     totalErroredFiles = (+(errorCount || 0) + 1).toString();
                     this.redisService.set(errorCountRedisKey, totalErroredFiles);

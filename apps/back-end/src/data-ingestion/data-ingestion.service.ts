@@ -85,6 +85,11 @@ export class DataIngestionService {
     return matches ? matches.join('') : '';
   }
 
+  extractScoreboardFileName(str: string) {
+    const matches = str.match(/^(.+?)(?:_info)?$/);
+    return matches ? matches[1] : '';
+  }
+
   matchUmpireType(value: string) {
     const isOffField = this.umpireMatchingRegexs.offFieldUmpireWord.test(value);
     const isReserve = this.umpireMatchingRegexs.reserveUmpireWord.test(value);
@@ -437,9 +442,15 @@ export class DataIngestionService {
   ) {
     const result = [];
 
+    const scoreboardFilename = this.extractScoreboardFileName(fileName);
     if (!sheetScoreboardData) {
-      const extractedSheetInfoString: string = await this.redisService.get(`${fileName}:data`);
-      sheetScoreboardData = JSON.parse(extractedSheetInfoString);
+      if(scoreboardFilename) {
+        const extractedSheetInfoString: string = await this.redisService.get(`${scoreboardFilename}:data`);
+        sheetScoreboardData = JSON.parse(extractedSheetInfoString);
+        sheetScoreboardData = sheetScoreboardData[scoreboardFilename] as IMatchSheetFormat;
+      } else {
+        return;
+      }
     }
 
     const rows = sheetScoreboardData;
