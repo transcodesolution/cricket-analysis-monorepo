@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Country, MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constants";
+import { Country, MatchFormat, TournamentName, TournamentType } from "@cricket-analysis-monorepo/constants";
 import { Gender } from '@cricket-analysis-monorepo/constants';
 
 @Schema({ timestamps: true, versionKey: false })
 export class Tournament {
-    @Prop()
-    event: string;
+    @Prop({ type: String, enum: TournamentName })
+    event: TournamentName;
 
     @Prop({
         type: {
@@ -28,14 +28,13 @@ export class Tournament {
     @Prop({ type: Date })
     startDate: Date | null;
 
-    @Prop({ type: String, enum: Object.values(Gender) })
+    @Prop({ type: String, enum: Gender })
     gender: string;
 
     @Prop()
     logo: string;
 
-    @Prop()
-    season: string;
+    season: string; // season is not saving in database
 
     @Prop({ enum: Object.values(TournamentType) })
     type: string;
@@ -46,12 +45,13 @@ export class Tournament {
     @Prop({
         type: String,
         default: MatchFormat.ODI,
-        enum: Object.values(MatchFormat),
+        enum: MatchFormat,
+        index: true
     })
     matchFormat: MatchFormat;
 
     constructor() {
-        this.event = '';
+        this.event = TournamentName.ipl;
         this.gender = '';
         this.organizerDetails = {
             contact: '',
@@ -65,7 +65,7 @@ export class Tournament {
         this.season = '';
         this.type = '';
         this.country = Country.India;
-        this.matchFormat = MatchFormat.ODI;
+        this.matchFormat = MatchFormat.T20;
     }
 }
 

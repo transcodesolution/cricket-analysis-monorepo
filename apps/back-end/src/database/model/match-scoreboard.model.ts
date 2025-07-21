@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
 import { BattingStyle, SubstituteReasonType, WicketType } from '@cricket-analysis-monorepo/constants';
+import { MatchInfo } from './match-info.model';
 
 export class Wicket {
     @Prop({ type: SchemaTypes.ObjectId })
@@ -120,7 +121,7 @@ export class MatchScoreboard {
     @Prop({ type: Number, index: true })
     over: number;
 
-    @Prop({ type: SchemaTypes.ObjectId, index: true })
+    @Prop({ type: SchemaTypes.ObjectId, ref: MatchInfo.name, index: true })
     match_id: string;
 
     @Prop({ type: String, index: true })
