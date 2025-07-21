@@ -97,7 +97,6 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
     }
   ) => {
     const key = filter.queryParameterKey ?? filter.label;
-
     if (filter.type === ReportFilterType.DATE_RANGE) {
       return (
         <DatePickerInput
@@ -109,6 +108,14 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
           onChange={handleDateChange}
           placeholder="Select Year Range"
           clearable
+          styles={{
+            input: {
+              background: 'var(--mantine-color-orange-7)',
+              color: 'black',
+              border: 'none',
+            },
+            placeholder: { color: 'black' }
+          }}
         />
       );
     }
@@ -191,7 +198,7 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
   };
 
   return (
-    <SimpleGrid cols={{ base: 1, sm: 2, md: reportFilters.length }}>
+    <SimpleGrid cols={{ base: 1, sm: 2, md: reportFilters.length > 6 ? 6 : reportFilters.length }}>
       {reportFilters.map((filter, index) => {
         const theme = styleThemes[index % styleThemes.length];
         const styledFilter = { ...filter, ...theme };

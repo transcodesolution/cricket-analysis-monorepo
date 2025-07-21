@@ -5,12 +5,14 @@ import dayjs from 'dayjs';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
 import { IReportFilter } from '@cricket-analysis-monorepo/interfaces';
 import { ReportFilterType } from '@cricket-analysis-monorepo/constants';
+import React from 'react';
 
 interface IReportFilters {
   reportFilters: IReportFilter[];
+  width?: string
 }
 
-export const ReportFilter = ({ reportFilters }: IReportFilters) => {
+export const ReportFilter = ({ reportFilters, width }: IReportFilters) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -64,6 +66,13 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
           : { label: String(val), value: String(val) }
       ),
     ];
+    const defaultSelectedValues = filter.singleFilterConfig?.selectedValues;
+    const param = searchParams.get(key);
+
+    const activeSingleValue = param ?? defaultSelectedValues?.[0] ?? 'all';
+    const activeMultiValues =
+      param?.split(',') ??
+      (defaultSelectedValues?.length ? defaultSelectedValues : ['all']);
     const isMultiSelect = filter?.singleFilterConfig?.isMultiSelectOption ?? filter.isMultiSelectOption;
 
     if (isMultiSelect) {
@@ -74,17 +83,17 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
           data={options}
           size="sm"
           searchable
-          value={(searchParams.get(key)?.split(',') || []) as string[]}
+          value={activeMultiValues}
           onChange={(values) => {
             handleApplyFilter({
               [key]: values.length === 0 || values.includes('all') ? undefined : values.join(','),
             });
           }}
-          max={207}
+          max={width ?? 207}
           styles={{
             input: {
               height: '2.2em',
-              width: '207px',
+              width: width ?? '207px',
               overflowX: 'auto',
               overflowY: 'hidden',
             },
@@ -104,7 +113,7 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
         size="sm"
         searchable
         clearable
-        value={searchParams.get(key) || null}
+        value={activeSingleValue}
         onChange={(value) => {
           handleApplyFilter({
             [key]: !value || value === 'all' ? undefined : value,
@@ -123,7 +132,7 @@ export const ReportFilter = ({ reportFilters }: IReportFilters) => {
           p="xs"
           radius="md"
           withBorder
-          miw={220}
+          miw={width ?? 220}
         >
           {renderFilterField(filter)}
         </Paper>

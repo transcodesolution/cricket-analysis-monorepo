@@ -177,8 +177,49 @@ export interface ITableReportDetails {
   tableBody: ITableRow[];
   tableHeader: ITableHeader[];
 }
+export interface IFilterStats {
+  [key: string]: number | string;
+  filterName: string;
+  fourAvg: string;
+  fourPercentage: number;
+  fours: number;
+  matchCount: number;
+  sixAvg: string;
+  sixPercentage: number;
+  sixes: number;
+}
 
-export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | IVenueStatsData | ITableReportDetails;
+export interface IFilterData {
+  stats: IFilterStats[];
+  tableHeader: ITableHeader[];
+}
+
+export interface ITeamPerformanceStatsData {
+  matches: ITeamPerformanceMatch[];
+  tableHeader: (string | number)[];
+  filterData: IFilterData
+}
+
+export interface ITeamPerformanceMatch {
+  _id: string;
+  start_date: string;
+  tournamentId: string;
+  tournament: {
+    _id: string;
+    event: string;
+    matchFormat: string;
+    type: string;
+  };
+  teams: ITeamStats[];
+}
+
+export interface ITeamStats {
+  team: { _id: string; name: string };
+  innings: number;
+  stats: Record<string, number | string>;
+}
+
+export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | IVenueStatsData | ITableReportDetails | ITeamPerformanceStatsData;
 
 export interface IGetReportByIdResponse {
   report: {
