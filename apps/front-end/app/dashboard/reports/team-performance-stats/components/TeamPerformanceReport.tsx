@@ -11,11 +11,14 @@ import { ITeamPerformanceData } from '@/libs/types-api/src';
 import { teamPerformanceColumns } from '../../_components/columns/teamPerformanceColumns';
 import { TeamFilterTable } from './TeamFilterTable';
 
+const PAGE_SIZES = [10, 20, 50, 100];
 const TeamPerformanceReport = () => {
   const pathname = usePathname();
   const pathSegments = pathname.split('/').filter(Boolean);
   const reportType = pathSegments[pathSegments.length - 1];
   const searchParams = useSearchParams();
+  const page = Number(searchParams.get('page')) || 1;
+  const pageSize = Number(searchParams.get('pageSize')) || PAGE_SIZES[0];
 
   const filters = useMemo<Record<string, string>>(() => {
     const f: Record<string, string> = {};
@@ -44,8 +47,8 @@ const TeamPerformanceReport = () => {
   const { data: getReportResponse, isLoading } = useGetReportById({
     params: {
       id: reportType,
-      page: 1,
-      limit: 10,
+      page: page,
+      limit: pageSize,
       ...formattedFilters,
     },
   });

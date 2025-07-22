@@ -19,10 +19,11 @@ interface IMappingModalData {
   keysToMapByFile: IFileColumns[];
   onClose: () => void;
   onSubmit: (userMappingDetail: IUserMappingDetail[]) => Promise<void>;
-  showMappingModal: boolean
+  showMappingModal: boolean;
+  loading?: boolean;
 }
 
-export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingModal }: IMappingModalData) => {
+export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingModal, loading }: IMappingModalData) => {
   const [mapping, setMapping] = useState<Record<string, Record<string, { table: string; key: string }>>>({});
   const { data: getDatabaseTablesAndFieldsResponse } = useGetDatabaseTablesAndFields();
   const tablesAndFields = getDatabaseTablesAndFieldsResponse?.data || [];
@@ -152,7 +153,8 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingMo
           size="md"
           color="var(--mantine-color-customBlue-5)"
           onClick={handleSubmit}
-          disabled={!isMappingComplete}
+          disabled={!isMappingComplete || loading}
+          loading={loading}
         >
           Submit Mapping
         </Button>

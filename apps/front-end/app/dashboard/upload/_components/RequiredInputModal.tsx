@@ -17,14 +17,16 @@ interface IRequiredModalData {
   data: IUpdateAndSaveEntriesRequest;
   onClose: () => void;
   onSubmit: (inputData: IUpdateAndSaveEntriesRequest) => Promise<void>;
-  showRequiredInputModal: boolean
+  showRequiredInputModal: boolean;
+  loading?: boolean;
 }
 
 export const RequiredInputModal = ({
   data,
   onClose,
   onSubmit,
-  showRequiredInputModal
+  showRequiredInputModal,
+  loading = false,
 }: IRequiredModalData) => {
   const [inputs, setInputs] = useState<Record<string, Record<string, string>>>({});
 
@@ -116,12 +118,13 @@ export const RequiredInputModal = ({
         )}
 
         <Button
-          disabled={!isComplete}
+          disabled={!isComplete || loading}
           onClick={handleSubmit}
           color="var(--mantine-color-customBlue-5)"
           w="fit-content"
           mx="auto"
           size='md'
+          loading={loading}
         >
           Submit
         </Button>
