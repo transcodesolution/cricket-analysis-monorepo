@@ -8,7 +8,7 @@ export enum TournamentType {
 export enum TournamentName {
   // Club / domestic leagues:
   bbl = "Big Bash League",
-  t20Blaze = "T20 Blaze",
+  westIndiesWomenT20Blaze = "Cricket West Indies Women's Twenty20 Blaze",
   bpl = "Bangladesh Premier League",
   bwl = "Bob Willis Trophy",
   cch = "County Championship",
@@ -53,4 +53,6 @@ export enum TournamentName {
   womensCricketWorldCup = "ICC Women's Cricket World Cup",
   mensT20WorldCup = "ICC Men's T20 World Cup",
   womensT20WorldCup = "ICC Women's T20 World Cup",
+  iccIntercontinentalCup = "ICC Intercontinental Cup",
+  iccWorldAmericanRegionDivisionOne = "ICC World Cricket League Americas Region Division One"
 }
