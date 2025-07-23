@@ -21,8 +21,8 @@ export const UploadFile = () => {
   const [fileColumnData, setFileColumnData] = useState<IFileColumns[]>([]);
   const [droppedFiles, setDroppedFiles] = useState<FileWithPath[]>([]);
   const [loading, setLoading] = useState(false);
-  const { mutate: checkMappingAndUpdate } = useCheckMappingAndUpdate();
-  const { mutate: updateAndSaveEntries } = useUpdateAndSaveEntries();
+  const { mutate: checkMappingAndUpdate, isPending: isCheckMapping } = useCheckMappingAndUpdate();
+  const { mutate: updateAndSaveEntries, isPending: isUpdateAndSaveEntries } = useUpdateAndSaveEntries();
   const [requirements, setRequirements] = useState<IUpdateAndSaveEntriesRequest>({});
 
   const handleDrop = (files: FileWithPath[]) => {
@@ -168,6 +168,7 @@ export const UploadFile = () => {
         onClose={() => setShowMappingModal(false)}
         onSubmit={handleMappingSubmit}
         showMappingModal={showMappingModal}
+        loading={isCheckMapping}
       />
 
       <RequiredInputModal
@@ -175,6 +176,7 @@ export const UploadFile = () => {
         onClose={() => setShowRequiredInputModal(false)}
         onSubmit={handleRequirementSubmit}
         showRequiredInputModal={showRequiredInputModal}
+        loading={isUpdateAndSaveEntries}
       />
 
       <UploadProgressList />

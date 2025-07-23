@@ -84,10 +84,15 @@ export const ReportFilter = ({ reportFilters, width }: IReportFilters) => {
           size="sm"
           searchable
           value={activeMultiValues}
-          onChange={(values) => {
-            handleApplyFilter({
-              [key]: values.length === 0 || values.includes('all') ? undefined : values.join(','),
-            });
+          onChange={(val) => {
+            if (val.includes('all') && val.length > 1) {
+              const filtered = val.filter((v) => v !== 'all');
+              handleApplyFilter({ [key]: filtered.join(',') });
+            } else if (val.includes('all')) {
+              handleApplyFilter({ [key]: undefined });
+            } else {
+              handleApplyFilter({ [key]: val.join(',') });
+            }
           }}
           max={width ?? 208}
           styles={{
