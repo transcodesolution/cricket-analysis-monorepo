@@ -11,11 +11,14 @@ import { ITeamPerformanceData } from '@/libs/types-api/src';
 import { teamPerformanceColumns } from '../../_components/columns/teamPerformanceColumns';
 import { TeamFilterTable } from './TeamFilterTable';
 
+const PAGE_SIZES = [10, 20, 50, 100];
 const TeamPerformanceReport = () => {
   const pathname = usePathname();
   const pathSegments = pathname.split('/').filter(Boolean);
   const reportType = pathSegments[pathSegments.length - 1];
   const searchParams = useSearchParams();
+  const page = Number(searchParams.get('page')) || 1;
+  const pageSize = Number(searchParams.get('pageSize')) || PAGE_SIZES[0];
 
   const filters = useMemo<Record<string, string>>(() => {
     const f: Record<string, string> = {};
@@ -44,8 +47,8 @@ const TeamPerformanceReport = () => {
   const { data: getReportResponse, isLoading } = useGetReportById({
     params: {
       id: reportType,
-      page: 1,
-      limit: 10,
+      page: page,
+      limit: pageSize,
       ...formattedFilters,
     },
   });
@@ -95,7 +98,7 @@ const TeamPerformanceReport = () => {
 
       reportContent = (
         <React.Fragment>
-          <Grid.Col span={9}>
+          <Grid.Col span={{ base: 12, md: 9 }}>
             <TeamFilterTable
               data={filterData.stats}
               tableHeader={filterData.tableHeader}
@@ -121,7 +124,7 @@ const TeamPerformanceReport = () => {
         {reportName}
       </Title>
       <Grid>
-        <Grid.Col span={3}>
+        <Grid.Col span={{ base: 12, md: 3 }}>
           <ScrollArea h="calc(100vh - 37.5rem)" scrollbars="y">
             <ReportFilter reportFilters={reportFilters} width="100%" />
           </ScrollArea>
