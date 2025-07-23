@@ -47,6 +47,7 @@ export class DataIngestionService {
 
   private readonly missingInputs: Record<string, { [keyname: string]: string[] }> = {
     [Tournament.name]: { event: ["matchFormat", "type", "event"] },
+    [MatchInfo.name]: { event: ["tournamentId"] },
   }
 
   private readonly enumValues: { [keyname: string]: string | null | object } = {
@@ -444,7 +445,7 @@ export class DataIngestionService {
 
     const scoreboardFilename = this.extractScoreboardFileName(fileName);
     if (!sheetScoreboardData) {
-      if(scoreboardFilename) {
+      if (scoreboardFilename) {
         const extractedSheetInfoString: string = await this.redisService.get(`${scoreboardFilename}:data`);
         sheetScoreboardData = JSON.parse(extractedSheetInfoString);
         sheetScoreboardData = sheetScoreboardData[scoreboardFilename] as IMatchSheetFormat;
@@ -600,7 +601,8 @@ export class DataIngestionService {
     const userMappingDetailDto: UserMappingDetailDto = JSON.parse(mappingDetailRaw);
 
     const cachedData = {
-      [Tournament.name]: await this.mappedDataModel.findOne({ collectionName: Tournament.name }, "fields inputs")
+      [Tournament.name]: await this.mappedDataModel.findOne({ collectionName: Tournament.name }, "fields inputs"),
+      [MatchInfo.name]: await this.mappedDataModel.findOne({ collectionName: MatchInfo.name }, "fields inputs"),
     }
 
     const missingInputKeys = Object.keys(this.missingInputs);
@@ -731,11 +733,12 @@ export class DataIngestionService {
     mappingKey: string,
     extractedSheetInfo: IMatchSheetFormat,
     inputs: CachedInput[] = [],
-    collectionName: string
+    collectionName: string,
+    sheetKey: string
   ) {
     if (!mappingKey || !collectionName) return;
 
-    const sheetValue = extractedSheetInfo[mappingKey]?.[0];
+    const sheetValue = extractedSheetInfo[mappingKey]?.[0] || extractedSheetInfo[sheetKey]?.[0];
     if (!sheetValue) return;
 
     const input = inputs.find(i => i.referenceValue?.toLowerCase().trim() === sheetValue?.toLowerCase().trim());
@@ -809,21 +812,21 @@ export class DataIngestionService {
               } else if (mappingKey === "result.status") {
                 const enumFunction = (enumValue)[mappingKey];
                 extractedSheetInfo[value][0] = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
+              } else {
+                dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
               }
-              dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
             }
-            this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName);
+            this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName, value);
           }
           else if (collection.includes(value)) {
             const enumValue = this.enumValues[j.collectionName];
             if (value === "method") {
               const enumFunction = (enumValue)[value];
               dataToUpdate[value] = enumFunction(value);
-            }
-            else {
+            } else {
               dataToUpdate[value] = extractedSheetInfo[value][0];
             }
-            this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName);
+            this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName, value);
           }
         });
         await this.saveMappedDataToDb(j.collectionName, dataToUpdate, match_id, scoreboardMappingFields, fileName);
