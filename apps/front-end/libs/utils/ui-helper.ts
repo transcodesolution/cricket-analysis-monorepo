@@ -21,7 +21,6 @@ export const readExcelFiles = async (
       }
       const fileData = parsedResults[baseName];
       const allColumns = new Set<string>();
-      console.log('fileData', fileData);
       if (Array.isArray(fileData)) {
         const firstItem = fileData[0];
         if (firstItem && typeof firstItem === 'object') {
