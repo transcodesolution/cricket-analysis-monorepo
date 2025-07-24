@@ -24,7 +24,6 @@ export const AuthProvider = ({
     if (user) setUser(user);
     setPermissions(permissions);
   }, [user, permissions]);
-  console.log(user, 'user')
 
   return children;
 };

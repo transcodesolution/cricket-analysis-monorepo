@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
     const signInData: ISignInRequest = { email, password };
 
     const result = await signIn(signInData);
-    console.log(result, 'result')
     if (result.statusCode === 200 || result.statusCode === 201) {
       const cookieStore = await cookies();
       cookieStore.set('cricketAnalysisToken', result.data.token, { httpOnly: true });
