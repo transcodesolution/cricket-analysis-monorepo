@@ -28,11 +28,12 @@ export enum TournamentName {
   npl = "Nepal Premier League",
   t20Blast = "NatWest T20 Blast",
   vitalityBlast = "Vitality Blast",
+  vitalityBlastFemale = "Vitality Blast Female",
   plunketShield = "Plunket Shield",
   psl = "Pakistan Super League",
   rhf = "Rachael Heyhoe Flint Trophy",
-  oneDayCup = "One‑Day Cup",
-  sa20 = "SA20",
+  metroBankOneDayCup = "Metro Bank One Day Cup",
+  betwaySA20 = "Betway SA20",
   cgUnitedWomensSuper50 = "CG United Women's Super50",
   syedAli = "Syed Mushtaq Ali Trophy",
   ssh = "Sheffield Shield",
@@ -43,9 +44,8 @@ export enum TournamentName {
   wcpl = "Women's Caribbean Premier League",
   ecbWOD = "ECB Women's One‑Day Cup",
   wpl = "Women's Premier League",
-  wcs = "Women's Cricket Super League",
-  wt20b = "Women's T20 Blast",
-  wtc = "Women's T20 Challenge",
+  superSmashWomen = "Women's Super Smash",
+  metroBankOneDayCupWomen = "Metro Bank One Day Cup Women",
 
   // ICC competitions:
   championsTrophy = "ICC Champions Trophy",
@@ -54,5 +54,8 @@ export enum TournamentName {
   mensT20WorldCup = "ICC Men's T20 World Cup",
   womensT20WorldCup = "ICC Women's T20 World Cup",
   iccIntercontinentalCup = "ICC Intercontinental Cup",
-  iccWorldAmericanRegionDivisionOne = "ICC World Cricket League Americas Region Division One"
+  iccWorldAmericanRegionDivisionOne = "ICC World Cricket League Americas Region Division One",
+
+  maltaTriNationSeries = "Malta Tri-Nation T20I Series",
+  majorClubT20SriLanka = "Major Clubs T20 Sri Lanka",
 }
