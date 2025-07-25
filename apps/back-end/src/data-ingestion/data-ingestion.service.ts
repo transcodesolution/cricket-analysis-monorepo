@@ -812,9 +812,8 @@ export class DataIngestionService {
               } else if (mappingKey === "result.status") {
                 const enumFunction = (enumValue)[mappingKey];
                 extractedSheetInfo[value][0] = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
-              } else {
-                dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
               }
+              dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
             }
             this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName, value);
           }
@@ -823,9 +822,8 @@ export class DataIngestionService {
             if (value === "method") {
               const enumFunction = (enumValue)[value];
               dataToUpdate[value] = enumFunction(value);
-            } else {
-              dataToUpdate[value] = extractedSheetInfo[value][0];
             }
+            dataToUpdate[value] = extractedSheetInfo[value][0];
             this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName, value);
           }
         });
