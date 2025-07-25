@@ -14,7 +14,6 @@ export const VenueStatsOverview = ({
   inningsStats,
   sidePanelStats,
 }: IVenueStatsOverviewData) => {
-  console.log('venues', venues);
 
   return (
     <Grid gutter="lg" mt="md">
