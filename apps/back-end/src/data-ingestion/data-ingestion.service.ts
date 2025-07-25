@@ -801,6 +801,7 @@ export class DataIngestionService {
               mappingKey = mappingKey.replace(".$", "");
               dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
             } else {
+              let getValue = extractedSheetInfo[value][0];
               const enumValue = this.enumValues[j.collectionName];
               if (mappingKey === "result.winBy") {
                 const enumField = "result.status";
@@ -808,22 +809,23 @@ export class DataIngestionService {
                 dataToUpdate[enumField] = enumFunction(value);
               } else if (mappingKey === "method") {
                 const enumFunction = (enumValue)[mappingKey];
-                dataToUpdate[mappingKey] = enumFunction(value);
+                getValue = enumFunction(value);
               } else if (mappingKey === "result.status") {
                 const enumFunction = (enumValue)[mappingKey];
-                extractedSheetInfo[value][0] = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
+                getValue = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
               }
-              dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
+              dataToUpdate[mappingKey] = getValue;
             }
             this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, j.inputs, j.collectionName, value);
           }
           else if (collection.includes(value)) {
+            let getValue = extractedSheetInfo[value][0];
             const enumValue = this.enumValues[j.collectionName];
             if (value === "method") {
               const enumFunction = (enumValue)[value];
-              dataToUpdate[value] = enumFunction(value);
+              getValue = enumFunction(value);
             }
-            dataToUpdate[value] = extractedSheetInfo[value][0];
+            dataToUpdate[value] = getValue;
             this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, j.inputs, j.collectionName, value);
           }
         });
