@@ -42,7 +42,6 @@ export enum TournamentName {
   // Women's competitions:
   wbb = "Women's Big Bash League",
   wcpl = "Women's Caribbean Premier League",
-  ecbWOD = "ECB Women's One‑Day Cup",
   wpl = "Women's Premier League",
   superSmashWomen = "Women's Super Smash",
   metroBankOneDayCupWomen = "Metro Bank One Day Cup Women",
