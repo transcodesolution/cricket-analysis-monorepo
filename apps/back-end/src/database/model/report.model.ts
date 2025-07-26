@@ -1,6 +1,6 @@
 import { MatchFormat } from '@cricket-analysis-monorepo/constants';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsMongoId, IsNumber, IsOptional, IsString } from 'class-validator';
 import { SchemaTypes } from 'mongoose';
 import { Player } from './player.model';
 import { Venue } from './venue.model';
@@ -30,6 +30,11 @@ export class FilterConfiguration {
     @IsString({ each: true })
     @IsOptional()
     selectedVenues?: string[];
+
+    @Prop({ type: Number })
+    @IsNumber()
+    @IsOptional()
+    order: number;
 }
 
 @Schema({ timestamps: true, versionKey: false })

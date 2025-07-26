@@ -19,7 +19,7 @@ import { RedisService } from '../redis/redis.service';
 
 interface IFilterExecutionParameter {
   schema: string;
-  filters: { matchFormat?: MatchFormat }
+  filters: { matchFormat?: MatchFormat, order?: number }
 }
 
 @Injectable()
@@ -135,6 +135,6 @@ export class ReportService {
       })
     );
 
-    return { data: { report: { name: report.name, filters: filterWithValues } }, message: responseMessage.getDataSuccess("report filters") };
+    return { data: { report: { name: report.name, filters: filterWithValues.sort((a, b) => (a.singleFilterConfig.order - b.singleFilterConfig.order)) } }, message: responseMessage.getDataSuccess("report filters") };
   }
 }
