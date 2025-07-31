@@ -11,6 +11,26 @@ import { MatchInfo } from "../database/model/match-info.model";
 import { MatchScoreboard } from "../database/model/match-scoreboard.model";
 import Redis from "ioredis";
 import { InjectRedis } from "@svtslv/nestjs-ioredis";
+import { createHash } from "crypto";
+import { MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constants";
+import { PaginationDto } from "./pagination.dto";
+
+interface IReportQueryFilter {
+    startDate: string;
+    endDate: string;
+    batsmen: string;
+    battingTeam: string | string[];
+    bowlingTeam: string;
+    competition: string | string[];
+    over: string;
+    venue: string | string[];
+    bowler: string;
+    matchFormat: MatchFormat;
+    team: string;
+    innings: string;
+    tournamentType: TournamentType;
+    season: string;
+}
 
 @Injectable()
 export class CommonHelperService {
@@ -54,6 +74,18 @@ export class CommonHelperService {
             this.matchScoreboardModel[queryMethodName]({ sheet_match_id, match_id: { $ne: null } }).lean(),
         ]);
     }
+
+    generateReportRedisCacheKey = (prefix: string, queryFilter: IReportQueryFilter, paginationDto: PaginationDto): string => {
+        const keyBase = {
+            ...queryFilter,
+            page: paginationDto.page,
+            limit: paginationDto.limit,
+        };
+        console.log(keyBase)
+        const keyStr = JSON.stringify(keyBase);
+        const hash = createHash('md5').update(keyStr).digest('hex');
+        return `${prefix}:${hash}`;
+    };
 
     async deleteKeysContainingId(id: string) {
         let cursor = '0';
