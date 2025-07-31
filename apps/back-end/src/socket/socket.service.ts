@@ -26,7 +26,6 @@ export class SocketGateway {
     }
 
     handleConnection(socket: Socket) {
-        console.log(socket.data.user)
         socket.join(socket.data.user._id.toString());
         this.logger.log(`Socket connected: ${socket.id}`);
     }

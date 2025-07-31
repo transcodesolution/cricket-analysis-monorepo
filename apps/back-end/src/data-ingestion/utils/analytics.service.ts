@@ -184,14 +184,14 @@ export class AnalyticsService {
     }
 
     private updateBattingStat(stat: BattingStats, ball: Ball) {
-        const checklegalDelivery = !(+(ball.extras?.wides ?? 0) || +(ball.extras?.noballs ?? 0));
+        const checklegalDelivery = !(+(ball.extras?.wides ?? 0));
         if (checklegalDelivery) {
             stat.ballsFaced++;
         }
         stat.runs += (+ball.runs_off_bat);
 
         const playingOverIn = stat.overPlayedIn.find((i) => (i.over === ball.over));
-        const has0s = ball.runs_off_bat == 0 && checklegalDelivery ? 1 : 0;
+        const has0s = ball.runs_off_bat == 0 && checklegalDelivery && !(+(ball.extras.noballs ?? 0)) ? 1 : 0;
         const has1s = ball.runs_off_bat == 1 ? 1 : 0;
         const has2s = ball.runs_off_bat == 2 ? 1 : 0;
         const has3s = ball.runs_off_bat == 3 ? 1 : 0;
