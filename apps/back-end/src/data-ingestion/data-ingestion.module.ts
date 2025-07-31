@@ -10,13 +10,14 @@ import { BullModule } from '@nestjs/bullmq';
 import { QUEUES } from '../helper/constant.helper';
 import { RedisModule } from '../redis/redis.module';
 import { SocketModule } from '../socket/socket.module';
+import { PlayerUpdateScriptService } from './script';
 
 @Module({
   imports: [DatabaseModule, EnvConfigModule, BullModule.registerQueue({
     name: QUEUES.fileUpload,
   }), RedisModule, SocketModule],
   controllers: [DataIngestionController],
-  providers: [DataIngestionService, AnalyticsService, AuthenticateUserRequest, CommonHelperService],
+  providers: [DataIngestionService, AnalyticsService, AuthenticateUserRequest, CommonHelperService, PlayerUpdateScriptService],
   exports: [DataIngestionService]
 })
 export class DataIngestionModule { }

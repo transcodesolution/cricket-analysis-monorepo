@@ -16,6 +16,7 @@ import { Venue } from '../database/model/venue.model';
 import { MatchInfo } from '../database/model/match-info.model';
 import { MatchAnalytics } from '../database/model/match-analytics.model';
 import { RedisService } from '../redis/redis.service';
+import { CommonHelperService } from '../helper/common.helper';
 
 interface IFilterExecutionParameter {
   schema: string;
@@ -47,6 +48,7 @@ export class ReportService {
     @InjectModel(MatchAnalytics.name) private readonly analyticsModel: Model<MatchAnalytics>,
     @InjectModel(ReportFilter.name) private readonly reportFilterModel: Model<ReportFilter>,
     private readonly redisService: RedisService,
+    private readonly commonHelperService: CommonHelperService,
   ) { }
 
   async createReport(createReportDto: CreateReportDto) {
@@ -87,7 +89,7 @@ export class ReportService {
       return ${report.query.match(this.getFunctionNameRegex)[1]}(executionParameters) 
     })()`;
 
-    const [reports]: IReport[] = await new Function("executionParameters", parsedQuery)({ mongoose, schema: this.collections[report.collectionName], scoreboardSchema: this.collections.scoreboard, queryFilter, paginationDto, matchInfoSchemaRef: this.collections.info, analyticsSchemaRef: this.collections.analytics, tournamentSchemaRef: this.collections.tournament, redisServiceRef: this.redisService });
+    const [reports]: IReport[] = await new Function("executionParameters", parsedQuery)({ mongoose, schema: this.collections[report.collectionName], scoreboardSchema: this.collections.scoreboard, queryFilter, paginationDto, matchInfoSchemaRef: this.collections.info, analyticsSchemaRef: this.collections.analytics, tournamentSchemaRef: this.collections.tournament, redisServiceRef: this.redisService, commonHelperServiceRef: this.commonHelperService });
 
     const { totalData, ...details } = reports;
 
