@@ -1,6 +1,7 @@
 import { WicketType } from '@cricket-analysis-monorepo/constants';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
+import { MatchInfo } from './match-info.model';
 
 export class BattingStats {
     @Prop({
@@ -181,6 +182,11 @@ export class TeamAnalytics {
     })
     summary?: MatchSummary;
 
+    @Prop({
+        type: Object
+    })
+    overRuns?: Record<string, number>;
+
     constructor() {
         this.fallOfWickets = [{}];
         this.playerStats = [{}];
@@ -197,7 +203,7 @@ export class MatchAnalytics {
     @Prop()
     totalRuns: number;
 
-    @Prop({ type: SchemaTypes.ObjectId, index: true })
+    @Prop({ type: SchemaTypes.ObjectId, ref: MatchInfo.name, index: true })
     matchId: string;
 
     @Prop({ type: TeamAnalytics })

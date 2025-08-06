@@ -58,7 +58,7 @@ export const TeamReportTable = ({ data, columns, totalData, isLoading }: ITeamRe
           flexDirection: 'row',
         },
       }}
-      height="calc(100vh - 34.375rem)"
+      height="calc(100vh - 31.375rem)"
     />
   );
 };

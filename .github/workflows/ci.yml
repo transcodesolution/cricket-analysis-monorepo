@@ -3,120 +3,80 @@ name: NX Build and Deploy
 on:
   push:
     branches:
+      - development
       - master
 
 jobs:
-  build-for-development-backend:
+  deploy-to-development-backend:
+    if: github.ref == 'refs/heads/development'
     runs-on: ubuntu-latest
+    name: Deploy Development Backend
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: '22'
 
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Ensure correct SHAs for affected commands
-        uses: nrwl/nx-set-shas@v4
-
-      - name: Build projects
-        run: npx nx run back-end:build --configuration=production
-
-      - name: Archive build artifacts
-        run: tar -czf build-output.tar.gz dist
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: nx-build-output
-          path: build-output.tar.gz
-
-  deploy-to-development-backend:
-    needs: build-for-development-backend
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: nx-build-output
-
-      # Debug: Check if SERVER_URL is set
-      - name: Debug Server URL
-        run: |
-          if [[ -z "$SERVER_URL" ]]; then
-            echo "Error: SERVER_URL is not set!"
-            exit 1
-          else
-            echo "Server URL is: $SERVER_URL"
-          fi
-        env:
-          SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
-
-      # Debug: Check SSH Connection Before Deployment
-      - name: Debug SSH Connection
+      - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "ssh folder done"
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          echo "ssh private key save id rsa done"
           chmod 600 ~/.ssh/id_rsa
-          echo "chmod done"
+          ssh-keyscan -H 94.136.185.156 >> ~/.ssh/known_hosts
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
 
-      - name: Deploy to server
-        run: |
-          echo "Transferring build files..."
-          scp -o StrictHostKeyChecking=no build-output.tar.gz $SERVER_URL:~/cricket-analysis-build
+      - name: Test SSH Connection
+        run: ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no root@94.136.185.156 "echo 'SSH connection successful!'"
 
-          echo "Extracting and restarting services..."
-          ssh -o StrictHostKeyChecking=no $SERVER_URL "
-            export NVM_DIR=\$HOME/.nvm
-            [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
-            [ -s \"\$NVM_DIR/bash_completion\" ] && . \"\$NVM_DIR/bash_completion\"  # Optional: Load completion
-            nvm use 22.14.0
-            export PATH=\$NVM_DIR/versions/node/v22.14.0/bin:\$PATH
-
-            # Debugging: Verify installation
-            echo 'Node.js version:'
-            node -v
-            echo 'NPM version:'
-            npm -v
-            
-            cd ~/cricket-analysis-build &&
-            tar -xzf build-output.tar.gz &&
-            mv ~/cricket-analysis-build/dist/apps/back-end/assets/.gitkeep ~/cricket-analysis-build/dist/assets/.gitkeep &&
-            mv ~/cricket-analysis-build/dist/apps/back-end/package.json ~/cricket-analysis-build/dist/package.json &&
-            mv ~/cricket-analysis-build/dist/apps/back-end/package-lock.json ~/cricket-analysis-build/dist/package-lock.json &&
-            mv ~/cricket-analysis-build/dist/apps/back-end/main.js ~/cricket-analysis-build/dist/main.js &&
-            mv ~/cricket-analysis-build/dist/apps/back-end/main.js.map ~/cricket-analysis-build/dist/main.js.map &&
-            cd ~/cricket-analysis-build/dist && npm install &&
-            pm2 restart 0"
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
-          SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
-            
-      - name: Clean Up server
+      - name: Deploy to development server (Cricket-Analysis-BE)
         run: |
-          ssh -o StrictHostKeyChecking=no $SERVER_URL "
-           rm -r ~/cricket-analysis-build/build-output.tar.gz &&
-           rm -r ~/cricket-analysis-build/dist/apps
+          BRANCH="${GITHUB_REF##*/}"
+          if [[ "$BRANCH" == "development" ]]; then
+            APP_PATH="./cricket-analysis/dev/cricket-analysis-monorepo"
+            PM2_PROCESS="cricket-analysis-dev"
+            GIT_BRANCH="development"
+          else
+            echo "❌ Unsupported branch: $BRANCH"
+            exit 1
+          fi
+
+          echo "✅ Deploying to $SERVER_URL ($BRANCH)"
+
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SERVER_URL "
+            export NVM_DIR=\$HOME/.nvm && \
+            [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" && \
+            nvm use 22.14.0 || nvm install 22.14.0 && \
+            export PATH=\$NVM_DIR/versions/node/v22.14.0/bin:\$PATH && \
+            echo '🔧 Node version:' && node -v && \
+            echo '🔧 NPM version:' && npm -v && \
+            cd $APP_PATH && \
+            echo '📦 Pulling latest code...' && \
+            git pull origin $GIT_BRANCH && \
+            echo '📦 Installing dependencies...' && \
+            rm -rf node_modules package-lock.json && \
+            npm install && \
+            echo '🛠 Building project...' && \
+            npx nx build back-end && \
+            if ! command -v pm2 &> /dev/null; then \
+              echo '⚙️ PM2 not found. Installing...' && npm install -g pm2; \
+            else \
+              echo '✅ PM2 already installed.'; \
+            fi && \
+            echo '🚀 Restarting PM2 process: $PM2_PROCESS' && \
+            pm2 restart $PM2_PROCESS
           "
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           SERVER_URL: ${{ secrets.DEV_SERVER_URL }}
 
   deploy-to-production-backend:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    name: Deploy Production Backend
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -172,7 +132,9 @@ jobs:
           SERVER_URL: ${{ secrets.SERVER_URL }}
   
   deploy-to-production-frontend:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    name: Deploy Development frontend
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
