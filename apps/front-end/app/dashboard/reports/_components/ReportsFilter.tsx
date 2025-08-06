@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { IFilterParams, updateUrlParams } from '@/libs/utils/updateUrlParams';
 import { IReportFilter, IFilterValue } from '@cricket-analysis-monorepo/interfaces';
 import { ReportFilterType } from '@cricket-analysis-monorepo/constants';
+import { useState } from 'react';
 
 interface IReportFilters {
   reportFilters: IReportFilter[];
@@ -67,6 +68,8 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
 
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
+  const [multiSelectValues, setMultiSelectValues] = useState<Record<string, string[]>>({});
+  const [singleSelectValues, setSingleSelectValues] = useState<Record<string, string | null>>({});
 
   const handleApplyFilter = (filters: IFilterParams) => {
     const newSearchParams = updateUrlParams(filters);
@@ -88,6 +91,45 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
     }
   };
 
+  const handleMultiSelectChange = (key: string, val: string[]) => {
+    let newVal = val;
+
+    if (val.includes('all') && val.length > 1) {
+      newVal = val.filter((v) => v !== 'all');
+    }
+
+    if (newVal.length === 0) {
+      newVal = ['all'];
+    }
+
+    setMultiSelectValues((prev) => ({
+      ...prev,
+      [key]: newVal,
+    }));
+
+    // Apply filter
+    if (newVal.includes('all')) {
+      handleApplyFilter({ [key]: undefined });
+    } else {
+      handleApplyFilter({ [key]: newVal.join(',') });
+    }
+  };
+
+  const handleSingleSelectChange = (key: string, value: string | null) => {
+    let newValue = value;
+    // If cleared, reset to "all"
+    if (!value) {
+      newValue = 'all';
+    }
+    setSingleSelectValues((prev) => ({
+      ...prev,
+      [key]: newValue,
+    }));
+
+    handleApplyFilter({
+      [key]: !newValue || newValue === 'all' ? undefined : newValue,
+    });
+  };
   const renderFilterField = (
     filter: IReportFilter & {
       bgColor: string;
@@ -123,11 +165,12 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
     const options = buildOptions(filter.values);
     const defaultSelectedValues = filter.singleFilterConfig?.selectedValues;
     const param = searchParams.get(key);
-
-    const activeSingleValue = param ?? defaultSelectedValues?.[0] ?? 'all';
-    const activeMultiValues =
-      param?.split(',') ??
-      (defaultSelectedValues?.length ? defaultSelectedValues : ['all']);
+    const stateValue = singleSelectValues[key];
+    const activeMultiValues = param?.split(',') ?? multiSelectValues[key] ?? (defaultSelectedValues?.length ? defaultSelectedValues : ['all']);
+    const activeSingleValue =
+      stateValue !== undefined
+        ? stateValue === '' ? null : stateValue
+        : param ?? defaultSelectedValues?.[0] ?? 'all';
     const isMultiSelect = filter?.singleFilterConfig?.isMultiSelectOption ?? filter.isMultiSelectOption;
 
     if (isMultiSelect) {
@@ -138,16 +181,17 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
           size="sm"
           searchable
           value={activeMultiValues}
-          onChange={(val) => {
-            if (val.includes('all') && val.length > 1) {
-              const filtered = val.filter((v) => v !== 'all');
-              handleApplyFilter({ [key]: filtered.join(',') });
-            } else if (val.includes('all')) {
-              handleApplyFilter({ [key]: undefined });
-            } else {
-              handleApplyFilter({ [key]: val.join(',') });
-            }
-          }}
+          onFocus={() => setMultiSelectValues((prev) => ({
+            ...prev,
+            [key]: [],
+          }))
+          }
+          onChange={(val) => handleMultiSelectChange(key, val)}
+          onBlur={() => setMultiSelectValues((prev) => ({
+            ...prev,
+            [key]: [],
+          }))
+          }
           styles={{
             input: {
               height: '2.2em',
@@ -177,10 +221,26 @@ export const ReportsFilter = ({ reportFilters }: IReportFilters) => {
         searchable
         clearable
         value={activeSingleValue}
-        onChange={(val) => {
-          handleApplyFilter({
-            [key]: !val || val === 'all' ? undefined : val,
-          });
+        onFocus={() => {
+          if (
+            singleSelectValues[key] === undefined ||
+            singleSelectValues[key] === null ||
+            singleSelectValues[key] === 'all'
+          ) {
+            setSingleSelectValues((prev) => ({
+              ...prev,
+              [key]: '',
+            }));
+          }
+        }}
+        onChange={(value) => handleSingleSelectChange(key, value)}
+        onBlur={() => {
+          if (singleSelectValues[key] === "") {
+            setSingleSelectValues((prev) => ({
+              ...prev,
+              [key]: 'all',
+            }));
+          }
         }}
         styles={{
           input: {
