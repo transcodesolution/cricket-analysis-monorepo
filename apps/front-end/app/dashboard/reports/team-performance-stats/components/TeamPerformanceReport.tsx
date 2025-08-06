@@ -125,7 +125,7 @@ const TeamPerformanceReport = () => {
       </Title>
       <Grid>
         <Grid.Col span={{ base: 12, md: 3 }}>
-          <ScrollArea h="calc(100vh - 37.5rem)" scrollbars="y">
+          <ScrollArea h="calc(100vh - 40.5rem)" scrollbars="y">
             <ReportFilter reportFilters={reportFilters} width="100%" />
           </ScrollArea>
         </Grid.Col>
