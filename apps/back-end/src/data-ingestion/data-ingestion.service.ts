@@ -409,7 +409,6 @@ export class DataIngestionService {
     overGroups.clear();
   }
 
-
   readExcelFiles = async <T = string>(
     file: ({ filename: string, readStream: T }),
   ): Promise<Record<string, IMatchSheetFormat>> => {
@@ -547,6 +546,11 @@ export class DataIngestionService {
     //   { collectionName: Team.name, field: "name", infoRefField: "team1.team" },
     //   { collectionName: Team.name, field: "name", infoRefField: "team2.team" },
     // ];
+
+    await this.commonHelperService.deleteKeysContainingId("REPORTS_");
+    await this.commonHelperService.deleteKeysContainingId("T20_BATSMEN_STATS");
+    await this.commonHelperService.deleteKeysContainingId("ODI_BATSMEN_STATS");
+    await this.commonHelperService.deleteKeysContainingId("TEAM_PERFORMANCE_STATS");
 
     for (const { fileName, columns } of files as ColumnDto[]) {
       const isInfoFile = regex.test(fileName);
