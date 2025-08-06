@@ -70,7 +70,7 @@ export class CommonHelperService {
 
     checkMatchInfoAndScoreboardExists({ sheet_match_id, queryMethodName = "countDocuments" }: { sheet_match_id: string, queryMethodName?: string }) {
         return Promise.all([
-            this.matchInfoModel.findOne({ match_id: sheet_match_id }),
+            this.matchInfoModel.findOne({ match_id: sheet_match_id }).populate("tournamentId", "matchFormat"),
             this.matchScoreboardModel[queryMethodName]({ sheet_match_id, match_id: { $ne: null } }).lean(),
         ]);
     }

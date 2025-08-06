@@ -4,6 +4,9 @@ import mongoose, { Model } from 'mongoose';
 import { BattingStats, BowlingStats, FallOfWickets, MatchAnalytics, PlayerStats, TeamAnalytics } from '../../database/model/match-analytics.model';
 import { Ball } from '../../database/model/match-scoreboard.model';
 import { CommonHelperService } from '../../helper/common.helper';
+import { MatchFormat } from '@cricket-analysis-monorepo/constants';
+
+export const FORMAT_WISE_OVERS = { T20: [1, 4, 6, 8, 10, 12, 15, 16, 18, 20], ODI: [1, 5, 10, 15, 20, 25, 35, 40, 45, 50], T10: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], TheHundred: [1, 4, 6, 8, 10, 12, 15, 16, 17, 20] };
 
 @Injectable()
 export class AnalyticsService {
@@ -20,14 +23,18 @@ export class AnalyticsService {
             const inningsOneBalls = scoreboards.filter(sb => sb.innings === 1).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id })));
             const inningsTwoBalls = scoreboards.filter(sb => sb.innings === 2).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id })));
 
-            const analytics = new this.analyticsModel(); // Create empty analytics document
+            let analytics = await this.analyticsModel.findOne({ matchId: matchInfo._id });
+
+            if (!analytics) {
+                analytics = new this.analyticsModel();
+            }
 
             analytics.matchId = matchInfo?._id as unknown as string;
 
             analytics.teamOne = this.calculateTeamAnalytics(inningsOneBalls, matchInfo.team1.playingEleven);
-            analytics.teamOne.team = matchInfo.team1.team;
+            analytics.teamOne.team = matchInfo.team1.playingEleven.find((m) => (m.toString() === inningsOneBalls[0]?.striker?.player?.toString())) ? matchInfo.team1.team : matchInfo.team2.team;
             analytics.teamTwo = this.calculateTeamAnalytics(inningsTwoBalls, matchInfo.team2.playingEleven);
-            analytics.teamTwo.team = matchInfo.team2.team;
+            analytics.teamTwo.team = matchInfo.team2.playingEleven.find((m) => (m.toString() === inningsTwoBalls[0]?.striker?.player?.toString())) ? matchInfo.team2.team : matchInfo.team1.team;
 
             const team1TotalRuns = this.calculateTotalRuns(inningsOneBalls);
             const team2TotalRuns = this.calculateTotalRuns(inningsTwoBalls);
@@ -44,7 +51,11 @@ export class AnalyticsService {
             analytics.teamOne.netRunRate = team1NRR - team2NRR;
             analytics.teamTwo.netRunRate = team2NRR - team1NRR;
 
-            // (Optional) Save to DB
+            const matchFormat = matchInfo.tournamentId.matchFormat;
+
+            analytics.teamOne.overRuns = this.calculateOverWiseRunsFourSix(inningsOneBalls, matchFormat);
+            analytics.teamTwo.overRuns = this.calculateOverWiseRunsFourSix(inningsTwoBalls, matchFormat);
+
             await analytics.save();
 
             await this.commonHelperService.deleteKeysContainingId(matchId);
@@ -53,6 +64,44 @@ export class AnalyticsService {
         }
 
         return;
+    }
+
+    private calculateOverWiseRunsFourSix(balls: Ball[], matchFormat: MatchFormat): Record<string, number> {
+        const overRuns: Record<string, number> = {};
+
+        if (!(matchFormat in FORMAT_WISE_OVERS)) {
+            return {};
+        }
+
+        const overThresholds = FORMAT_WISE_OVERS[matchFormat];
+
+        for (const ball of balls) {
+            const over = ball.over + 1;
+
+            const overs = overThresholds
+                .filter(threshold => over <= threshold);
+
+            for (const over of overs) {
+                const runs = (+ball.runs_off_bat || 0) + (+ball.extras?.total || 0);
+                if (!overRuns[over]) {
+                    overRuns[over] = runs;
+                } else {
+                    overRuns[over] += runs;
+                }
+            }
+
+            if (ball.runs_off_bat == 4) {
+                overRuns.fours = overRuns.fours || 0;
+                overRuns.fours++;
+            };
+
+            if (ball.runs_off_bat == 6) {
+                overRuns.sixes = overRuns.sixes || 0;
+                overRuns.sixes++;
+            };
+        }
+
+        return overRuns;
     }
 
     private calculateTeamAnalytics(balls: Ball[], playingEleven: string[]): TeamAnalytics {
