@@ -143,14 +143,18 @@ export class MatchInfo {
         eliminator: string;
     };
 
+
     @Prop()
     balls_per_over: number;
+
+    other?: object;
 
     constructor() {
         this.name = '';
         this.start_date = '';
         this.method = MatchMethod.DLS;
         this.end_date = '';
+        this.other = {};
         this.balls_per_over = 6;
         this.toss = {
             tossResult: TossResult.head,
