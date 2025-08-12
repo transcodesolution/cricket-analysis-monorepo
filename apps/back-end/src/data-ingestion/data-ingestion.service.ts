@@ -682,13 +682,13 @@ export class DataIngestionService {
           // check input reference key direct found in sheet information
           Object.keys(this.missingInputs[key]).forEach((k) => {
             const mappingKey = sheetInformationKeys.find((l) => cachedData[key].fields[k]?.includes(l));
-            obj[mappingKey || k] = extractedSheetInfo[fileName][mappingKey || k][0];
+            obj[mappingKey || k] = extractedSheetInfo[fileName][mappingKey || k]?.[0];
           });
           // check input key value direct found in sheet information
-          const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey]?.toLowerCase().trim() === inputCache.referenceValue.toLowerCase().trim());
+          const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey]?.toLowerCase()?.trim() === inputCache.referenceValue?.toLowerCase()?.trim());
           // final prepare user input required fields
           Object.keys(obj).forEach((mappedKey) => {
-            if (!hasFoundCached) {
+            if (!hasFoundCached && mappedKey) {
               const inputs = this.missingInputs[key][mappedKey]?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
               userInputRequiredFields[fileName].push({
                 referenceKey: mappedKey,
@@ -745,7 +745,7 @@ export class DataIngestionService {
     const sheetValue = extractedSheetInfo[mappingKey]?.[0] || extractedSheetInfo[sheetKey]?.[0];
     if (!sheetValue) return;
 
-    const input = inputs.find(i => i.referenceValue?.toLowerCase().trim() === sheetValue?.toLowerCase().trim());
+    const input = inputs.find(i => i.referenceValue?.toLowerCase()?.trim() === sheetValue?.toLowerCase()?.trim());
     if (input && this.missingInputs[collectionName]?.[input.referenceKey]) {
       for (const inputValue of this.missingInputs[collectionName][input.referenceKey]) {
         dataToUpdate[inputValue] = input[inputValue];
