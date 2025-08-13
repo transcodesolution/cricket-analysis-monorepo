@@ -152,6 +152,7 @@ export class MatchInfo {
     constructor() {
         this.name = '';
         this.start_date = '';
+        this.referee = '';
         this.method = MatchMethod.DLS;
         this.end_date = '';
         this.other = {};
@@ -169,6 +170,7 @@ export class MatchInfo {
             impactPlayerOut: '',
             playingEleven: [],
             substitutPlayers: [],
+            team: ""
         };
         this.tournamentId = '';
         this.ball = {
@@ -181,6 +183,7 @@ export class MatchInfo {
             impactPlayerOut: '',
             playingEleven: [],
             substitutePlayers: [],
+            team: ""
         };
         this.result = {
             playerOfMatch: [],

@@ -34,8 +34,6 @@ export class Tournament {
     @Prop()
     logo: string;
 
-    season: string; // season is not saving in database
-
     @Prop({ enum: Object.values(TournamentType) })
     type: string;
 
@@ -62,7 +60,6 @@ export class Tournament {
         this.endDate = null;
         this.startDate = null;
         this.logo = '';
-        this.season = '';
         this.type = '';
         this.country = Country.India;
         this.matchFormat = MatchFormat.T20;
