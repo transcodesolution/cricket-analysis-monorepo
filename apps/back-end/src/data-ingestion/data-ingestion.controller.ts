@@ -41,7 +41,7 @@ export class DataIngestionController {
   @HttpCode(HttpStatus.OK)
   @SetMetadata(ROUTE_PERMISSION_KEY_NAME, uploadFilePermissions)
   getAllDBSchemaNameWithFields() {
-    return this.dataIngestionService.getAllDBSchemaNameWithFields();
+    return this.dataIngestionService.getAllDBSchemaNameWithFields({ isSoftwareCall: false });
   }
 
   @Post('/update-mapping-and-check-required-inputs')
