@@ -51,20 +51,22 @@ export const RequiredInputModal = ({
     Object.entries(data).forEach(([fileName, entries]) => {
       formattedData[fileName] = entries.map((entry) => {
         const inputFields = (entry.inputs ?? []) as IFormInput[];
-        const inputsArray = inputFields.map((input) => ({
-          ...input,
-          [input.key]: inputs[entry.referenceValue]?.[input.key] || input.key, // use acc[input.key] equivalent
-        }));
+
+        const inputsObject = inputFields.reduce((acc, input) => {
+          acc[input.key] = inputs[entry.referenceValue]?.[input.key] ?? '';
+          return acc;
+        }, {} as Record<string, string>);
 
         return {
           referenceKey: entry.referenceKey,
           referenceValue: entry.referenceValue,
           collectionName: entry.collectionName,
-          inputs: inputsArray,
+          inputs: inputsObject
         };
       });
     });
-    onSubmit(formattedData);
+
+     onSubmit(formattedData);
   };
 
   return (
