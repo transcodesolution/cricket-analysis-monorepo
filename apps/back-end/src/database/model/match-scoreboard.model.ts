@@ -133,12 +133,15 @@ export class MatchScoreboard {
     @Prop({ type: [Ball] })
     balls: Ball[];
 
+    other?: object;
+
     constructor() {
         this.over = 0;
         this.match_id = '';
         this.sheet_match_id = '';
         this.innings = 0;
         this.balls = [];
+        this.other = {};
     }
 }
 

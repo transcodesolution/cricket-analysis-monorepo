@@ -13,6 +13,9 @@ function getDeepKeys<T>(obj: T, parent = ''): string[] {
     let keys: string[] = [];
 
     for (const key in obj) {
+        if (key === "other") {
+            keys.push("other");
+        }
         if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
 
         const value = obj[key];
@@ -62,6 +65,12 @@ export const DatabaseFields = {
     },
     MatchInfo: () => {
         const matchInfoObj = new MatchInfo();
+        const tournamentObj = new Tournament();
+        const venueObj = new Venue();
+        matchInfoObj["matchFormat"] = tournamentObj.matchFormat;
+        matchInfoObj["type"] = tournamentObj.type;
+        matchInfoObj["gender"] = tournamentObj.gender;
+        matchInfoObj["city"] = venueObj.city;
         return getDeepKeys(matchInfoObj, "");
     },
     MatchScoreboard: () => {

@@ -57,4 +57,5 @@ export enum TournamentName {
 
   maltaTriNationSeries = "Malta Tri-Nation T20I Series",
   majorClubT20SriLanka = "Major Clubs T20 Sri Lanka",
+  majorLeagueTournament = "Major League Tournament",
 }

@@ -30,22 +30,20 @@ export const RequiredInputModal = ({
 }: IRequiredModalData) => {
   const [inputs, setInputs] = useState<Record<string, Record<string, string>>>({});
 
-  const handleChange = (fileName: string, inputKey: string, value: string) => {
+  const handleChange = (referenceValue: string, inputKey: string, value: string) => {
     setInputs((prev) => ({
       ...prev,
-      [fileName]: {
-        ...prev[fileName],
+      [referenceValue]: {
+        ...prev[referenceValue],
         [inputKey]: value,
       },
     }));
   };
 
-  const isComplete = Object.entries(data).every(([fileName, fileInputs]) =>
-    fileInputs.every((entry) => {
-      const inputFields = (entry.inputs ?? []) as IFormInput[];
-      return inputFields.every((input) => inputs[fileName]?.[input.key]);
-    })
-  );
+  const isComplete = Object.values(data).flat().every((entry) => {
+    const inputFields = (entry.inputs ?? []) as IFormInput[];
+    return inputFields.every((input) => inputs[entry.referenceValue]?.[input.key]);
+  });
 
   const handleSubmit = () => {
     const formattedData: IUpdateAndSaveEntriesRequest = {};
@@ -55,7 +53,7 @@ export const RequiredInputModal = ({
         const inputFields = (entry.inputs ?? []) as IFormInput[];
 
         const inputsObject = inputFields.reduce((acc, input) => {
-          acc[input.key] = inputs[fileName]?.[input.key] || '';
+          acc[input.key] = inputs[entry.referenceValue]?.[input.key] ?? '';
           return acc;
         }, {} as Record<string, string>);
 
@@ -63,11 +61,12 @@ export const RequiredInputModal = ({
           referenceKey: entry.referenceKey,
           referenceValue: entry.referenceValue,
           collectionName: entry.collectionName,
-          inputs: inputsObject,
+          inputs: inputsObject
         };
       });
     });
-    onSubmit(formattedData);
+
+     onSubmit(formattedData);
   };
 
   return (
@@ -99,13 +98,13 @@ export const RequiredInputModal = ({
                         key={input.key}
                         label={input.label}
                         placeholder="Select an option"
-                        value={inputs[fileName]?.[input.key] || ''}
+                        value={inputs[entry.referenceValue]?.[input.key] || ''}
                         data={input.options.map((opt) => ({
                           value: opt,
                           label: opt,
                         }))}
                         onChange={(val) =>
-                          handleChange(fileName, input.key, val || '')
+                          handleChange(entry.referenceValue, input.key, val || '')
                         }
                         size="xs"
                       />
