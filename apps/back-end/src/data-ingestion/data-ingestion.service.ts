@@ -47,7 +47,7 @@ export class DataIngestionService {
 
   private readonly missingInputs: Record<string, { [keyname: string]: string[] }> = {
     [Tournament.name]: { event: ["matchFormat", "type", "event"] },
-    [MatchInfo.name]: { event: ["tournamentId"] },
+    [MatchInfo.name]: { event: ["tournamentId", "matchFormat", "type", "event"] },
   }
 
   private readonly enumValues: { [keyname: string]: string | null | object } = {
@@ -701,6 +701,10 @@ export class DataIngestionService {
                 userInputRequiredFields[fileNameKey] = [];
               }
 
+              if (!obj[mappedKey]) {
+                return;
+              }
+
               const inputs = this.missingInputs[key][mappedKey]?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
               const isInputExist = userInputRequiredFields[fileNameKey]?.find((f) => f.collectionName === key && f.referenceKey === mappedKey && f.referenceValue === obj[mappedKey]);
               if (!isInputExist) {
@@ -709,6 +713,7 @@ export class DataIngestionService {
                   referenceValue: obj[mappedKey],
                   collectionName: key,
                   inputs,
+                  fileId: fileName,
                 });
               }
             }
