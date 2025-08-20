@@ -67,6 +67,7 @@ export const DatabaseFields = {
         const matchInfoObj = new MatchInfo();
         const tournamentObj = new Tournament();
         const venueObj = new Venue();
+        matchInfoObj["event"] = tournamentObj.event;
         matchInfoObj["matchFormat"] = tournamentObj.matchFormat;
         matchInfoObj["type"] = tournamentObj.type;
         matchInfoObj["gender"] = tournamentObj.gender;
