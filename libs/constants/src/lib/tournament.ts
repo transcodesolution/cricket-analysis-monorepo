@@ -56,4 +56,184 @@ export enum TournamentName {
   maltaTriNationSeries = "Malta Tri-Nation T20I Series",
   majorClubT20SriLanka = "Major Clubs T20 Sri Lanka",
   majorLeagueTournament = "Major League Tournament",
+
+  // Test series:
+
+  // ICC Global
+  ICCWorldTestChampionship = "ICC World Test Championship",
+
+  // Major Named Test Series / Trophies
+  TheAshes = "The Ashes", // Eng vs Aus
+  BorderGavaskarTrophy = "Border–Gavaskar Trophy", // Ind vs Aus
+  FrankWorrellTrophy = "Frank Worrell Trophy", // WI vs Aus
+  BasilDOliveiraTrophy = "Basil D'Oliveira Trophy", // Eng vs SA
+  PataudiTrophy = "Pataudi Trophy", // Ind vs Eng (in Eng)
+  AnthonyDeMelloTrophy = "Anthony de Mello Trophy", // Ind vs Eng (in Ind)
+  WisdenTrophy = "Wisden Trophy", // Eng vs WI (historic)
+  RichardsBothamTrophy = "Richards–Botham Trophy", // Eng vs WI (current)
+  TransTasmanTrophy = "Trans-Tasman Trophy", // Aus vs NZ
+  WarneMuralitharanTrophy = "Warne–Muralitharan Trophy", // Aus vs SL
+  SobersTisseraTrophy = "Sobers–Tissera Trophy", // WI vs SL
+  BenaudQadirTrophy = "Benaud–Qadir Trophy", // Aus vs Pak
+  FreedomTrophy = "Freedom Trophy", // Ind vs SA
+  SirVivianRichardsTrophy = "Sir Vivian Richards Trophy", // WI vs SA
+  cyprusTourOfCroatia = "Cyprus tour of Croatia",
+  switzerlandTourOfEstonia = "Switzerland tour of Estonia",
+
+  // ---- Bilateral Tours (12 ICC Full Members) ----
+  // Afghanistan tours
+  AfghanistanTourOfAustralia = "Afghanistan Tour of Australia",
+  AfghanistanTourOfBangladesh = "Afghanistan Tour of Bangladesh",
+  AfghanistanTourOfEngland = "Afghanistan Tour of England",
+  AfghanistanTourOfIndia = "Afghanistan Tour of India",
+  AfghanistanTourOfIreland = "Afghanistan Tour of Ireland",
+  AfghanistanTourOfNewZealand = "Afghanistan Tour of New Zealand",
+  AfghanistanTourOfPakistan = "Afghanistan Tour of Pakistan",
+  AfghanistanTourOfSouthAfrica = "Afghanistan Tour of South Africa",
+  AfghanistanTourOfSriLanka = "Afghanistan Tour of Sri Lanka",
+  AfghanistanTourOfWestIndies = "Afghanistan Tour of West Indies",
+  AfghanistanTourOfZimbabwe = "Afghanistan Tour of Zimbabwe",
+
+  // Australia tours
+  AustraliaTourOfAfghanistan = "Australia Tour of Afghanistan",
+  AustraliaTourOfBangladesh = "Australia Tour of Bangladesh",
+  AustraliaTourOfEngland = "Australia Tour of England",
+  AustraliaTourOfIndia = "Australia Tour of India",
+  AustraliaTourOfIreland = "Australia Tour of Ireland",
+  AustraliaTourOfNewZealand = "Australia Tour of New Zealand",
+  AustraliaTourOfPakistan = "Australia Tour of Pakistan",
+  AustraliaTourOfSouthAfrica = "Australia Tour of South Africa",
+  AustraliaTourOfSriLanka = "Australia Tour of Sri Lanka",
+  AustraliaTourOfWestIndies = "Australia Tour of West Indies",
+  AustraliaTourOfZimbabwe = "Australia Tour of Zimbabwe",
+
+  // Bangladesh tours
+  BangladeshTourOfAfghanistan = "Bangladesh Tour of Afghanistan",
+  BangladeshTourOfAustralia = "Bangladesh Tour of Australia",
+  BangladeshTourOfEngland = "Bangladesh Tour of England",
+  BangladeshTourOfIndia = "Bangladesh Tour of India",
+  BangladeshTourOfIreland = "Bangladesh Tour of Ireland",
+  BangladeshTourOfNewZealand = "Bangladesh Tour of New Zealand",
+  BangladeshTourOfPakistan = "Bangladesh Tour of Pakistan",
+  BangladeshTourOfSouthAfrica = "Bangladesh Tour of South Africa",
+  BangladeshTourOfSriLanka = "Bangladesh Tour of Sri Lanka",
+  BangladeshTourOfWestIndies = "Bangladesh Tour of West Indies",
+  BangladeshTourOfZimbabwe = "Bangladesh Tour of Zimbabwe",
+
+  // England tours
+  EnglandTourOfAfghanistan = "England Tour of Afghanistan",
+  EnglandTourOfAustralia = "England Tour of Australia",
+  EnglandTourOfBangladesh = "England Tour of Bangladesh",
+  EnglandTourOfIndia = "England Tour of India",
+  EnglandTourOfIreland = "England Tour of Ireland",
+  EnglandTourOfNewZealand = "England Tour of New Zealand",
+  EnglandTourOfPakistan = "England Tour of Pakistan",
+  EnglandTourOfSouthAfrica = "England Tour of South Africa",
+  EnglandTourOfSriLanka = "England Tour of Sri Lanka",
+  EnglandTourOfWestIndies = "England Tour of West Indies",
+  EnglandTourOfZimbabwe = "England Tour of Zimbabwe",
+
+  // India tours
+  IndiaTourOfAfghanistan = "India Tour of Afghanistan",
+  IndiaTourOfAustralia = "India Tour of Australia",
+  IndiaTourOfBangladesh = "India Tour of Bangladesh",
+  IndiaTourOfEngland = "India Tour of England",
+  IndiaTourOfIreland = "India Tour of Ireland",
+  IndiaTourOfNewZealand = "India Tour of New Zealand",
+  IndiaTourOfPakistan = "India Tour of Pakistan",
+  IndiaTourOfSouthAfrica = "India Tour of South Africa",
+  IndiaTourOfSriLanka = "India Tour of Sri Lanka",
+  IndiaTourOfWestIndies = "India Tour of West Indies",
+  IndiaTourOfZimbabwe = "India Tour of Zimbabwe",
+
+  // Ireland tours
+  IrelandTourOfAfghanistan = "Ireland Tour of Afghanistan",
+  IrelandTourOfAustralia = "Ireland Tour of Australia",
+  IrelandTourOfBangladesh = "Ireland Tour of Bangladesh",
+  IrelandTourOfEngland = "Ireland Tour of England",
+  IrelandTourOfIndia = "Ireland Tour of India",
+  IrelandTourOfNewZealand = "Ireland Tour of New Zealand",
+  IrelandTourOfPakistan = "Ireland Tour of Pakistan",
+  IrelandTourOfSouthAfrica = "Ireland Tour of South Africa",
+  IrelandTourOfSriLanka = "Ireland Tour of Sri Lanka",
+  IrelandTourOfWestIndies = "Ireland Tour of West Indies",
+  IrelandTourOfZimbabwe = "Ireland Tour of Zimbabwe",
+
+  // New Zealand tours
+  NewZealandTourOfAfghanistan = "New Zealand Tour of Afghanistan",
+  NewZealandTourOfAustralia = "New Zealand Tour of Australia",
+  NewZealandTourOfBangladesh = "New Zealand Tour of Bangladesh",
+  NewZealandTourOfEngland = "New Zealand Tour of England",
+  NewZealandTourOfIndia = "New Zealand Tour of India",
+  NewZealandTourOfIreland = "New Zealand Tour of Ireland",
+  NewZealandTourOfPakistan = "New Zealand Tour of Pakistan",
+  NewZealandTourOfSouthAfrica = "New Zealand Tour of South Africa",
+  NewZealandTourOfSriLanka = "New Zealand Tour of Sri Lanka",
+  NewZealandTourOfWestIndies = "New Zealand Tour of West Indies",
+  NewZealandTourOfZimbabwe = "New Zealand Tour of Zimbabwe",
+
+  // Pakistan tours
+  PakistanTourOfAfghanistan = "Pakistan Tour of Afghanistan",
+  PakistanTourOfAustralia = "Pakistan Tour of Australia",
+  PakistanTourOfBangladesh = "Pakistan Tour of Bangladesh",
+  PakistanTourOfEngland = "Pakistan Tour of England",
+  PakistanTourOfIndia = "Pakistan Tour of India",
+  PakistanTourOfIreland = "Pakistan Tour of Ireland",
+  PakistanTourOfNewZealand = "Pakistan Tour of New Zealand",
+  PakistanTourOfSouthAfrica = "Pakistan Tour of South Africa",
+  PakistanTourOfSriLanka = "Pakistan Tour of Sri Lanka",
+  PakistanTourOfWestIndies = "Pakistan Tour of West Indies",
+  PakistanTourOfZimbabwe = "Pakistan Tour of Zimbabwe",
+
+  // South Africa tours
+  SouthAfricaTourOfAfghanistan = "South Africa Tour of Afghanistan",
+  SouthAfricaTourOfAustralia = "South Africa Tour of Australia",
+  SouthAfricaTourOfBangladesh = "South Africa Tour of Bangladesh",
+  SouthAfricaTourOfEngland = "South Africa Tour of England",
+  SouthAfricaTourOfIndia = "South Africa Tour of India",
+  SouthAfricaTourOfIreland = "South Africa Tour of Ireland",
+  SouthAfricaTourOfNewZealand = "South Africa Tour of New Zealand",
+  SouthAfricaTourOfPakistan = "South Africa Tour of Pakistan",
+  SouthAfricaTourOfSriLanka = "South Africa Tour of Sri Lanka",
+  SouthAfricaTourOfWestIndies = "South Africa Tour of West Indies",
+  SouthAfricaTourOfZimbabwe = "South Africa Tour of Zimbabwe",
+
+  // Sri Lanka tours
+  SriLankaTourOfAfghanistan = "Sri Lanka Tour of Afghanistan",
+  SriLankaTourOfAustralia = "Sri Lanka Tour of Australia",
+  SriLankaTourOfBangladesh = "Sri Lanka Tour of Bangladesh",
+  SriLankaTourOfEngland = "Sri Lanka Tour of England",
+  SriLankaTourOfIndia = "Sri Lanka Tour of India",
+  SriLankaTourOfIreland = "Sri Lanka Tour of Ireland",
+  SriLankaTourOfNewZealand = "Sri Lanka Tour of New Zealand",
+  SriLankaTourOfPakistan = "Sri Lanka Tour of Pakistan",
+  SriLankaTourOfSouthAfrica = "Sri Lanka Tour of South Africa",
+  SriLankaTourOfWestIndies = "Sri Lanka Tour of West Indies",
+  SriLankaTourOfZimbabwe = "Sri Lanka Tour of Zimbabwe",
+
+  // West Indies tours
+  WestIndiesTourOfAfghanistan = "West Indies Tour of Afghanistan",
+  WestIndiesTourOfAustralia = "West Indies Tour of Australia",
+  WestIndiesTourOfBangladesh = "West Indies Tour of Bangladesh",
+  WestIndiesTourOfEngland = "West Indies Tour of England",
+  WestIndiesTourOfIndia = "West Indies Tour of India",
+  WestIndiesTourOfIreland = "West Indies Tour of Ireland",
+  WestIndiesTourOfNewZealand = "West Indies Tour of New Zealand",
+  WestIndiesTourOfPakistan = "West Indies Tour of Pakistan",
+  WestIndiesTourOfSouthAfrica = "West Indies Tour of South Africa",
+  WestIndiesTourOfSriLanka = "West Indies Tour of Sri Lanka",
+  WestIndiesTourOfZimbabwe = "West Indies Tour of Zimbabwe",
+
+  // Zimbabwe tours
+  ZimbabweTourOfAfghanistan = "Zimbabwe Tour of Afghanistan",
+  ZimbabweTourOfAustralia = "Zimbabwe Tour of Australia",
+  ZimbabweTourOfBangladesh = "Zimbabwe Tour of Bangladesh",
+  ZimbabweTourOfEngland = "Zimbabwe Tour of England",
+  ZimbabweTourOfIndia = "Zimbabwe Tour of India",
+  ZimbabweTourOfIreland = "Zimbabwe Tour of Ireland",
+  ZimbabweTourOfNewZealand = "Zimbabwe Tour of New Zealand",
+  ZimbabweTourOfPakistan = "Zimbabwe Tour of Pakistan",
+  ZimbabweTourOfSouthAfrica = "Zimbabwe Tour of South Africa",
+  ZimbabweTourOfSriLanka = "Zimbabwe Tour of Sri Lanka",
+  ZimbabweTourOfWestIndies = "Zimbabwe Tour of West Indies",
 }
