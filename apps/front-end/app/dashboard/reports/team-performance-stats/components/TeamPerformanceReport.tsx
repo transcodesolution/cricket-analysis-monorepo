@@ -94,7 +94,7 @@ const TeamPerformanceReport = () => {
     case 'hasReportData': {
       const { matches, tableHeader, filterData } =
         reportDetails as ITeamPerformanceData;
-      const columns = teamPerformanceColumns(matches, tableHeader);
+      const columns = teamPerformanceColumns(tableHeader);
 
       reportContent = (
         <React.Fragment>

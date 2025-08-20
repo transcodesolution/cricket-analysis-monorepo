@@ -196,27 +196,21 @@ export interface IFilterData {
 
 export interface ITeamPerformanceData {
   matches: ITeamPerformanceMatch[];
-  tableHeader: (string | number)[];
+  tableHeader: ITableHeader[];
   filterData: IFilterData
 }
 
 export interface ITeamPerformanceMatch {
   _id: string;
   start_date: string;
-  tournamentId: string;
-  tournament: {
-    _id: string;
-    event: string;
-    matchFormat: string;
-    type: string;
-  };
+  tournament: string;
   teams: ITeamStats[];
 }
 
 export interface ITeamStats {
-  team: { _id: string; name: string };
   innings: number;
-  stats: Record<string, number | string>;
+  [key: string]: number | string
+  name: string;
 }
 
 export type TReportDetails = IBatsmanStatsData | IBowlerStatsData | IVenueStatsData | ITableReportDetails | ITeamPerformanceData;
