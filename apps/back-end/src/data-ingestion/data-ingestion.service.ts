@@ -46,8 +46,7 @@ export class DataIngestionService {
   private readonly infoFileMatchingRegex = /info/i;
 
   private readonly missingInputs: Record<string, { [keyname: string]: string[] }> = {
-    [Tournament.name]: { event: ["matchFormat", "type", "event"] },
-    [MatchInfo.name]: { event: ["tournamentId", "matchFormat", "type", "event"] },
+    [MatchInfo.name]: { event: ["matchFormat", "type", "event"] },
   }
 
   private readonly enumValues: { [keyname: string]: string | null | object } = {
@@ -655,6 +654,9 @@ export class DataIngestionService {
           // Merge without duplicates
           const merged = Array.from(new Set([...existing, ...newValues]));
 
+          if (key === "event") {
+            fields["tournamentId"] = Array.from(new Set([...fields["tournamentId"], ...newValues]));
+          }
           fields[key] = merged;
         }
 
@@ -784,6 +786,9 @@ export class DataIngestionService {
     if (input && this.missingInputs[collectionName]?.[input.referenceKey]) {
       for (const inputValue of this.missingInputs[collectionName][input.referenceKey]) {
         dataToUpdate[inputValue] = input[inputValue];
+        if (inputValue === "event") {
+          dataToUpdate["tournamentId"] = input[inputValue];
+        }
       }
     }
   }
@@ -805,10 +810,9 @@ export class DataIngestionService {
       return { isFileProcessedSuccessfully: false };
     }
 
-    const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name, Tournament.name] } });
+    const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name] } });
     const mappingDoc = mappingDocs.find((m) => m.collectionName === MatchInfo.name);
     const scoreboardMappingDoc = mappingDocs.find((m) => m.collectionName === MatchScoreboard.name);
-    const tournamentMappingDoc = mappingDocs.find((m) => m.collectionName === Tournament.name);
     const sheetKeys = Object.keys(extractedSheetInfo);
     const collection: string[] = DatabaseFields[mappingDoc.collectionName]();
     if (isInfoFile) {
@@ -836,8 +840,7 @@ export class DataIngestionService {
             }
             mappingKey = mappingKey.replace(".$", "");
             dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
-          } else if (mappingKey === "tournamentId") {
-            this.updateInputToSaveInDatabase(dataToUpdate, "event", extractedSheetInfo, tournamentMappingDoc.inputs, tournamentMappingDoc.collectionName, value);
+          } else if (mappingKey === "event") {
             this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value);
           } else if (mappingKey.includes("playingEleven") || mappingKey.includes("playerOfMatch")) {
             mappingKey = mappingKey.replace(".$", "");
