@@ -66,7 +66,7 @@ export const RequiredInputModal = ({
       });
     });
 
-     onSubmit(formattedData);
+    onSubmit(formattedData);
   };
 
   return (
@@ -82,14 +82,12 @@ export const RequiredInputModal = ({
         {Object.entries(data).map(([fileName, entries]) =>
           entries.length > 0 ? (
             <Stack key={fileName} gap="sm">
-              <Title order={4}>{fileName}</Title>
-              <Divider />
               {entries.map((entry, idx) => {
                 const inputFields = (entry.inputs ?? []) as IFormInput[];
 
                 return (
                   <Stack key={`${entry.collectionName}-${idx}`} gap="xs">
-                    <Title order={5}>{entry.collectionName}</Title>
+                    <Title order={5}>{entry.collectionName}  {entry.fileId && `(${entry.fileId})`}</Title>
                     <Text size="sm">
                       {entry.referenceKey} → {entry.referenceValue}
                     </Text>
@@ -98,6 +96,7 @@ export const RequiredInputModal = ({
                         key={input.key}
                         label={input.label}
                         placeholder="Select an option"
+                        searchable
                         value={inputs[entry.referenceValue]?.[input.key] || ''}
                         data={input.options.map((opt) => ({
                           value: opt,
