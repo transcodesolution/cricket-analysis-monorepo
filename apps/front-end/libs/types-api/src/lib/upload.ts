@@ -30,8 +30,12 @@ export interface IUserMappingDetail {
   mappingsByUser: IMappingByUser[];
 }
 
+export type TFileCachedInput = ICachedInput & {
+  fileId?: string;
+};
+
 export interface IUpdateAndSaveEntriesRequest {
-  [fileName: string]: ICachedInput[];
+  [fileName: string]: TFileCachedInput[];
 }
 export interface IFileProgressEvent {
   totalFiles: number;
