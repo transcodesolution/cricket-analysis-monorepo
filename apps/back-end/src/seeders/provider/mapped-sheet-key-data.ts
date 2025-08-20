@@ -51,13 +51,13 @@ export const MAPPED_SHEET_KEY_DATA: MappingData[] = [
                 referenceKey: "event",
                 referenceValue: "World T20",
                 matchFormat: MatchFormat.T20,
-                type: TournamentType.FRANCHISE,
+                type: TournamentType.DOMESTIC,
             },
             {
                 referenceKey: "event",
                 referenceValue: "Indian Premier League",
                 matchFormat: MatchFormat.T20,
-                type: TournamentType.FRANCHISE,
+                type: TournamentType.DOMESTIC,
             },
         ]
     },
