@@ -18,17 +18,18 @@ export const teamPerformanceColumns = (
       title: tableHeader?.[1]?.label ?? 'Competition',
       width: 160,
       render: ({ tournament }) => tournament ?? '-',
+      ellipsis: true,
     },
     ...tableHeader.slice(2).map((header) => ({
       accessor: header.value as keyof ITeamPerformanceMatch,
       title: header.label,
       ellipsis: true,
-      sortable: true,
+      sortable: false,
       width: 160,
       render: ({ teams }: ITeamPerformanceMatch) => (
         <Flex direction="column" gap={4}>
           {teams.map((team: ITeamStats, i: number) => (
-            <Text key={i}>
+            <Text key={i} lineClamp={1}>
               {team[header.value as keyof ITeamStats] ?? '-'}
             </Text>
           ))}
