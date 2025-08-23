@@ -207,27 +207,33 @@ export class MatchAnalytics {
     matchId: string;
 
     @Prop({ type: TeamAnalytics })
-    teamOne: TeamAnalytics;
+    inningOne: TeamAnalytics;
 
     @Prop({ type: TeamAnalytics })
-    teamTwo: TeamAnalytics;
+    inningTwo: TeamAnalytics;
 
-    constructor() {
-        this.totalBallFaced = 0;
-        this.totalRuns = 0;
-        this.matchId = '';
-        this.teamTwo = {};
-        this.teamOne = {};
-    }
+    @Prop({ type: TeamAnalytics })
+    inningThree: TeamAnalytics;
+
+    @Prop({ type: TeamAnalytics })
+    inningFour: TeamAnalytics;
 }
 
 export const MatchAnalyticsSchema = SchemaFactory.createForClass(MatchAnalytics);
 
-MatchAnalyticsSchema.index({ 'teamOne.playerStats.batting.overPlayedIn.over': 1 });
-MatchAnalyticsSchema.index({ 'teamOne.playerStats.batting.player': 1 });
-MatchAnalyticsSchema.index({ 'teamOne.team': 1 });
-MatchAnalyticsSchema.index({ 'teamOne.fallOfWickets.ballReference': 1 });
-MatchAnalyticsSchema.index({ 'teamTwo.playerStats.batting.overPlayedIn.over': 1 });
-MatchAnalyticsSchema.index({ 'teamTwo.playerStats.batting.player': 1 });
-MatchAnalyticsSchema.index({ 'teamTwo.team': 1 });
-MatchAnalyticsSchema.index({ 'teamTwo.fallOfWickets.ballReference': 1 });
+MatchAnalyticsSchema.index({ 'inningOne.playerStats.batting.overPlayedIn.over': 1 });
+MatchAnalyticsSchema.index({ 'inningOne.playerStats.batting.player': 1 });
+MatchAnalyticsSchema.index({ 'inningOne.team': 1 });
+MatchAnalyticsSchema.index({ 'inningOne.fallOfWickets.ballReference': 1 });
+MatchAnalyticsSchema.index({ 'inningTwo.playerStats.batting.overPlayedIn.over': 1 });
+MatchAnalyticsSchema.index({ 'inningTwo.playerStats.batting.player': 1 });
+MatchAnalyticsSchema.index({ 'inningTwo.team': 1 });
+MatchAnalyticsSchema.index({ 'inningTwo.fallOfWickets.ballReference': 1 });
+MatchAnalyticsSchema.index({ 'inningThree.playerStats.batting.overPlayedIn.over': 1 });
+MatchAnalyticsSchema.index({ 'inningThree.playerStats.batting.player': 1 });
+MatchAnalyticsSchema.index({ 'inningThree.team': 1 });
+MatchAnalyticsSchema.index({ 'inningThree.fallOfWickets.ballReference': 1 });
+MatchAnalyticsSchema.index({ 'inningFour.playerStats.batting.overPlayedIn.over': 1 });
+MatchAnalyticsSchema.index({ 'inningFour.playerStats.batting.player': 1 });
+MatchAnalyticsSchema.index({ 'inningFour.team': 1 });
+MatchAnalyticsSchema.index({ 'inningFour.fallOfWickets.ballReference': 1 });
