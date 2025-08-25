@@ -8,12 +8,13 @@ import { Model } from "mongoose";
 import { User } from "../database/model/user.model";
 import { responseMessage } from "./response-message.helper";
 import { MatchInfo } from "../database/model/match-info.model";
-import { MatchScoreboard } from "../database/model/match-scoreboard.model";
+import { Ball, MatchScoreboard } from "../database/model/match-scoreboard.model";
 import Redis from "ioredis";
 import { InjectRedis } from "@svtslv/nestjs-ioredis";
 import { createHash } from "crypto";
 import { MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constants";
 import { PaginationDto } from "./pagination.dto";
+import { Tournament } from "../database/model/tournament.model";
 
 interface IReportQueryFilter {
     startDate: string;
@@ -68,11 +69,19 @@ export class CommonHelperService {
         return { message: responseMessage.addDataSuccess("user details"), data: { user } };
     };
 
-    checkMatchInfoAndScoreboardExists({ sheet_match_id, queryMethodName = "countDocuments" }: { sheet_match_id: string, queryMethodName?: string }) {
+    checkMatchInfoAndScoreboardExists<T = Array<MatchScoreboard>>({ sheet_match_id, queryMethodName = "countDocuments" }: { sheet_match_id: string, queryMethodName?: string }): Promise<[Omit<MatchInfo, "tournamentId"> & {
+        tournamentId: Pick<Tournament, "matchFormat">;
+    }, T]> {
         return Promise.all([
-            this.matchInfoModel.findOne({ match_id: sheet_match_id }).populate("tournamentId", "matchFormat"),
+            this.matchInfoModel.findOne({ match_id: sheet_match_id }).populate<{ tournamentId: Pick<Tournament, "matchFormat"> }>("tournamentId", "matchFormat"),
             this.matchScoreboardModel[queryMethodName]({ sheet_match_id, match_id: { $ne: null } }).lean(),
         ]);
+    }
+
+    ballsToOvers({ ballBowled }: { ballBowled: number }) {
+        const completeOvers = Math.floor(ballBowled / 6);
+        const remainingBalls = ballBowled % 6;
+        return `${completeOvers}.${remainingBalls}`;
     }
 
     generateReportRedisCacheKey = (prefix: string, queryFilter: IReportQueryFilter, paginationDto: PaginationDto): string => {

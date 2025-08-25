@@ -802,7 +802,7 @@ export class DataIngestionService {
 
     const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
-    const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
+    const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists<number>({ sheet_match_id: match_id });
 
     if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
       await this.updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey);

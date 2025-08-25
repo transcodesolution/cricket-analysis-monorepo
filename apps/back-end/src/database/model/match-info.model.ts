@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { SchemaTypes } from 'mongoose';
+import { SchemaTypes, Types } from 'mongoose';
 import { TossResult, WinnerTeamDecision, MatchStatus, MatchMethod } from '@cricket-analysis-monorepo/constants';
 import { BallType, Brand, Color } from '@cricket-analysis-monorepo/constants';
 import { Tournament } from './tournament.model';
@@ -21,6 +21,8 @@ import { Team } from './team.model';
     },
 })
 export class MatchInfo {
+    _id: Types.ObjectId;
+
     @Prop()
     name: string;
 
