@@ -75,8 +75,14 @@ export class AnalyticsService {
 
             analytics.inningOne.overRuns = this.calculateOverWiseRunsFourSix(inningsOneBalls, matchFormat);
             analytics.inningTwo.overRuns = this.calculateOverWiseRunsFourSix(inningsTwoBalls, matchFormat);
-            analytics.inningThree.overRuns = this.calculateOverWiseRunsFourSix(inningsThreeBalls, matchFormat);
-            analytics.inningFour.overRuns = this.calculateOverWiseRunsFourSix(inningsFourBalls, matchFormat);
+
+            if (isTestSeriesFormat) {
+                analytics.inningThree.runsScored = inning3TotalRuns;
+                analytics.inningFour.runsScored = inning4TotalRuns;
+
+                analytics.inningThree.overRuns = this.calculateOverWiseRunsFourSix(inningsThreeBalls, matchFormat);
+                analytics.inningFour.overRuns = this.calculateOverWiseRunsFourSix(inningsFourBalls, matchFormat);
+            }
 
             await analytics.save();
 

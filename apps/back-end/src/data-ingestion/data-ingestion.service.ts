@@ -172,10 +172,10 @@ export class DataIngestionService {
     let team2PlayingEleven: string[] = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[1] === dataToUpdate["team2.team"] ? i[0] : []));
     team1PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[0]) ? i[1] : []));
     team2PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[0]) ? i[1] : []));
+    
+    const team1Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[1]) ? { name: i[0], uniqueId: i[1] } : []))
 
-    const team1Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[0]) ? { name: i[0], uniqueId: i[1] } : []))
-
-    const team2Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[0]) ? { name: i[0], uniqueId: i[1] } : []))
+    const team2Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[1]) ? { name: i[0], uniqueId: i[1] } : []))
 
     // handling extract all player of matches from team2.playingEleven
 
