@@ -43,17 +43,17 @@ export class MatchInfo {
 
     @Prop({
         type: {
-            fourthUmpire: SchemaTypes.ObjectId,
-            onFieldBowlerEndUmpire: SchemaTypes.ObjectId,
-            onFieldLegUmpire: SchemaTypes.ObjectId,
-            thirdUmpire: SchemaTypes.ObjectId,
+            fourthUmpire: [SchemaTypes.ObjectId],
+            onFieldBowlerEndUmpire: [SchemaTypes.ObjectId],
+            onFieldLegUmpire: [SchemaTypes.ObjectId],
+            thirdUmpire: [SchemaTypes.ObjectId],
         }
     })
     umpire: {
-        fourthUmpire: string;
-        onFieldBowlerEndUmpire: string;
-        onFieldLegUmpire: string;
-        thirdUmpire: string;
+        fourthUmpire: [string];
+        onFieldBowlerEndUmpire: [string];
+        onFieldLegUmpire: [string];
+        thirdUmpire: [string];
     };
 
     @Prop({
@@ -159,6 +159,12 @@ export class MatchInfo {
         this.end_date = '';
         this.other = {};
         this.balls_per_over = 6;
+        this.umpire = {
+            fourthUmpire: [''],
+            onFieldBowlerEndUmpire: [''],
+            onFieldLegUmpire: [''],
+            thirdUmpire: [''],
+        };
         this.toss = {
             tossResult: TossResult.head,
             winnerTeam: '',

@@ -8,4 +8,5 @@ export enum UmpireType {
 export enum UmpireSubType {
   BOWLER_END = 'bowler end',
   SQUARE_LEG = 'square leg',
+  NONE = 'none',
 }
