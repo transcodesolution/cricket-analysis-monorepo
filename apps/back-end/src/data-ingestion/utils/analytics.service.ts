@@ -20,8 +20,12 @@ export class AnalyticsService {
 
         if (matchInfo && scoreboards.length) {
             // Separate innings
-            const inningsOneBalls = scoreboards.filter(sb => sb.innings === 1).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id })));
-            const inningsTwoBalls = scoreboards.filter(sb => sb.innings === 2).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id })));
+            const inningsOneBalls: Ball[] = scoreboards.filter(sb => sb.innings === 1).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id.toString() })));
+            const inningsTwoBalls: Ball[] = scoreboards.filter(sb => sb.innings === 2).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id.toString() })));
+
+            let inningsThreeBalls: Ball[] = [], inningsFourBalls: Ball[] = [];
+
+            const matchFormat = matchInfo.tournamentId.matchFormat;
 
             let analytics = await this.analyticsModel.findOne({ matchId: matchInfo._id });
 
@@ -31,30 +35,54 @@ export class AnalyticsService {
 
             analytics.matchId = matchInfo?._id as unknown as string;
 
-            analytics.teamOne = this.calculateTeamAnalytics(inningsOneBalls, matchInfo.team1.playingEleven);
-            analytics.teamOne.team = matchInfo.team1.playingEleven.find((m) => (m.toString() === inningsOneBalls[0]?.striker?.player?.toString())) ? matchInfo.team1.team : matchInfo.team2.team;
-            analytics.teamTwo = this.calculateTeamAnalytics(inningsTwoBalls, matchInfo.team2.playingEleven);
-            analytics.teamTwo.team = matchInfo.team2.playingEleven.find((m) => (m.toString() === inningsTwoBalls[0]?.striker?.player?.toString())) ? matchInfo.team2.team : matchInfo.team1.team;
+            const isTestSeriesFormat = matchFormat === MatchFormat.FIRST_CLASS || matchFormat === MatchFormat.TEST || matchFormat === MatchFormat.LIST_A;
 
-            const team1TotalRuns = this.calculateTotalRuns(inningsOneBalls);
-            const team2TotalRuns = this.calculateTotalRuns(inningsTwoBalls);
+            if (isTestSeriesFormat) {
+                inningsThreeBalls = scoreboards.filter(sb => sb.innings === 3).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id.toString() })));
+                inningsFourBalls = scoreboards.filter(sb => sb.innings === 4).flatMap(sb => sb.balls.map((i) => ({ ...i, over: sb.over, _id: sb._id.toString() })));
+            }
 
-            analytics.teamOne.runsScored = team1TotalRuns;
-            analytics.teamTwo.runsScored = team2TotalRuns;
+            analytics.inningOne = this.calculateTeamAnalytics(inningsOneBalls, matchInfo.team1.playingEleven);
+            analytics.inningOne.team = matchInfo.team1.playingEleven.find((m) => (m.toString() === inningsOneBalls[0]?.striker?.player?.toString())) ? matchInfo.team1.team : matchInfo.team2.team;
+            analytics.inningTwo = this.calculateTeamAnalytics(inningsTwoBalls, matchInfo.team2.playingEleven);
+            analytics.inningTwo.team = matchInfo.team2.playingEleven.find((m) => (m.toString() === inningsTwoBalls[0]?.striker?.player?.toString())) ? matchInfo.team2.team : matchInfo.team1.team;
 
-            analytics.totalRuns = team1TotalRuns + team2TotalRuns;
-            analytics.totalBallFaced = (analytics.teamOne.ballFaced + analytics.teamTwo.ballFaced) || 0;
+            if (isTestSeriesFormat) {
+                analytics.inningThree = this.calculateTeamAnalytics(inningsThreeBalls, matchInfo.team1.playingEleven);
+                analytics.inningThree.team = matchInfo.team1.playingEleven.find((m) => (m.toString() === inningsThreeBalls[0]?.striker?.player?.toString())) ? matchInfo.team1.team : matchInfo.team2.team;
+                analytics.inningFour = this.calculateTeamAnalytics(inningsFourBalls, matchInfo.team2.playingEleven);
+                analytics.inningFour.team = matchInfo.team2.playingEleven.find((m) => (m.toString() === inningsFourBalls[0]?.striker?.player?.toString())) ? matchInfo.team2.team : matchInfo.team1.team;
+            }
 
-            const team1NRR = this.calculateNetRunRate(team1TotalRuns, inningsOneBalls.length);
-            const team2NRR = this.calculateNetRunRate(team2TotalRuns, inningsTwoBalls.length);
+            const inning1TotalRuns = this.calculateTotalRuns(inningsOneBalls);
+            const inning2TotalRuns = this.calculateTotalRuns(inningsTwoBalls);
+            const inning3TotalRuns = this.calculateTotalRuns(inningsThreeBalls);
+            const inning4TotalRuns = this.calculateTotalRuns(inningsFourBalls);
 
-            analytics.teamOne.netRunRate = team1NRR - team2NRR;
-            analytics.teamTwo.netRunRate = team2NRR - team1NRR;
+            analytics.inningOne.runsScored = inning1TotalRuns;
+            analytics.inningTwo.runsScored = inning2TotalRuns;
 
-            const matchFormat = matchInfo.tournamentId.matchFormat;
+            analytics.totalRuns = inning1TotalRuns + inning2TotalRuns + inning3TotalRuns + inning4TotalRuns;
+            analytics.totalBallFaced = (analytics.inningOne.ballFaced + analytics.inningTwo.ballFaced + (analytics.inningThree?.ballFaced || 0) + (analytics.inningFour?.ballFaced || 0)) || 0;
 
-            analytics.teamOne.overRuns = this.calculateOverWiseRunsFourSix(inningsOneBalls, matchFormat);
-            analytics.teamTwo.overRuns = this.calculateOverWiseRunsFourSix(inningsTwoBalls, matchFormat);
+            if (!isTestSeriesFormat) {
+                const team1NRR = this.calculateNetRunRate(inning1TotalRuns, inningsOneBalls.length);
+                const team2NRR = this.calculateNetRunRate(inning2TotalRuns, inningsTwoBalls.length);
+
+                analytics.inningOne.netRunRate = team1NRR - team2NRR;
+                analytics.inningTwo.netRunRate = team2NRR - team1NRR;
+            }
+
+            analytics.inningOne.overRuns = this.calculateOverWiseRunsFourSix(inningsOneBalls, matchFormat);
+            analytics.inningTwo.overRuns = this.calculateOverWiseRunsFourSix(inningsTwoBalls, matchFormat);
+
+            if (isTestSeriesFormat) {
+                analytics.inningThree.runsScored = inning3TotalRuns;
+                analytics.inningFour.runsScored = inning4TotalRuns;
+
+                analytics.inningThree.overRuns = this.calculateOverWiseRunsFourSix(inningsThreeBalls, matchFormat);
+                analytics.inningFour.overRuns = this.calculateOverWiseRunsFourSix(inningsFourBalls, matchFormat);
+            }
 
             await analytics.save();
 

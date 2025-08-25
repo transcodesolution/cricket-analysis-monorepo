@@ -161,74 +161,161 @@ export class DataIngestionService {
     }
   }
 
-  async saveMatchInformationToDb(dataToUpdate: IMatchSheetFormat, sheet_match_id: string) {
+  extractEntitiesFromCombineFields(dataToUpdate: IMatchSheetFormat) {
+    dataToUpdate["team1.playingEleven"] = dataToUpdate["team1.playingEleven"] || [];
+    dataToUpdate["team2.playingEleven"] = dataToUpdate["team2.playingEleven"] || [];
+    dataToUpdate["result.playerOfMatch"] = dataToUpdate["result.playerOfMatch"] || [];
+
+    // handling extract all players from team1.playingEleven and team2.playingEleven
+
+    let team1PlayingEleven: string[] = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[1] === dataToUpdate["team1.team"] ? i[0] : []));
+    let team2PlayingEleven: string[] = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[1] === dataToUpdate["team2.team"] ? i[0] : []));
+    team1PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[0]) ? i[1] : []));
+    team2PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[0]) ? i[1] : []));
+    
+    const team1Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[1]) ? { name: i[0], uniqueId: i[1] } : []))
+
+    const team2Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[1]) ? { name: i[0], uniqueId: i[1] } : []))
+
+    // handling extract all player of matches from team2.playingEleven
+
+    const playerOfMatches = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (dataToUpdate["result.playerOfMatch"] as string[]).find((k) => i.includes(k[0])) ? i[1] : []);
+
+    // handling extract all umpires from team2.playingEleven
+
+    const bowledEndUmpireNames: string[] = (dataToUpdate["umpire.onFieldBowlerEndUmpire"] as string[]) ?? [];
+    const legUmpireNames: string[] = (dataToUpdate["umpire.onFieldLegUmpire"] as string[]) ?? [];
+    const fourthUmpireNames: string[] = (dataToUpdate["umpire.fourthUmpire"] as string[]) ?? [];
+    const thirdUmpireNames: string[] = (dataToUpdate["umpire.thirdUmpire"] as string[]) ?? [];
+
+    const allUmpiresNames = [...bowledEndUmpireNames, ...legUmpireNames, ...fourthUmpireNames, ...thirdUmpireNames];
+
+    const bowledEndUmpireIds: string[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => bowledEndUmpireNames.includes(i[0]) ? i[1] : []);
+    const legUmpireIds: string[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => legUmpireNames.includes(i[0]) ? i[1] : []);
+    const fourthUmpireIds: string[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => fourthUmpireNames.includes(i[0]) ? i[1] : []);
+    const thirdUmpireIds: string[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => thirdUmpireNames.includes(i[0]) ? i[1] : []);
+
+    const onFieldUmpires = [...bowledEndUmpireIds, ...legUmpireIds];
+
+    const umpires = (dataToUpdate["team2.playingEleven"] as Pick<Umpire, "name" | "uniqueId" | "type" | "subType">[]).flatMap<Pick<Umpire, "name" | "uniqueId" | "type" | "subType">>((i) => allUmpiresNames.includes(i[0]) ? { name: i[0], uniqueId: i[1], type: onFieldUmpires.includes(i[1]) ? UmpireType.onfield : thirdUmpireIds.includes(i[1]) ? UmpireType.reserve : fourthUmpireIds.includes(i[1]) ? UmpireType.offfield : UmpireType.none, subType: bowledEndUmpireIds.includes(i[1]) ? UmpireSubType.BOWLER_END : legUmpireIds.includes(i[1]) ? UmpireSubType.SQUARE_LEG : UmpireSubType.NONE } : []);
+
+    // handling extract referee from team2.playingEleven
+
+    const refereeName = dataToUpdate["referee"];
+    const refereeObj = (dataToUpdate["team2.playingEleven"] as Pick<Referee, "name" | "uniqueId">[]).find((i) => refereeName === i[0]);
+
+    return {
+      playerOfMatches,
+      player: {
+        team1PlayingEleven,
+        team2PlayingEleven,
+        allPlayers: [...team1Players, ...team2Players],
+      },
+      umpire: {
+        bowledEndUmpireIds,
+        legUmpireIds,
+        fourthUmpireIds,
+        thirdUmpireIds,
+        allUmpires: umpires,
+      },
+      referee: {
+        name: refereeObj?.[0], uniqueId: refereeObj?.[1]
+      },
+    }
+  }
+
+  async saveMatchInformationToDb(dataToUpdate: IMatchSheetFormat, sheet_match_id: string, team1PlayingElevenIds: string[] = [], team2PlayingElevenIds: string[] = [], playerOfMatchIds: string[] = [], onFieldBowlerEndUmpires: string[] = [], onFieldLegUmpires: string[] = [], fourthUmpires: string[] = [], thirdUmpires: string[] = [], referee?: Pick<Referee, "name" | "uniqueId">) {
     const teams = await this.teamModel.find({ name: { $in: [dataToUpdate["team1.team"], dataToUpdate["team2.team"]] } });
     const team1 = teams.find((team) => team.name === dataToUpdate["team1.team"]);
     const team2 = teams.find((team) => team.name === dataToUpdate["team2.team"]);
     const eliminator = teams.find((team) => team.name === dataToUpdate["result.eliminator"]);
     const winningTeam = teams.find((team) => team.name === dataToUpdate["result.winningTeam"]);
     const tossWinningTeam = teams.find((team) => team.name === dataToUpdate["toss.winnerTeam"]);
-    const onFieldBowlerEndUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.onFieldBowlerEndUmpire"] });
-    const onFieldLegUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.onFieldLegUmpire"] });
-    const fourthUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.fourthUmpire"] });
-    const thirdUmpire = await this.umpireModel.findOne({ name: dataToUpdate["umpire.thirdUmpire"] });
+
+    // handling referee
+    const refereeObj = await this.refereeModel.findOne({ uniqueId: referee?.uniqueId }, "_id");
+
+    // handling venue
     const venue = await this.venueModel.findOne({ name: dataToUpdate["venue"] });
+
+    // handling tournamentId ref in match info table
     const tournament = await this.tournamentModel.findOne({ event: dataToUpdate["tournamentId"] });
-    const referee = await this.refereeModel.findOne({ name: dataToUpdate["referee"] });
-    dataToUpdate["team1.playingEleven"] = dataToUpdate["team1.playingEleven"] || [];
-    dataToUpdate["team2.playingEleven"] = dataToUpdate["team2.playingEleven"] || [];
-    dataToUpdate["result.playerOfMatch"] = dataToUpdate["result.playerOfMatch"] || [];
-    let team1PlayingEleven = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[1] === team1.name ? i[0] : []));
-    let team2PlayingEleven = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[1] === team2.name ? i[0] : []));
-    team1PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[0]) ? i[1] : []));
-    team2PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[0]) ? i[1] : []));
-    const playerOfMatches = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (dataToUpdate["result.playerOfMatch"] as string[]).find((k) => i.includes(k[0])) ? i[1] : []);
-    const playerOfMatchIds = await this.playerModel.distinct("_id", { uniqueId: { $in: playerOfMatches } });
-    const team1PlayingElevenIds = await this.playerModel.distinct("_id", { uniqueId: { $in: team1PlayingEleven } });
-    const team2PlayingElevenIds = await this.playerModel.distinct("_id", { uniqueId: { $in: team2PlayingEleven } });
+
+    const team1PlayerIds = await this.playerModel.distinct("_id", { uniqueId: { $in: team1PlayingElevenIds } });
+    const team2PlayerIds = await this.playerModel.distinct("_id", { uniqueId: { $in: team2PlayingElevenIds } });
+    playerOfMatchIds = await this.playerModel.distinct("_id", { uniqueId: { $in: playerOfMatchIds } });
+
+    const bowledEndUmpireIds = await this.umpireModel.distinct("_id", { uniqueId: { $in: onFieldBowlerEndUmpires } });
+    const legUmpireIds = await this.umpireModel.distinct("_id", { uniqueId: { $in: onFieldLegUmpires } });
+    const thirdUmpireIds = await this.umpireModel.distinct("_id", { uniqueId: { $in: thirdUmpires } });
+    const fourthUmpireIds = await this.umpireModel.distinct("_id", { uniqueId: { $in: fourthUmpires } });
+
+    // prepare match info object to save match detail in database
     const matchInfoObj = {
       ...dataToUpdate,
       "team1.team": team1?._id,
       "team2.team": team2?._id,
-      "team1.playingEleven": team1PlayingElevenIds,
-      "team2.playingEleven": team2PlayingElevenIds,
+      "team1.playingEleven": team1PlayerIds,
+      "team2.playingEleven": team2PlayerIds,
       "result.winningTeam": winningTeam?._id,
       "result.playerOfMatch": playerOfMatchIds,
       "result.eliminator": eliminator,
-      'umpire.onFieldBowlerEndUmpire': onFieldBowlerEndUmpire?._id,
-      'umpire.onFieldLegUmpire': onFieldLegUmpire?._id,
-      'umpire.thirdUmpire': fourthUmpire?._id,
-      'umpire.fourthUmpire': thirdUmpire?._id,
+      'umpire.onFieldBowlerEndUmpire': bowledEndUmpireIds,
+      'umpire.onFieldLegUmpire': legUmpireIds,
+      'umpire.thirdUmpire': thirdUmpireIds,
+      'umpire.fourthUmpire': fourthUmpireIds,
       venue: venue?._id,
       "toss.winnerTeam": tossWinningTeam?._id,
       match_id: sheet_match_id,
       tournamentId: tournament?._id,
-      referee: referee?._id,
+      referee: refereeObj?._id,
     }
+
+    // save match info data in database and update player team reference
     const matchInfo = new this.matchInfoModel(matchInfoObj);
     await Promise.all([
       matchInfo.save(),
-      this.playerModel.updateMany({ _id: { $in: team1PlayingElevenIds }, "teams.id": { $ne: team1?._id } }, { $push: { teams: { id: team1?._id } } }),
-      this.playerModel.updateMany({ _id: { $in: team2PlayingElevenIds }, "teams.id": { $ne: team2?._id } }, { $push: { teams: { id: team2?._id } } }),
+      this.playerModel.updateMany({ _id: { $in: team1PlayerIds }, "teams.id": { $ne: team1?._id } }, { $push: { teams: { id: team1?._id } } }),
+      this.playerModel.updateMany({ _id: { $in: team1PlayerIds }, "teams.id": { $ne: team2?._id } }, { $push: { teams: { id: team2?._id } } }),
     ]);
-    const findWhoAreNotPlayerQuery = { "teams.id": { $exists: false } };
-    const umpireOrReferees = await this.playerModel.find(findWhoAreNotPlayerQuery);
-    const refereeDetail = umpireOrReferees.find((i) => (i.name === referee?.name));
-    if (refereeDetail) {
-      referee.uniqueId = refereeDetail.uniqueId;
-      await referee.save();
-    }
-    const umpireDetail = umpireOrReferees.filter((i) => (i.name !== referee?.name));
-    if (umpireDetail.length > 0) {
-      await this.umpireModel.bulkWrite(umpireDetail.map((i) => ({
-        updateOne: {
-          filter: { name: i.name },
-          update: { $set: { uniqueId: i.uniqueId } },
-        },
-      })));
-    }
-    await this.playerModel.deleteMany(findWhoAreNotPlayerQuery);
+
     return matchInfo._id;
+  }
+
+  async insertAllPlayers(players: Pick<Player, "name" | "uniqueId">[], gender?: string) {
+    const bulkOperations = players.flatMap((i: { name: string, uniqueId: string }) => {
+      if (!i.name && !i.uniqueId) {
+        return [];
+      }
+      return {
+        updateOne: {
+          filter: { uniqueId: i.uniqueId },
+          update: { $set: { ...i, gender } },
+          upsert: true,
+        },
+      };
+    });
+    if (bulkOperations.length !== 0) {
+      await this.playerModel.bulkWrite(bulkOperations);
+    }
+  }
+
+  async insertAllUmpires(umpires: Pick<Umpire, "name" | "uniqueId" | "type" | "subType">[]) {
+    const bulkOperations = umpires.flatMap((i) => {
+      if (!i.name && !i.uniqueId) {
+        return [];
+      }
+      return {
+        updateOne: {
+          filter: { uniqueId: i.uniqueId },
+          update: { $set: i },
+          upsert: true,
+        },
+      };
+    });
+    if (bulkOperations.length !== 0) {
+      await this.umpireModel.bulkWrite(bulkOperations);
+    }
   }
 
   async saveMappedDataToDb(collectionName: string, dataToUpdate: IMatchSheetFormat, match_id: string, scoreboardMappingFields: Record<string, string[]>, fileName: string) {
@@ -240,15 +327,16 @@ export class DataIngestionService {
         break;
       case MatchInfo.name:
         {
+          const extractedEntities = this.extractEntitiesFromCombineFields(dataToUpdate);
           await Promise.all([
             this.saveMappedDataToDb(Team.name, dataToUpdate, match_id, scoreboardMappingFields, fileName),
-            this.saveMappedDataToDb(Player.name, dataToUpdate, match_id, scoreboardMappingFields, fileName),
-            this.saveMappedDataToDb(Umpire.name, dataToUpdate, match_id, scoreboardMappingFields, fileName),
+            this.insertAllPlayers(extractedEntities.player.allPlayers),
+            this.insertAllUmpires(extractedEntities.umpire.allUmpires),
             this.saveMappedDataToDb(Tournament.name, { event: dataToUpdate.tournamentId, ...dataToUpdate }, match_id, scoreboardMappingFields, fileName),
             this.saveMappedDataToDb(Venue.name, dataToUpdate, match_id, scoreboardMappingFields, fileName),
-            this.saveMappedDataToDb(Referee.name, dataToUpdate, match_id, scoreboardMappingFields, fileName),
+            this.refereeModel.updateOne({ uniqueId: extractedEntities.referee.uniqueId }, { $set: extractedEntities.referee }, { upsert: true }),
           ]);
-          const matchInfoId = await this.saveMatchInformationToDb(dataToUpdate, match_id);
+          const matchInfoId = await this.saveMatchInformationToDb(dataToUpdate, match_id, extractedEntities.player.team1PlayingEleven, extractedEntities.player.team2PlayingEleven, extractedEntities.playerOfMatches, extractedEntities.umpire.bowledEndUmpireIds, extractedEntities.umpire.legUmpireIds, extractedEntities.umpire.fourthUmpireIds, extractedEntities.umpire.thirdUmpireIds, extractedEntities.referee);
           const scoreboardCount = await this.matchScoreboardModel.countDocuments({ sheet_match_id: match_id });
           if (scoreboardCount !== 0) {
             const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, null, scoreboardMappingFields, fileName);
@@ -257,21 +345,7 @@ export class DataIngestionService {
           break;
         }
       case Player.name: {
-        const bulkOperations = (dataToUpdate?.registry as unknown as Pick<Player, "name" | "uniqueId">[])?.flatMap((i: { name: string, uniqueId: string }) => {
-          if (!i.name && !i.uniqueId) {
-            return [];
-          }
-          return {
-            updateOne: {
-              filter: { uniqueId: i.uniqueId },
-              update: { $set: { ...i, gender: dataToUpdate.gender } },
-              upsert: true,
-            },
-          };
-        });
-        if ((bulkOperations?.length || 0) !== 0) {
-          await this.playerModel.bulkWrite(bulkOperations);
-        }
+
         break;
       }
       case Umpire.name: {
@@ -793,59 +867,54 @@ export class DataIngestionService {
     }
   }
 
+  // Process mapping sheet data with database keys and save to database
   async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat, alreadyUploadCountRedisKey: string) {
+    // Extract unique number value from filename
     const match_id = this.extractNumbers(fileName);
 
+    // If couldn't extract unique number value from filename, throw error
     if (!match_id) {
       throw new Error("couldn't get unique number value from filename");
     }
 
+    // Check if file is info or scoreboard
     const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
-    const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists({ sheet_match_id: match_id });
+    // Check if match info or scoreboard already exists in database
+    const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists<number>({ sheet_match_id: match_id });
 
+    // If info file and match info already exists OR if scoreboard file and scoreboard already exists, skip processing
     if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
       await this.updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey);
       await this.commonHelperService.deleteKeysContainingId(match_id);
       return { isFileProcessedSuccessfully: false };
     }
 
-    const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name] } });
-    const mappingDoc = mappingDocs.find((m) => m.collectionName === MatchInfo.name);
-    const scoreboardMappingDoc = mappingDocs.find((m) => m.collectionName === MatchScoreboard.name);
-    const sheetKeys = Object.keys(extractedSheetInfo);
-    const collection: string[] = DatabaseFields[mappingDoc.collectionName]();
-    if (isInfoFile) {
+    const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name] } }); // get mapping documents for match info and scoreboard
+    const mappingDoc = mappingDocs.find((m) => m.collectionName === MatchInfo.name); // get match info mapping document
+    const scoreboardMappingDoc = mappingDocs.find((m) => m.collectionName === MatchScoreboard.name); // get scoreboard mapping document
+    const sheetKeys = Object.keys(extractedSheetInfo); // get all keys from sheet information
+    const collection: string[] = DatabaseFields[mappingDoc.collectionName](); // get all database fields for match info table
+    if (isInfoFile) { // info file
       const dataToUpdate: IDataToUpdate = {};
       const dbMappingKeys = Object.keys(mappingDoc.fields);
       sheetKeys.forEach((value) => {
         let mappingKey = dbMappingKeys.find((k) => mappingDoc.fields[k]?.includes(value));
         if (mappingKey) {
-          if (mappingKey === "team1.team" || mappingKey === "team2.team") {
+          if (mappingKey === "team1.team" || mappingKey === "team2.team") { // for team table
             dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { name: extractedSheetInfo[value][0] }] as Record<string, string>[];
             dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
-          } else if (mappingKey === "umpire.fourthUmpire" || mappingKey === "umpire.thirdUmpire" || mappingKey === "umpire.onFieldBowlerEndUmpire" || mappingKey === "umpire.onFieldLegUmpire") {
-            if (!mappingKey.includes("onField")) {
-              dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { name: extractedSheetInfo[value][0], type: mappingKey === "umpire.fourthUmpire" ? UmpireType.offfield : UmpireType.reserve }] as Record<string, string>[];
-            } else {
-              dataToUpdate["umpires"] = [...(dataToUpdate["umpires"] || []), { name: extractedSheetInfo[value][0], type: UmpireType.onfield, subType: mappingKey.includes("BowlerEndUmpire") ? UmpireSubType.BOWLER_END : UmpireSubType.SQUARE_LEG }] as Record<string, string>[];
-            }
-            dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
-          } else if (mappingKey === "team2.playingEleven") {
-            if ((extractedSheetInfo[value] as string[]).length > 1) {
-              dataToUpdate["registry"] = [...(dataToUpdate["registry"] || []), { name: extractedSheetInfo[value][0], uniqueId: extractedSheetInfo[value][1] }] as Record<string, string>[];
-            }
-            else {
-              dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
-            }
+          } else if (mappingKey === "umpire.fourthUmpire" || mappingKey === "umpire.thirdUmpire" || mappingKey === "umpire.onFieldBowlerEndUmpire" || mappingKey === "umpire.onFieldLegUmpire") { // for umpire table
+            dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value][0]];
+          } else if (mappingKey === "team2.playingEleven") { // for player table
             mappingKey = mappingKey.replace(".$", "");
             dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
-          } else if (mappingKey === "event") {
+          } else if (mappingKey === "event") { // for tournament table
             this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value);
-          } else if (mappingKey.includes("playingEleven") || mappingKey.includes("playerOfMatch")) {
+          } else if (mappingKey.includes("playingEleven") || mappingKey.includes("playerOfMatch")) { // for match info table
             mappingKey = mappingKey.replace(".$", "");
             dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
-          } else {
+          } else { // for match info table enum and normal fields
             let getValue = extractedSheetInfo[value][0];
             const enumValue = this.enumValues[mappingDoc.collectionName];
             if (mappingKey === "result.winBy") {
@@ -862,7 +931,7 @@ export class DataIngestionService {
             dataToUpdate[mappingKey] = getValue;
           }
         }
-        else if (collection.includes(value)) {
+        else if (collection.includes(value)) { // for match info table normal fields
           let getValue = extractedSheetInfo[value][0];
           const enumValue = this.enumValues[mappingDoc.collectionName];
           if (value === "method") {
@@ -875,9 +944,10 @@ export class DataIngestionService {
       });
       await this.saveMappedDataToDb(mappingDoc.collectionName, dataToUpdate, match_id, scoreboardMappingDoc.fields, fileName);
     }
-    else {
+    else { // scoreboard file
       await this.saveMappedDataToDb(scoreboardMappingDoc.collectionName, extractedSheetInfo, match_id, scoreboardMappingDoc.fields, fileName);
     }
+    // After processing file delete redis key and generate analytics for match
     await this.analyticService.generateAnalyticsForMatch(match_id);
     return { isFileProcessedSuccessfully: true }
   }

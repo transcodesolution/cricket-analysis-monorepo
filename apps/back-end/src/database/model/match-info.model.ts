@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { SchemaTypes } from 'mongoose';
+import { SchemaTypes, Types } from 'mongoose';
 import { TossResult, WinnerTeamDecision, MatchStatus, MatchMethod } from '@cricket-analysis-monorepo/constants';
 import { BallType, Brand, Color } from '@cricket-analysis-monorepo/constants';
 import { Tournament } from './tournament.model';
@@ -21,6 +21,8 @@ import { Team } from './team.model';
     },
 })
 export class MatchInfo {
+    _id: Types.ObjectId;
+
     @Prop()
     name: string;
 
@@ -41,17 +43,17 @@ export class MatchInfo {
 
     @Prop({
         type: {
-            fourthUmpire: SchemaTypes.ObjectId,
-            onFieldBowlerEndUmpire: SchemaTypes.ObjectId,
-            onFieldLegUmpire: SchemaTypes.ObjectId,
-            thirdUmpire: SchemaTypes.ObjectId,
+            fourthUmpire: [SchemaTypes.ObjectId],
+            onFieldBowlerEndUmpire: [SchemaTypes.ObjectId],
+            onFieldLegUmpire: [SchemaTypes.ObjectId],
+            thirdUmpire: [SchemaTypes.ObjectId],
         }
     })
     umpire: {
-        fourthUmpire: string;
-        onFieldBowlerEndUmpire: string;
-        onFieldLegUmpire: string;
-        thirdUmpire: string;
+        fourthUmpire: [string];
+        onFieldBowlerEndUmpire: [string];
+        onFieldLegUmpire: [string];
+        thirdUmpire: [string];
     };
 
     @Prop({
@@ -157,6 +159,12 @@ export class MatchInfo {
         this.end_date = '';
         this.other = {};
         this.balls_per_over = 6;
+        this.umpire = {
+            fourthUmpire: [''],
+            onFieldBowlerEndUmpire: [''],
+            onFieldLegUmpire: [''],
+            thirdUmpire: [''],
+        };
         this.toss = {
             tossResult: TossResult.head,
             winnerTeam: '',
