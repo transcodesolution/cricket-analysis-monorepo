@@ -9,14 +9,14 @@ export const teamPerformanceColumns = (
     {
       accessor: tableHeader?.[0]?.value,
       title: tableHeader?.[0]?.label ?? 'Date',
-      width: 100,
+      width: 70,
       render: ({ start_date }) =>
         start_date ? new Date(start_date).toLocaleDateString('en-IN') : '-',
     },
     {
       accessor: tableHeader?.[1]?.value,
       title: tableHeader?.[1]?.label ?? 'Competition',
-      width: 160,
+      width: 100,
       render: ({ tournament }) => tournament ?? '-',
       ellipsis: true,
     },
@@ -25,11 +25,11 @@ export const teamPerformanceColumns = (
       title: header.label,
       ellipsis: true,
       sortable: false,
-      width: 160,
+      width: 65,
       render: ({ teams }: ITeamPerformanceMatch) => (
         <Flex direction="column" gap={4}>
           {teams.map((team: ITeamStats, i: number) => (
-            <Text key={i} lineClamp={1}>
+            <Text key={i} lineClamp={1} size='sm'>
               {team[header.value as keyof ITeamStats] ?? '-'}
             </Text>
           ))}
