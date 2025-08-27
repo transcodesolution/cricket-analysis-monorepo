@@ -1,6 +1,7 @@
 'use client';
 import { Sidebar } from '@/libs/layouts/sidebar';
 import {
+  ActionIcon,
   AppShell,
   Burger,
   Flex,
@@ -11,6 +12,7 @@ import { useDisclosure } from '@mantine/hooks';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { ProfilePopOver } from './ProfilePopOver';
+import { IconChevronCompactLeft, IconChevronCompactRight } from '@tabler/icons-react';
 
 interface IMainLayout {
   children: React.ReactNode;
@@ -29,7 +31,7 @@ export const MainLayout = ({ children }: IMainLayout) => {
       navbar={{
         width: 240,
         breakpoint: 'sm',
-        collapsed: { mobile: !opened },
+        collapsed: { desktop: !opened, mobile: !opened },
       }}
       padding="md"
       bg={'var(--mantine-color-gray-1)'}
@@ -57,6 +59,19 @@ export const MainLayout = ({ children }: IMainLayout) => {
 
       {/* Sidebar */}
       <AppShell.Navbar p="xs" bg='var(--mantine-color-gray-1)'>
+        <ActionIcon
+          variant="default"
+          bg='var(--mantine-color-primary-1)'
+          c={'var(--mantine-color-primary-7)'}
+          size="md"
+          onClick={toggle}
+          pos='absolute'
+          visibleFrom='sm'
+          styles={{ root: { right: '-28px', bottom: '4rem', borderRadius: "0 0.3rem 0 0" } }}
+        >
+          {!opened ? <IconChevronCompactRight size={20} /> : <IconChevronCompactLeft size={20} />}
+        </ActionIcon>
+
         <Sidebar toggle={toggle} />
       </AppShell.Navbar>
 
