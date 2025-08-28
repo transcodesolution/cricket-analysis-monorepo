@@ -23,7 +23,7 @@ export const ProfilePopOver = () => {
   }
 
   return (
-    <Menu shadow="md" width={200}>
+    <Menu shadow="md" width={200} position='bottom-end'>
       <Menu.Target>
         <Avatar
           src={null}

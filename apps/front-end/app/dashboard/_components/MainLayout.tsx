@@ -19,7 +19,8 @@ interface IMainLayout {
 }
 
 export const MainLayout = ({ children }: IMainLayout) => {
-  const [opened, { toggle }] = useDisclosure();
+  const [desktopOpened, { toggle: deskTopToggle }] = useDisclosure(true);
+  const [mobileOpened, { toggle: mobileToggle }] = useDisclosure(false);
 
   return (
     <AppShell
@@ -31,7 +32,10 @@ export const MainLayout = ({ children }: IMainLayout) => {
       navbar={{
         width: 240,
         breakpoint: 'sm',
-        collapsed: { desktop: !opened, mobile: !opened },
+        collapsed: {
+          desktop: !desktopOpened,
+          mobile: !mobileOpened,
+        },
       }}
       padding="md"
       bg={'var(--mantine-color-gray-1)'}
@@ -40,7 +44,7 @@ export const MainLayout = ({ children }: IMainLayout) => {
       <AppShell.Header bg='var(--mantine-color-gray-1)'>
         <Flex justify="space-between" align="center" h="100%" px="lg">
           <Group >
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+            <Burger opened={mobileOpened} onClick={mobileToggle} hiddenFrom="sm" size="sm" />
             <Group onClick={() => redirect('/dashboard')} styles={{ root: { cursor: 'pointer' } }}>
               <Image
                 src="/assets/images/logo.svg"
@@ -64,15 +68,15 @@ export const MainLayout = ({ children }: IMainLayout) => {
           bg='var(--mantine-color-primary-1)'
           c={'var(--mantine-color-primary-7)'}
           size="md"
-          onClick={toggle}
+          onClick={deskTopToggle}
           pos='absolute'
           visibleFrom='sm'
           styles={{ root: { right: '-28px', bottom: '4rem', borderRadius: "0 0.3rem 0 0" } }}
         >
-          {!opened ? <IconChevronCompactRight size={20} /> : <IconChevronCompactLeft size={20} />}
+          {!desktopOpened ? <IconChevronCompactRight size={20} /> : <IconChevronCompactLeft size={20} />}
         </ActionIcon>
 
-        <Sidebar toggle={toggle} />
+        <Sidebar toggle={mobileToggle} />
       </AppShell.Navbar>
 
       {/* Main Content */}
