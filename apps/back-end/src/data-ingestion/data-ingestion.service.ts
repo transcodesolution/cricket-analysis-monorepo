@@ -172,7 +172,7 @@ export class DataIngestionService {
     let team2PlayingEleven: string[] = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[1] === dataToUpdate["team2.team"] ? i[0] : []));
     team1PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[0]) ? i[1] : []));
     team2PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[0]) ? i[1] : []));
-    
+
     const team1Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[1]) ? { name: i[0], uniqueId: i[1] } : []))
 
     const team2Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[1]) ? { name: i[0], uniqueId: i[1] } : []))
@@ -495,21 +495,21 @@ export class DataIngestionService {
   ): Promise<Record<string, IMatchSheetFormat>> => {
     const results: Record<string, IMatchSheetFormat> = {};
 
-    const baseName = stripExt(file.filename);
+    const fileName = file.filename;
     const ext = stripExt(file.filename) === file.filename
       ? '' // no extension
       : file.filename.split('.').pop()?.toLowerCase() ?? '';
 
     try {
       if (ext === 'csv') {
-        await formatCsvFiles<T>(results, baseName, file.readStream);
+        await formatCsvFiles<T>(results, fileName, file.readStream);
       } else {
         // Excel (.xlsx) case
-        formatExcelFiles<T>(results, file.readStream, baseName);
+        formatExcelFiles<T>(results, file.readStream, fileName);
       }
     } catch (err) {
       console.error(`Error reading ${file.filename}:`, err);
-      results[baseName] = {};
+      results[fileName] = {};
     }
 
     return results;
@@ -608,12 +608,24 @@ export class DataIngestionService {
     return result;
   }
 
+  getFileName(fileName: string) {
+    const fileSplitData = fileName.split(".");
+
+    if (fileSplitData.length !== 2) {
+      throw new BadRequestException(responseMessage.customMessage("Data not pass correctly"))
+    }
+
+    const [name] = fileSplitData;
+
+    return name;
+  }
+
   async checkMappingAndUpdate(mappingDetailDto: MappingDetailDto) {
     const { files } = mappingDetailDto;
     const { data } = await this.getAllDBSchemaNameWithFields({ isSoftwareCall: true });
 
     const regex = /info/i;
-    const unmappedData: Record<string, string[]> = {};
+    const response: { unmappedKeys: string[], fileNames: string[] } = { unmappedKeys: [], fileNames: [] };
 
     await this.commonHelperService.deleteKeysContainingId("REPORTS_");
 
@@ -622,7 +634,9 @@ export class DataIngestionService {
     let mainFileNameRequiredKey = "";
 
     for (const { fileName, columns } of files as ColumnDto[]) {
-      const isInfoFile = regex.test(fileName);
+      const name = this.getFileName(fileName);
+
+      const isInfoFile = regex.test(name);
       const matchedColumns = new Set<string>();
 
       const mappingDoc = mappingDocs.find((e) => e.collectionName === (isInfoFile ? MatchInfo.name : MatchScoreboard.name));
@@ -649,24 +663,16 @@ export class DataIngestionService {
       const requiredMappingColumns = columns.filter((col) => !matchedColumns.has(col));
 
       if (!mainFileNameRequiredKey && requiredMappingColumns.length !== 0) {
-        mainFileNameRequiredKey = fileName;
+        mainFileNameRequiredKey = name;
       }
 
-      const fileNameKey = mainFileNameRequiredKey || fileName;
-
-      if (!unmappedData[fileNameKey]) {
-        unmappedData[fileNameKey] = [];
-      }
-      // Remaining unmapped columns
-      unmappedData[fileNameKey] = [...new Set([...unmappedData[fileNameKey], ...new Set(requiredMappingColumns)])];
-      if (mainFileNameRequiredKey !== fileName) {
-        unmappedData[fileName] = [];
-      }
+      response.unmappedKeys = [...new Set([...response.unmappedKeys, ...new Set(requiredMappingColumns)])];
+      response.fileNames.push(fileName);
     }
 
     return {
       message: responseMessage.customMessage("mapping performed successfully"),
-      data: unmappedData,
+      data: response,
     };
   }
 
@@ -687,12 +693,56 @@ export class DataIngestionService {
 
     const missingInputKeys = Object.keys(this.missingInputs);
 
-    const userInputRequiredFields: Record<string, ICachedInput[]> = {};
+    const userInputRequiredFields: ICachedInput[] = [];
 
-    let mainFileNameRequiredKey = "";
+    // Step 1: Get all relevant collectionNames
+    const collectionNames = userMappingDetailDto.mappingsByUser.map(j => j.collectionName);
 
-    for (const i of userMappingDetailDto.files) {
-      const { fileName, mappingsByUser } = i;
+    // Step 2: Fetch all in one query
+    const existingDocs = await this.mappedDataModel
+      .find({ collectionName: { $in: collectionNames } })
+      .lean(); // plain JS objects for speed
+
+    // Step 3: Index by collectionName
+    const docMap = new Map(
+      existingDocs.map(doc => [doc.collectionName, doc])
+    );
+
+    const bulkOperations = [];
+
+    for (const j of userMappingDetailDto.mappingsByUser) {
+      const doc = docMap.get(j.collectionName);
+      if (!doc) continue;
+
+      const fields = doc.fields || {};
+
+      for (const key of Object.keys(j.fields)) {
+        const existing = Array.isArray(fields[key]) ? fields[key] : [];
+        const newValues = j.fields[key];
+
+        // Merge without duplicates
+        const merged = Array.from(new Set([...existing, ...newValues]));
+
+        if (key === "event") {
+          fields["tournamentId"] = Array.from(new Set([...fields["tournamentId"], ...newValues]));
+        }
+        fields[key] = merged;
+      }
+
+      bulkOperations.push({
+        updateOne: {
+          filter: { collectionName: j.collectionName },
+          update: { $set: { fields } }
+        }
+      });
+    }
+
+    if (bulkOperations.length > 0) {
+      await this.mappedDataModel.bulkWrite(bulkOperations);
+    }
+
+    for (const fileName of userMappingDetailDto.fileNames) {
+      const name = this.getFileName(fileName);
 
       const currentSheetData = sheets.find((i) => i.filename.includes(fileName));
 
@@ -700,57 +750,11 @@ export class DataIngestionService {
         throw new BadRequestException(responseMessage.customMessage("please pass user mapping detail correctly! files uploaded and mapping detail must be equal length"))
       }
 
-      // Step 1: Get all relevant collectionNames
-      const collectionNames = mappingsByUser.map(j => j.collectionName);
-
-      // Step 2: Fetch all in one query
-      const existingDocs = await this.mappedDataModel
-        .find({ collectionName: { $in: collectionNames } })
-        .lean(); // plain JS objects for speed
-
-      // Step 3: Index by collectionName
-      const docMap = new Map(
-        existingDocs.map(doc => [doc.collectionName, doc])
-      );
-
-      const bulkOperations = [];
-
-      for (const j of mappingsByUser) {
-        const doc = docMap.get(j.collectionName);
-        if (!doc) continue;
-
-        const fields = doc.fields || {};
-
-        for (const key of Object.keys(j.fields)) {
-          const existing = Array.isArray(fields[key]) ? fields[key] : [];
-          const newValues = j.fields[key];
-
-          // Merge without duplicates
-          const merged = Array.from(new Set([...existing, ...newValues]));
-
-          if (key === "event") {
-            fields["tournamentId"] = Array.from(new Set([...fields["tournamentId"], ...newValues]));
-          }
-          fields[key] = merged;
-        }
-
-        bulkOperations.push({
-          updateOne: {
-            filter: { collectionName: j.collectionName },
-            update: { $set: { fields } }
-          }
-        });
-      }
-
-      if (bulkOperations.length > 0) {
-        await this.mappedDataModel.bulkWrite(bulkOperations);
-      }
-
       currentSheetData.readStream = createReadStream(join("uploads/", currentSheetData.filename));
 
       const extractedSheetInfo = await this.readExcelFiles<ReadStream>(currentSheetData);
 
-      await this.redisService.set(`${fileName}:data`, JSON.stringify(extractedSheetInfo));
+      await this.redisService.set(`${name}:data`, JSON.stringify(extractedSheetInfo));
 
       const isInfoFile = this.infoFileMatchingRegex.test(fileName);
 
@@ -768,23 +772,15 @@ export class DataIngestionService {
           // final prepare user input required fields
           Object.keys(obj).forEach((mappedKey) => {
             if (!hasFoundCached && mappedKey) {
-              if (!mainFileNameRequiredKey) {
-                mainFileNameRequiredKey = fileName;
-              }
-              const fileNameKey = mainFileNameRequiredKey || fileName;
-
-              if (!userInputRequiredFields[fileNameKey]) {
-                userInputRequiredFields[fileNameKey] = [];
-              }
 
               if (!obj[mappedKey]) {
                 return;
               }
 
               const inputs = this.missingInputs[key][mappedKey]?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
-              const isInputExist = userInputRequiredFields[fileNameKey]?.find((f) => f.collectionName === key && f.referenceKey === mappedKey && f.referenceValue === obj[mappedKey]);
+              const isInputExist = userInputRequiredFields?.find((f) => f.collectionName === key && f.referenceKey === mappedKey && f.referenceValue === obj[mappedKey]);
               if (!isInputExist) {
-                userInputRequiredFields[fileNameKey].push({
+                userInputRequiredFields.push({
                   referenceKey: mappedKey,
                   referenceValue: obj[mappedKey],
                   collectionName: key,
@@ -796,19 +792,11 @@ export class DataIngestionService {
           });
         }
       }
-      const fileNameKey = mainFileNameRequiredKey || fileName;
-      if (!userInputRequiredFields[fileNameKey]) {
-        userInputRequiredFields[fileNameKey] = [];
-      }
-
-      if (mainFileNameRequiredKey !== fileName) {
-        userInputRequiredFields[fileName] = [];
-      }
     }
 
     return {
       message: responseMessage.customMessage("mapping updated successfully and user input fields checked successfully"),
-      data: userInputRequiredFields,
+      data: { userInputRequiredFields, fileNames: userMappingDetailDto.fileNames },
     };
   }
 
@@ -960,36 +948,33 @@ export class DataIngestionService {
   }
 
   async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response, requestUniqueId: string, userId: string) {
-    const fileUploadDtoKeys = Object.keys(uploadFileDto);
-
-    const socketUpdateForProcessStartingObject = { totalFilesProcessed: 0, totalErroredFiles: 0, totalAlreadyUploadedFiles: 0, totalFiles: fileUploadDtoKeys.length, requestUniqueId };
+    const socketUpdateForProcessStartingObject = { totalFilesProcessed: 0, totalErroredFiles: 0, totalAlreadyUploadedFiles: 0, totalFiles: uploadFileDto.fileNames.length, requestUniqueId };
 
     this.socketGateway.server.to(userId.toString()).emit("file-progress-update", socketUpdateForProcessStartingObject);
 
-    for (const i of fileUploadDtoKeys) {
-      const fileName = i;
-      const uploadFileObj = uploadFileDto[fileName];
+    const bulkInputOps = [];
+    for (const userInput of uploadFileDto.userInputs) {
+      const { collectionName, inputs, ...input } = userInput;
 
-      const extractedSheetInfoString: string = await this.redisService.get(`${fileName}:data`);
+      bulkInputOps.push({
+        updateOne: {
+          filter: { collectionName },
+          update: { $addToSet: { inputs: { ...input, ...inputs } } }
+        }
+      });
+    }
+    if (bulkInputOps.length > 0) {
+      await this.mappedDataModel.bulkWrite(bulkInputOps);
+    }
+
+    for (const fileName of uploadFileDto.fileNames) {
+      const name = this.getFileName(fileName);
+
+      const extractedSheetInfoString: string = await this.redisService.get(`${name}:data`);
 
       const extractedSheetInfo: Record<string, IMatchSheetFormat> = JSON.parse(extractedSheetInfoString);
 
-      const bulkInputOps = [];
-      for (const key in uploadFileObj) {
-        const { collectionName, inputs, ...input }: InputUpdateDto = uploadFileObj[key];
-
-        bulkInputOps.push({
-          updateOne: {
-            filter: { collectionName },
-            update: { $addToSet: { inputs: { ...input, ...inputs } } }
-          }
-        });
-      }
-      if (bulkInputOps.length > 0) {
-        await this.mappedDataModel.bulkWrite(bulkInputOps);
-      }
-
-      await this.fileUploadQueue.add(TASKS.processMappingSheetDataWithDatabaseKeys, { requestUniqueId, fileName, totalFiles: fileUploadDtoKeys.length, fileData: extractedSheetInfo[fileName], userId }, { removeOnComplete: true, removeOnFail: true, delay: 6000 });
+      await this.fileUploadQueue.add(TASKS.processMappingSheetDataWithDatabaseKeys, { requestUniqueId, fileName: name, totalFiles: uploadFileDto.fileNames.length, fileData: extractedSheetInfo[fileName], userId }, { removeOnComplete: true, removeOnFail: true, delay: 6000 });
     }
 
     return res.status(HttpStatus.PARTIAL_CONTENT).json({
