@@ -43,7 +43,8 @@ export const UploadFile = () => {
           message: error?.message || 'An error occurred while checking mapping.',
           color: 'red',
         });
-      }).finally(() => { setLoading(false) });
+        setLoading(false);
+      })
   };
 
   const handleMappingCheck = (structuredData: IFileColumns[], files: FileWithPath[]) => {
@@ -68,7 +69,6 @@ export const UploadFile = () => {
             updateMappingAndCheck(files, userMappingDetail);
           }
         },
-        onSettled: () => setLoading(false)
       }
     );
   };
@@ -80,7 +80,6 @@ export const UploadFile = () => {
     });
 
     formData.append('userMappingDetail', JSON.stringify({ files: userMappingDetail }));
-
     // Upload files
     updateMappingAndCheckRequiredInputs({ formData })
       .then((response) => {
@@ -132,6 +131,7 @@ export const UploadFile = () => {
           color: 'red',
         });
       },
+      onSettled: () => setLoading(false)
     }
     );
   };
