@@ -24,6 +24,7 @@ export const UploadFile = () => {
   const { mutate: checkMappingAndUpdate, isPending: isCheckMapping } = useCheckMappingAndUpdate();
   const { mutate: updateAndSaveEntries, isPending: isUpdateAndSaveEntries } = useUpdateAndSaveEntries();
   const [requirements, setRequirements] = useState<IUpdateAndSaveEntriesRequest>({});
+  const [fileNames, setFileNames] = useState<string[]>([]);
 
   const handleDrop = (files: FileWithPath[]) => {
     if (files.length === 0) return;
@@ -52,20 +53,18 @@ export const UploadFile = () => {
       { files: structuredData },
       {
         onSuccess: ({ data }: IApiResponse<IFileColumnDataResponse>) => {
-          const hasMissingMappings = Object.values(data || {}).some(cols => cols.length > 0);
+          const hasMissingMappings = (data?.unmappedKeys?.length ?? 0) > 0;
 
           if (hasMissingMappings) {
-            const mappingDetail = Object.entries(data || {}).map(([fileName, columns]) => ({
-              fileName,
-              columns,
-            }));
-            setFileColumnData(mappingDetail);
+            setFileNames(data?.fileNames ?? []);
+            setFileColumnData([{ columns: data?.unmappedKeys ?? [] }]);
             setShowMappingModal(true);
           } else {
-            const userMappingDetail = structuredData.map(({ fileName }) => ({
-              fileName,
+            const userMappingDetail: IUserMappingDetail =
+            {
+              fileNames: data?.fileNames ?? [],
               mappingsByUser: [],
-            }));
+            };
             updateMappingAndCheck(files, userMappingDetail);
           }
         },
@@ -73,17 +72,19 @@ export const UploadFile = () => {
     );
   };
 
-  const updateMappingAndCheck = (files: FileWithPath[], userMappingDetail: IUserMappingDetail[] = []) => {
+  const updateMappingAndCheck = (files: FileWithPath[], userMappingDetail: IUserMappingDetail) => {
     const formData = new FormData();
     files.forEach((file) => {
       formData.append('sheets', file, file.name);
     });
 
-    formData.append('userMappingDetail', JSON.stringify({ files: userMappingDetail }));
+    formData.append('userMappingDetail', JSON.stringify(userMappingDetail));
     // Upload files
     updateMappingAndCheckRequiredInputs({ formData })
       .then((response) => {
         setShowMappingModal(false);
+        setFileColumnData([]);
+        setFileNames([]);
         setDroppedFiles([]);
         if (response.statusCode === 200) {
           const hasInputs = Object.values(response.data ?? {}).some((arr) =>
@@ -112,7 +113,13 @@ export const UploadFile = () => {
   };
 
   const handleMappingSubmit = async (userMappingDetail: IUserMappingDetail[]) => {
-    updateMappingAndCheck(droppedFiles, userMappingDetail);
+    const updated: IUserMappingDetail = {
+      fileNames: fileNames,
+      mappingsByUser: userMappingDetail.flatMap(detail => detail.mappingsByUser),
+    };
+
+    updateMappingAndCheck(droppedFiles, updated);
+
   };
 
   const handleRequirementSubmit = async (inputData: IUpdateAndSaveEntriesRequest) => {

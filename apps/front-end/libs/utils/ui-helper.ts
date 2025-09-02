@@ -1,4 +1,4 @@
-import { stripExt, formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
+import { formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
 import { IBatsmanStatsData, IBowlerStatsData, TReportDetails, IVenueStatsData, IStatTileItem, ITeamPerformanceData } from "../types-api/src";
 
@@ -9,7 +9,7 @@ export const readExcelFiles = async (
   const columnResults: Record<string, string[]> = {};
 
   for (const file of files) {
-    const baseName = stripExt(file.name);
+    const baseName = file.name;
     const ext = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() ?? '' : '';
 
     try {
