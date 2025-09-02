@@ -796,7 +796,7 @@ export class DataIngestionService {
 
     return {
       message: responseMessage.customMessage("mapping updated successfully and user input fields checked successfully"),
-      data: { userInputRequiredFields, fileNames: userMappingDetailDto.fileNames },
+      data: { userInputs: userInputRequiredFields, fileNames: userMappingDetailDto.fileNames },
     };
   }
 
