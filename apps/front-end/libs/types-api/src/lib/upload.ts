@@ -1,10 +1,11 @@
 import { ICachedInput } from "@cricket-analysis-monorepo/interfaces";
 
 export interface IFileColumnDataResponse {
-  [fileName: string]: string[];
+  unmappedKeys: string[];
+  fileNames: string[];
 }
 export interface IFileColumns {
-  fileName: string;
+  fileName?: string;
   columns: string[];
 }
 
@@ -26,7 +27,7 @@ export interface IMappingByUser {
 }
 
 export interface IUserMappingDetail {
-  fileName: string;
+  fileNames: string[];
   mappingsByUser: IMappingByUser[];
 }
 

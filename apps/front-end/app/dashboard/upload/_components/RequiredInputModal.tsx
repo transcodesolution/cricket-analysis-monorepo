@@ -5,7 +5,6 @@ import {
   Select,
   Button,
   Title,
-  Divider,
 } from '@mantine/core';
 import { useState } from 'react';
 import {
@@ -46,10 +45,9 @@ export const RequiredInputModal = ({
   });
 
   const handleSubmit = () => {
-    const formattedData: IUpdateAndSaveEntriesRequest = {};
-
-    Object.entries(data).forEach(([fileName, entries]) => {
-      formattedData[fileName] = entries.map((entry) => {
+    const formattedData: IUpdateAndSaveEntriesRequest = {
+      fileNames: data.fileNames,
+      userInputs: data.userInputs.map((entry) => {
         const inputFields = (entry.inputs ?? []) as IFormInput[];
 
         const inputsObject = inputFields.reduce((acc, input) => {
@@ -58,13 +56,11 @@ export const RequiredInputModal = ({
         }, {} as Record<string, string>);
 
         return {
-          referenceKey: entry.referenceKey,
-          referenceValue: entry.referenceValue,
-          collectionName: entry.collectionName,
-          inputs: inputsObject
+          ...entry,
+          inputs: inputsObject,
         };
-      });
-    });
+      }),
+    };
 
     onSubmit(formattedData);
   };
@@ -79,41 +75,40 @@ export const RequiredInputModal = ({
       transitionProps={{ transition: 'fade-down', duration: 600, timingFunction: 'ease' }}
     >
       <Stack gap="md">
-        {Object.entries(data).map(([fileName, entries]) =>
-          entries.length > 0 ? (
-            <Stack key={fileName} gap="sm">
-              {entries.map((entry, idx) => {
-                const inputFields = (entry.inputs ?? []) as IFormInput[];
+        {data?.userInputs?.map((entry, idx) => {
+          const inputFields = (entry.inputs ?? []) as IFormInput[];
 
-                return (
-                  <Stack key={`${entry.collectionName}-${idx}`} gap="xs">
-                    <Title order={5}>{entry.collectionName}  {entry.fileId && `(${entry.fileId})`}</Title>
-                    <Text size="sm">
-                      {entry.referenceKey} → {entry.referenceValue}
-                    </Text>
-                    {inputFields.map((input) => (
-                      <Select
-                        key={input.key}
-                        label={input.label}
-                        placeholder="Select an option"
-                        searchable
-                        value={inputs[entry.referenceValue]?.[input.key] || ''}
-                        data={input.options.map((opt) => ({
-                          value: opt,
-                          label: opt,
-                        }))}
-                        onChange={(val) =>
-                          handleChange(entry.referenceValue, input.key, val || '')
-                        }
-                        size="xs"
-                      />
-                    ))}
-                  </Stack>
-                );
-              })}
+          return (
+            <Stack key={`${entry.collectionName}-${idx}`} gap="xs">
+              <Title order={5}>
+                {entry.collectionName} {entry.fileId && `(${entry.fileId})`}
+              </Title>
+              <Text size="sm">
+                {inputFields.length > 0 &&
+                  entry.referenceKey &&
+                  entry.referenceValue &&
+                  `${entry.referenceKey} → ${entry.referenceValue}`}
+              </Text>
+              {inputFields.map((input) => (
+                <Select
+                  key={input.key}
+                  label={input.label}
+                  placeholder="Select an option"
+                  searchable
+                  value={inputs[entry.referenceValue]?.[input.key] || ''}
+                  data={input.options.map((opt) => ({
+                    value: opt,
+                    label: opt,
+                  }))}
+                  onChange={(val) =>
+                    handleChange(entry.referenceValue, input.key, val || '')
+                  }
+                  size="xs"
+                />
+              ))}
             </Stack>
-          ) : null
-        )}
+          );
+        })}
 
         <Button
           disabled={!isComplete || loading}

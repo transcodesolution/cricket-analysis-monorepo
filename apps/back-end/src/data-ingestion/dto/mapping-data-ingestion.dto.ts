@@ -24,14 +24,11 @@ export class MappingDetailDto {
 }
 
 export class UserMappingDetailDto {
-    files: [Pick<ColumnDto, "fileName"> & { mappingsByUser: MappingData[] }];
+    fileNames: string[];
+    mappingsByUser: MappingData[]
 }
 
 export class UploadFileAndMappingUpdateDto {
-    // @ValidateNested({ each: true })
-    // @Type(() => ColumnDto)
-    // @IsArray()
-    // @IsString()
     userMappingDetail: UserMappingDetailDto;
 }
 
@@ -46,5 +43,6 @@ export class InputUpdateDto extends PickType(CachedInput, ["collectionName", "re
 }
 
 export class UploadFileDto {
-    [keyname: string]: InputUpdateDto[];
+    userInputs: InputUpdateDto[];
+    fileNames: string[];
 }
