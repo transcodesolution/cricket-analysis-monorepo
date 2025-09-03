@@ -6,7 +6,7 @@ import { apiErrorHandler } from '@/libs/utils/apiErrorHandler';
 
 export const getDatabaseTablesAndFields = async (): Promise<IApiResponse<ITableField[]>> => {
   try {
-    const response = await http.get<IApiResponse<ITableField[]>>('/database/table-names-and-fields');
+    const response = await http.get<IApiResponse<ITableField[]>>('/database/schema');
     return response.data;
   } catch (error) {
     throw new Error(`Error while fetching table names and fields: ${error}`);
@@ -15,7 +15,7 @@ export const getDatabaseTablesAndFields = async (): Promise<IApiResponse<ITableF
 
 export const checkMappingAndUpdate = async (params: ICheckMappingRequest): Promise<IApiResponse<IFileColumnDataResponse>> => {
   try {
-    const result = await http.post<IApiResponse<IFileColumnDataResponse>>('/check-mapping-and-update', params);
+    const result = await http.post<IApiResponse<IFileColumnDataResponse>>('/mappings/validate', params);
     return result.data;
   } catch (error) {
     throw new Error(`Checking column mapping: ${error}`)
@@ -27,7 +27,7 @@ export const updateMappingAndCheckRequiredInputs = async ({ formData, onUploadPr
   onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
 }): Promise<IApiResponse<IUpdateAndSaveEntriesRequest>> => {
   try {
-    const result = await http.post('/update-mapping-and-check-required-inputs', formData, {
+    const result = await http.post('/mappings/update-and-validate-inputs', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -41,7 +41,7 @@ export const updateMappingAndCheckRequiredInputs = async ({ formData, onUploadPr
 
 export const updateAndSaveEntries = async (params: IUpdateAndSaveEntriesRequest): Promise<IApiResponse<IUploadResult[]>> => {
   try {
-    const result = await http.post<IApiResponse<IUploadResult[]>>('/update-input-and-save-entries', params);
+    const result = await http.post<IApiResponse<IUploadResult[]>>('/entries/save', params);
     return result.data;
   } catch (error) {
     throw new Error(`Update input entries: ${error}`)
