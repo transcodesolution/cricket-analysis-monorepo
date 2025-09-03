@@ -4,6 +4,7 @@ export interface IFormInput {
     label: string;
     key: string;
     elementType: FormInputElement;
+    isShowCreateOption: boolean;
     options: string[];
 }
 

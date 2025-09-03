@@ -87,8 +87,8 @@ export const DatabaseFields = {
 }
 
 export const UIInputRequiredFieldConfiguration: Record<string, () => IFormInput> = {
-    matchFormat: () => ({ label: "Match Format", key: "matchFormat", elementType: FormInputElement.dropdown, options: Object.values(MatchFormat) }),
-    type: () => ({ label: "Tournament Type", key: "type", elementType: FormInputElement.dropdown, options: Object.values(TournamentType) }),
-    event: () => ({ label: "Tournament Name", key: "event", elementType: FormInputElement.dropdown, options: Object.values(TournamentName) }),
-    tournamentId: () => ({ label: "Tournament Id Reference", key: "tournamentId", elementType: FormInputElement.dropdown, options: Object.values(TournamentName) }),
+    matchFormat: () => ({ label: "Match Format", key: "matchFormat", elementType: FormInputElement.dropdown, options: Object.values(MatchFormat), isShowCreateOption: false }),
+    type: () => ({ label: "Tournament Type", key: "type", elementType: FormInputElement.dropdown, options: Object.values(TournamentType), isShowCreateOption: false }),
+    event: () => ({ label: "Tournament Name", key: "event", elementType: FormInputElement.dropdown, options: Object.values(TournamentName), isShowCreateOption: true }),
+    tournamentId: () => ({ label: "Tournament Id Reference", key: "tournamentId", elementType: FormInputElement.dropdown, options: Object.values(TournamentName), isShowCreateOption: false }),
 }

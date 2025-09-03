@@ -1,7 +1,8 @@
-import { ArrayMinSize, IsArray, IsDefined, IsString, ValidateNested } from "class-validator";
+import { ArrayMinSize, IsArray, IsBoolean, IsDefined, IsEnum, IsNotEmpty, IsString, ValidateNested } from "class-validator";
 import { CachedInput, MappingData } from "../../database/model/mapping.model";
 import { Type } from "class-transformer";
 import { PickType } from "@nestjs/mapped-types";
+import { EntityType } from "@cricket-analysis-monorepo/constants";
 
 export class ColumnDto {
     @IsArray()
@@ -40,9 +41,28 @@ export class InputUpdateDto extends PickType(CachedInput, ["collectionName", "re
     @ValidateNested()
     @Type(() => CachedInputDto)
     inputs: CachedInputDto;
+
+    @IsBoolean()
+    isUserTypedValue: boolean;
+
+    @IsBoolean()
+    typedValue: boolean;
+
+    @IsEnum(EntityType)
+    entityType: EntityType;
 }
 
 export class UploadFileDto {
     userInputs: InputUpdateDto[];
     fileNames: string[];
+}
+
+export class VerifyEntityNameDto {
+    @IsNotEmpty()
+    @IsEnum(EntityType)
+    entityType: EntityType;
+
+    @IsNotEmpty()
+    @IsString()
+    name: string;
 }
