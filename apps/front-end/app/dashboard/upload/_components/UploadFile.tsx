@@ -88,7 +88,9 @@ export const UploadFile = () => {
         setDroppedFiles([]);
         if (response.statusCode === 200) {
           const hasInputs = Object.values(response.data ?? {}).some((arr) =>
-            arr.some((item) => item.inputs && Number(item.inputs.length) > 0)
+            arr.some((item) =>
+              Array.isArray(item.inputs) && item.inputs.length > 0
+            )
           );
           if (hasInputs) {
             setShowRequiredInputModal(true);

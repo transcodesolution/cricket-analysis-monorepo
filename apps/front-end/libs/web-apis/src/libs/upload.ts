@@ -47,3 +47,12 @@ export const updateAndSaveEntries = async (params: IUpdateAndSaveEntriesRequest)
     throw new Error(`Update input entries: ${error}`)
   }
 };
+
+export const verifyEntity = async (entityType: string, name: string): Promise<IApiResponse> => {
+  try {
+    const result = await http.get<IApiResponse>(`/entities/verify?entityType=${entityType}&name=${encodeURIComponent(name)}`);
+    return result.data;
+  } catch (error) {
+    throw apiErrorHandler(error, 'verification failed');
+  }
+};

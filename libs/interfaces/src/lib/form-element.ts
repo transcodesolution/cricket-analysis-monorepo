@@ -1,4 +1,4 @@
-import { FormInputElement } from "@cricket-analysis-monorepo/constants";
+import { EntityType, FormInputElement } from "@cricket-analysis-monorepo/constants";
 
 export interface IFormInput {
     label: string;
@@ -12,5 +12,7 @@ export interface ICachedInput {
     referenceKey: string;
     referenceValue: string;
     collectionName: string;
-    [keyname: string]: string | IFormInput[] | Record<string, string>;
+    entityType: EntityType;
+    fileId: string;
+    [keyname: string]: string | boolean | IFormInput[] | Record<string, string>;
 }
