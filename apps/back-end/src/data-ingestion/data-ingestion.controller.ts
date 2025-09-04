@@ -12,9 +12,10 @@ import {
   UseGuards,
   Res,
   Req,
+  Query,
 } from '@nestjs/common';
 import { DataIngestionService } from './data-ingestion.service';
-import { MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto } from './dto/mapping-data-ingestion.dto';
+import { MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto, VerifyEntityNameDto } from './dto/mapping-data-ingestion.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { Permission } from '@cricket-analysis-monorepo/constants';
@@ -31,7 +32,7 @@ const ROUTE_PREFIX = '/mappings';
 @Controller()
 @UseGuards(AuthGuard, UserPermissionCheckerGuard)
 export class DataIngestionController {
-  constructor(private readonly dataIngestionService: DataIngestionService) {}
+  constructor(private readonly dataIngestionService: DataIngestionService) { }
 
   @Post(`${ROUTE_PREFIX}/validate`)
   @SetMetadata(ROUTE_PERMISSION_KEY_NAME, uploadFilePermissions)
@@ -79,6 +80,16 @@ export class DataIngestionController {
       res,
       req.id,
       req.headers.user._id,
+    );
+  }
+
+  @Get('/entities/verify')
+  @SetMetadata(ROUTE_PERMISSION_KEY_NAME, uploadFilePermissions)
+  async verifyEntityName(
+    @Query() verifyEntityNameDto: VerifyEntityNameDto,
+  ) {
+    return this.dataIngestionService.verifyEntityName(
+      verifyEntityNameDto,
     );
   }
 }

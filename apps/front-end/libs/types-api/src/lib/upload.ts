@@ -32,7 +32,8 @@ export interface IUserMappingDetail {
 }
 
 export type TFileCachedInput = ICachedInput & {
-  fileId?: string;
+  typedValue?: string;
+  isUserTypedValue?: boolean;
 };
 
 export interface IUpdateAndSaveEntriesRequest {

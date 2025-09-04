@@ -1,10 +1,10 @@
 import { BadRequestException, HttpStatus, Injectable, Res } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { Connection, Model } from 'mongoose';
+import mongoose, { Connection, Model, UpdateQuery } from 'mongoose';
 import { DatabaseFields, UIInputRequiredFieldConfiguration } from './dto/constant.dto';
-import { ColumnDto, InputUpdateDto, MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto, UserMappingDetailDto } from './dto/mapping-data-ingestion.dto';
+import { ColumnDto, MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto, UserMappingDetailDto, VerifyEntityNameDto } from './dto/mapping-data-ingestion.dto';
 import { responseMessage } from '../helper/response-message.helper';
-import { CachedInput, MappingData } from '../database/model/mapping.model';
+import { CachedInput, IMappingData, MappingData } from '../database/model/mapping.model';
 import { Collection } from "mongoose";
 import { Ball, MatchScoreboard } from '../database/model/match-scoreboard.model';
 import { MatchAnalytics } from '../database/model/match-analytics.model';
@@ -15,7 +15,7 @@ import { Referee } from '../database/model/referee.model';
 import { Venue } from '../database/model/venue.model';
 import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
-import { MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
+import { EntityType, MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
 import { ICachedInput, IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
 import { formatCsvFiles, formatExcelFiles, stripExt } from '@cricket-analysis-monorepo/service';
@@ -33,6 +33,7 @@ import { QUEUES, TASKS } from '../helper/constant.helper';
 import { InjectQueue } from '@nestjs/bullmq';
 import { RedisService } from '../redis/redis.service';
 import { SocketGateway } from '../socket/socket.service';
+import Fuse from 'fuse.js';
 
 export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string | string[] };
 
@@ -45,8 +46,13 @@ export class DataIngestionService {
   };
   private readonly infoFileMatchingRegex = /info/i;
 
-  private readonly missingInputs: Record<string, { [keyname: string]: string[] }> = {
-    [MatchInfo.name]: { event: ["matchFormat", "type", "event"] },
+  private readonly missingInputs: Record<string, { [keyname: string]: { type: EntityType, keys: string[] } }> = {
+    [MatchInfo.name]: {
+      event: {
+        type: EntityType.tournament,
+        keys: ["matchFormat", "type", "event"]
+      }
+    },
   }
 
   private readonly enumValues: { [keyname: string]: string | null | object } = {
@@ -86,7 +92,7 @@ export class DataIngestionService {
   }
 
   extractScoreboardFileName(str: string) {
-    const matches = str.match(/^(.+?)(?:_info)?$/);
+    const matches = str.match(/^.*?(\d+)(?:_info)?\.[^.]+$/);
     return matches ? matches[1] : '';
   }
 
@@ -535,6 +541,11 @@ export class DataIngestionService {
     }
 
     const rows = sheetScoreboardData;
+
+    if (!rows) {
+      return;
+    }
+
     const sheetKeys = Object.keys(rows[0]);
     const overGroups = new Map<number, Partial<Ball>[]>();
 
@@ -777,7 +788,7 @@ export class DataIngestionService {
                 return;
               }
 
-              const inputs = this.missingInputs[key][mappedKey]?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
+              const inputs = this.missingInputs[key][mappedKey]?.keys?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
               const isInputExist = userInputRequiredFields?.find((f) => f.collectionName === key && f.referenceKey === mappedKey && f.referenceValue === obj[mappedKey]);
               if (!isInputExist) {
                 userInputRequiredFields.push({
@@ -786,6 +797,7 @@ export class DataIngestionService {
                   collectionName: key,
                   inputs,
                   fileId: fileName,
+                  entityType: this.missingInputs[key][mappedKey]?.type
                 });
               }
             }
@@ -846,7 +858,7 @@ export class DataIngestionService {
 
     const input = inputs.find(i => i.referenceValue?.toLowerCase()?.trim() === sheetValue?.toLowerCase()?.trim());
     if (input && this.missingInputs[collectionName]?.[input.referenceKey]) {
-      for (const inputValue of this.missingInputs[collectionName][input.referenceKey]) {
+      for (const inputValue of this.missingInputs[collectionName][input.referenceKey]?.keys || []) {
         dataToUpdate[inputValue] = input[inputValue];
         if (inputValue === "event") {
           dataToUpdate["tournamentId"] = input[inputValue];
@@ -897,8 +909,6 @@ export class DataIngestionService {
           } else if (mappingKey === "team2.playingEleven") { // for player table
             mappingKey = mappingKey.replace(".$", "");
             dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
-          } else if (mappingKey === "event") { // for tournament table
-            this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value);
           } else if (mappingKey.includes("playingEleven") || mappingKey.includes("playerOfMatch")) { // for match info table
             mappingKey = mappingKey.replace(".$", "");
             dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value]] as string[];
@@ -917,6 +927,7 @@ export class DataIngestionService {
               getValue = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
             }
             dataToUpdate[mappingKey] = getValue;
+            this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value);
           }
         }
         else if (collection.includes(value)) { // for match info table normal fields
@@ -956,10 +967,23 @@ export class DataIngestionService {
     for (const userInput of uploadFileDto.userInputs) {
       const { collectionName, inputs, ...input } = userInput;
 
+      Object.keys(this.missingInputs[collectionName])
+
+      const update: UpdateQuery<IMappingData> = { $addToSet: { inputs: { ...input, ...inputs } } };
+
+      if (input.isUserTypedValue) {
+        bulkInputOps.push({
+          updateOne: {
+            filter: { collectionName: input.entityType },
+            update: { $push: { names: input.typedValue } }
+          }
+        })
+      }
+
       bulkInputOps.push({
         updateOne: {
           filter: { collectionName },
-          update: { $addToSet: { inputs: { ...input, ...inputs } } }
+          update,
         }
       });
     }
@@ -981,5 +1005,40 @@ export class DataIngestionService {
       message: responseMessage.customMessage("input updated successfully and files are processing to load in database"),
       data: {},
     });
+  }
+
+  async verifyEntityName(verifyEntityNameDto: VerifyEntityNameDto) {
+    const mappedData = await this.mappedDataModel.findOne({
+      collectionName: verifyEntityNameDto.entityType,
+    });
+
+    if (!mappedData) {
+      throw new BadRequestException(responseMessage.getDataNotFound('entity'));
+    }
+
+    // Normalize names (lowercase)
+    const normalizedNames = mappedData.names.map((n: string) => n.toLowerCase());
+    const userInput = verifyEntityNameDto.name.toLowerCase();
+
+    const fuse = new Fuse(normalizedNames, {
+      threshold: 0.3, // fuzzy tolerance (0 = exact, 1 = very loose)
+      ignoreLocation: true, // don't penalize if word appears in different place
+      distance: 100, // allow wider matching window
+    });
+
+    const searchedResults = fuse.search(userInput);
+
+    if (searchedResults.length > 0) {
+      throw new BadRequestException(
+        responseMessage.dataAlreadyExist('entity name'),
+      );
+    }
+
+    return {
+      message: responseMessage.dataVerifiedSuccess(
+        `${verifyEntityNameDto.entityType} name`,
+      ),
+      data: {},
+    };
   }
 }

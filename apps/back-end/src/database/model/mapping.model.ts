@@ -5,6 +5,7 @@ import { Document } from 'mongoose';
 
 export interface IMappingData extends MappingData, Document { }
 
+@Schema({ strict: true })
 export class CachedInput {
     @Prop()
     @IsNotEmpty()
@@ -35,10 +36,13 @@ export class CachedInput {
     collectionName?: string;
 }
 
-@Schema({ timestamps: true, versionKey: false })
+@Schema({ timestamps: true, versionKey: false, strict: true })
 export class MappingData {
     @Prop()
     collectionName: string;
+
+    @Prop({ type: [String], default: [] })
+    names?: string[];
 
     @Prop({
         type: Object,
