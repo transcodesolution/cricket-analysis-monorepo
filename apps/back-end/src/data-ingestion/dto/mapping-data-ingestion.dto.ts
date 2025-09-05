@@ -45,8 +45,8 @@ export class InputUpdateDto extends PickType(CachedInput, ["collectionName", "re
     @IsBoolean()
     isUserTypedValue: boolean;
 
-    @IsBoolean()
-    typedValue: boolean;
+    @IsString()
+    typedValue: string;
 
     @IsEnum(EntityType)
     entityType: EntityType;

@@ -1,7 +1,7 @@
 import { BadRequestException, HttpStatus, Injectable, Res } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Connection, Model, UpdateQuery } from 'mongoose';
-import { DatabaseFields, UIInputRequiredFieldConfiguration } from './dto/constant.dto';
+import { DatabaseFields, RedisKey, UIInputRequiredFieldConfiguration } from './dto/constant.dto';
 import { ColumnDto, MappingDetailDto, UploadFileAndMappingUpdateDto, UploadFileDto, UserMappingDetailDto, VerifyEntityNameDto } from './dto/mapping-data-ingestion.dto';
 import { responseMessage } from '../helper/response-message.helper';
 import { CachedInput, IMappingData, MappingData } from '../database/model/mapping.model';
@@ -33,7 +33,6 @@ import { QUEUES, TASKS } from '../helper/constant.helper';
 import { InjectQueue } from '@nestjs/bullmq';
 import { RedisService } from '../redis/redis.service';
 import { SocketGateway } from '../socket/socket.service';
-import Fuse from 'fuse.js';
 
 export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string | string[] };
 
@@ -92,7 +91,7 @@ export class DataIngestionService {
   }
 
   extractScoreboardFileName(str: string) {
-    const matches = str.match(/^.*?(\d+)(?:_info)?\.[^.]+$/);
+    const matches = str.match(/^.*?(\d+).*/);
     return matches ? matches[1] : '';
   }
 
@@ -324,7 +323,7 @@ export class DataIngestionService {
     }
   }
 
-  async saveMappedDataToDb(collectionName: string, dataToUpdate: IMatchSheetFormat, match_id: string, scoreboardMappingFields: Record<string, string[]>, fileName: string) {
+  async saveMappedDataToDb(collectionName: string, dataToUpdate: IMatchSheetFormat, match_id: string, scoreboardMappingFields: Record<string, string[]>, fileName: string, extension?: string) {
     switch (collectionName) {
       case Tournament.name:
         if (dataToUpdate?.event) {
@@ -345,7 +344,7 @@ export class DataIngestionService {
           const matchInfoId = await this.saveMatchInformationToDb(dataToUpdate, match_id, extractedEntities.player.team1PlayingEleven, extractedEntities.player.team2PlayingEleven, extractedEntities.playerOfMatches, extractedEntities.umpire.bowledEndUmpireIds, extractedEntities.umpire.legUmpireIds, extractedEntities.umpire.fourthUmpireIds, extractedEntities.umpire.thirdUmpireIds, extractedEntities.referee);
           const scoreboardCount = await this.matchScoreboardModel.countDocuments({ sheet_match_id: match_id });
           if (scoreboardCount !== 0) {
-            const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, null, scoreboardMappingFields, fileName);
+            const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, null, scoreboardMappingFields, fileName, extension);
             await this.updateScoreboardDataToDb(scoreboard, match_id, matchInfoId.toString());
           }
           break;
@@ -405,10 +404,10 @@ export class DataIngestionService {
           if ((dataToUpdate?.length || 0) !== 0) {
             const matchInfo = await this.matchInfoModel.findOne({ match_id });
             if (matchInfo) {
-              const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, dataToUpdate, scoreboardMappingFields, fileName);
+              const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, dataToUpdate, scoreboardMappingFields, fileName, extension);
               await this.updateScoreboardDataToDb(scoreboard, match_id, matchInfo._id.toString());
             } else {
-              const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, dataToUpdate, scoreboardMappingFields, fileName);
+              const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, dataToUpdate, scoreboardMappingFields, fileName, extension);
               await this.updateScoreboardDataToDb(scoreboard, match_id, null);
             }
           }
@@ -496,15 +495,20 @@ export class DataIngestionService {
     overGroups.clear();
   }
 
+  getExtension(fileName: string) {
+    const ext = stripExt(fileName) === fileName
+      ? '' // no extension
+      : fileName.split('.').pop()?.toLowerCase() ?? '';
+    return ext;
+  }
+
   readExcelFiles = async <T = string>(
     file: ({ filename: string, readStream: T }),
   ): Promise<Record<string, IMatchSheetFormat>> => {
     const results: Record<string, IMatchSheetFormat> = {};
 
     const fileName = file.filename;
-    const ext = stripExt(file.filename) === file.filename
-      ? '' // no extension
-      : file.filename.split('.').pop()?.toLowerCase() ?? '';
+    const ext = this.getExtension(fileName);
 
     try {
       if (ext === 'csv') {
@@ -525,7 +529,8 @@ export class DataIngestionService {
     sheet_match_id: string,
     sheetScoreboardData: IMatchSheetFormat,
     fields: Record<string, string[]>,
-    fileName: string
+    fileName: string,
+    extension: string
   ) {
     const result = [];
 
@@ -534,16 +539,16 @@ export class DataIngestionService {
       if (scoreboardFilename) {
         const extractedSheetInfoString: string = await this.redisService.get(`${scoreboardFilename}:data`);
         sheetScoreboardData = JSON.parse(extractedSheetInfoString);
-        sheetScoreboardData = sheetScoreboardData[scoreboardFilename] as IMatchSheetFormat;
+        sheetScoreboardData = sheetScoreboardData[`${scoreboardFilename}.${extension}`] as IMatchSheetFormat;
       } else {
-        return;
+        return [];
       }
     }
 
     const rows = sheetScoreboardData;
 
     if (!rows) {
-      return;
+      return [];
     }
 
     const sheetKeys = Object.keys(rows[0]);
@@ -698,7 +703,6 @@ export class DataIngestionService {
     const userMappingDetailDto: UserMappingDetailDto = JSON.parse(mappingDetailRaw);
 
     const cachedData = {
-      [Tournament.name]: await this.mappedDataModel.findOne({ collectionName: Tournament.name }, "fields inputs"),
       [MatchInfo.name]: await this.mappedDataModel.findOne({ collectionName: MatchInfo.name }, "fields inputs"),
     }
 
@@ -781,14 +785,14 @@ export class DataIngestionService {
           // check input key value direct found in sheet information
           const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey]?.toLowerCase()?.trim() === inputCache.referenceValue?.toLowerCase()?.trim());
           // final prepare user input required fields
-          Object.keys(obj).forEach((mappedKey) => {
+          await Promise.all(Object.keys(obj).map(async (mappedKey) => {
             if (!hasFoundCached && mappedKey) {
 
               if (!obj[mappedKey]) {
                 return;
               }
 
-              const inputs = this.missingInputs[key][mappedKey]?.keys?.map((inputKey) => (UIInputRequiredFieldConfiguration[inputKey]()));
+              const inputs = await Promise.all(this.missingInputs[key][mappedKey]?.keys?.map(async (inputKey) => (UIInputRequiredFieldConfiguration[inputKey]({ redisService: this.redisService }))));
               const isInputExist = userInputRequiredFields?.find((f) => f.collectionName === key && f.referenceKey === mappedKey && f.referenceValue === obj[mappedKey]);
               if (!isInputExist) {
                 userInputRequiredFields.push({
@@ -801,7 +805,7 @@ export class DataIngestionService {
                 });
               }
             }
-          });
+          }));
         }
       }
     }
@@ -868,7 +872,7 @@ export class DataIngestionService {
   }
 
   // Process mapping sheet data with database keys and save to database
-  async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat, alreadyUploadCountRedisKey: string) {
+  async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat, alreadyUploadCountRedisKey: string, extension: string) {
     // Extract unique number value from filename
     const match_id = this.extractNumbers(fileName);
 
@@ -941,10 +945,10 @@ export class DataIngestionService {
           this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value);
         }
       });
-      await this.saveMappedDataToDb(mappingDoc.collectionName, dataToUpdate, match_id, scoreboardMappingDoc.fields, fileName);
+      await this.saveMappedDataToDb(mappingDoc.collectionName, dataToUpdate, match_id, scoreboardMappingDoc.fields, fileName, extension);
     }
     else { // scoreboard file
-      await this.saveMappedDataToDb(scoreboardMappingDoc.collectionName, extractedSheetInfo, match_id, scoreboardMappingDoc.fields, fileName);
+      await this.saveMappedDataToDb(scoreboardMappingDoc.collectionName, extractedSheetInfo, match_id, scoreboardMappingDoc.fields, fileName, extension);
     }
     // After processing file delete redis key and generate analytics for match
     await this.analyticService.generateAnalyticsForMatch(match_id);
@@ -978,6 +982,9 @@ export class DataIngestionService {
             update: { $push: { names: input.typedValue } }
           }
         })
+        const names = await this.redisService.lrange(RedisKey.TOURNAMENT_NAMES);
+        names.push(input.typedValue);
+        await this.redisService.rpush(RedisKey.TOURNAMENT_NAMES, names);
       }
 
       bulkInputOps.push({
@@ -993,18 +1000,24 @@ export class DataIngestionService {
 
     for (const fileName of uploadFileDto.fileNames) {
       const name = this.getFileName(fileName);
+      const ext = this.getExtension(fileName);
 
       const extractedSheetInfoString: string = await this.redisService.get(`${name}:data`);
 
+
       const extractedSheetInfo: Record<string, IMatchSheetFormat> = JSON.parse(extractedSheetInfoString);
 
-      await this.fileUploadQueue.add(TASKS.processMappingSheetDataWithDatabaseKeys, { requestUniqueId, fileName: name, totalFiles: uploadFileDto.fileNames.length, fileData: extractedSheetInfo[fileName], userId }, { removeOnComplete: true, removeOnFail: true, delay: 6000 });
+      await this.fileUploadQueue.add(TASKS.processMappingSheetDataWithDatabaseKeys, { requestUniqueId, fileName: name, totalFiles: uploadFileDto.fileNames.length, fileData: extractedSheetInfo[fileName], userId, extension: ext }, { removeOnComplete: true, removeOnFail: true, delay: 6000 });
     }
 
     return res.status(HttpStatus.PARTIAL_CONTENT).json({
       message: responseMessage.customMessage("input updated successfully and files are processing to load in database"),
       data: {},
     });
+  }
+
+  normalize(str: string): string {
+    return str.toLowerCase().trim().replace(/\s+/g, " ");
   }
 
   async verifyEntityName(verifyEntityNameDto: VerifyEntityNameDto) {
@@ -1017,18 +1030,10 @@ export class DataIngestionService {
     }
 
     // Normalize names (lowercase)
-    const normalizedNames = mappedData.names.map((n: string) => n.toLowerCase());
-    const userInput = verifyEntityNameDto.name.toLowerCase();
+    const normalizedNames = mappedData.names.map((n: string) => this.normalize(n));
+    const userInput = this.normalize(verifyEntityNameDto.name);
 
-    const fuse = new Fuse(normalizedNames, {
-      threshold: 0.3, // fuzzy tolerance (0 = exact, 1 = very loose)
-      ignoreLocation: true, // don't penalize if word appears in different place
-      distance: 100, // allow wider matching window
-    });
-
-    const searchedResults = fuse.search(userInput);
-
-    if (searchedResults.length > 0) {
+    if (normalizedNames.includes(userInput)) {
       throw new BadRequestException(
         responseMessage.dataAlreadyExist('entity name'),
       );
