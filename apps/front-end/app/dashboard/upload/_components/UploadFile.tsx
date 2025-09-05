@@ -96,12 +96,10 @@ export const UploadFile = () => {
             setShowRequiredInputModal(true);
             setRequirements(response?.data ?? {});
           } else {
-            const inputData: IUpdateAndSaveEntriesRequest = {};
-            const fileNames = Object.keys(response.data ?? {});
-
-            fileNames.forEach((fileName) => {
-              inputData[fileName] = [];
-            });
+            const inputData: IUpdateAndSaveEntriesRequest = {
+              fileNames: response?.data?.fileNames ?? [],
+              userInputs: response?.data?.userInputs ?? [],
+            };
             handleRequirementSubmit(inputData);
           }
         }
