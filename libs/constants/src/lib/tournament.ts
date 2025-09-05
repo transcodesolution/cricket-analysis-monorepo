@@ -236,4 +236,8 @@ export enum TournamentName {
   ZimbabweTourOfSouthAfrica = "Zimbabwe Tour of South Africa",
   ZimbabweTourOfSriLanka = "Zimbabwe Tour of Sri Lanka",
   ZimbabweTourOfWestIndies = "Zimbabwe Tour of West Indies",
+
+  unitedArabEmiratesT20ITriSeries = "United Arab Emirates T20I Tri-Series",
+  iccCricketWorldCupChallengeLeagueA = "ICC Cricket World Cup Challenge League A",
+  iccWomenT20TriSeries = "ICC Women's T20 Tri-Series",
 }
