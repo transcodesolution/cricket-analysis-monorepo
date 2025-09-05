@@ -33,6 +33,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         return this.client.set(key, value);
     }
 
+    async rpush(key: string, value: string[]): Promise<void> {
+        await this.client.rpush(key, ...value);
+    }
+
+    async setList(key: string, value: string[]): Promise<void> {
+        await this.client.rpush(key, ...value);
+    }
+
+    async lrange(key: string): Promise<string[]> {
+        return this.client.lrange(key, 0, -1);
+    }
+
     async get(key: string): Promise<string | null> {
         return this.client.get(key);
     }

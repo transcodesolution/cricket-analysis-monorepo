@@ -13,6 +13,7 @@ interface IFileProcessToDatabase {
     fileData: IMatchSheetFormat;
     userId: string;
     totalFiles: number;
+    extension:string;
 }
 
 @Injectable()
@@ -43,7 +44,7 @@ export class FileUploadConsumer implements OnModuleInit {
     async process(job: Job<IFileProcessToDatabase>) {
         switch (job.name) {
             case TASKS.processMappingSheetDataWithDatabaseKeys: {
-                const { requestUniqueId, fileName, fileData, userId, totalFiles } = job.data;
+                const { requestUniqueId, fileName, fileData, userId, totalFiles, extension } = job.data;
                 this.logger.log(`${job.name} is started! with processing file : ${fileName}`);
                 const alreadyUploadCountRedisKey = requestUniqueId + "-" + "alreadyUploadCount";
                 const processCountRedisKey = requestUniqueId + "-" + "processedCount";
@@ -52,7 +53,7 @@ export class FileUploadConsumer implements OnModuleInit {
                 const errorCount = await this.redisService.get(errorCountRedisKey);
                 let totalFilesProcessed: string = processingCount || "0", totalErroredFiles = errorCount || "0";
                 try {
-                    const response = await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData, alreadyUploadCountRedisKey);
+                    const response = await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData, alreadyUploadCountRedisKey, extension);
                     if (response.isFileProcessedSuccessfully) {
                         totalFilesProcessed = (+(processingCount || 0) + 1).toString();
                         this.redisService.set(processCountRedisKey, totalFilesProcessed);
