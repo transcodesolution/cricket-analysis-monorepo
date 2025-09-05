@@ -132,24 +132,30 @@ export const RequiredInputModal = ({
     }
   };
 
-  const isComplete = Array.isArray(data?.userInputs) && data.userInputs.some(entry => {
-    const inputFields = (entry.inputs ?? []) as IFormInput[];
+  const isComplete =
+    Array.isArray(data?.userInputs) &&
+    data.userInputs.every((entry) => {
+      const inputFields = (entry.inputs ?? []) as IFormInput[];
 
-    return inputFields.every(input => {
-      const val = entry.fileId ? inputs[entry.fileId]?.[input.key] : undefined;
+      return inputFields.every((input) => {
+        const val = entry.fileId ? inputs[entry.fileId]?.[input.key] : undefined;
 
-      const customState = input.isShowCreateOption
-        ? showCustomInput[`${entry.fileId}-${input.key}`]
-        : null;
+        const customState = input.isShowCreateOption
+          ? showCustomInput[`${entry.fileId}-${input.key}`]
+          : null;
 
-      if (!val && customState?.visible && customState.verified === false) {
-        return false;
-      }
-      const hasValue = val !== undefined && val !== null && (typeof val !== 'string' || val.trim() !== "");
+        if (!val && customState?.visible && customState.verified === false) {
+          return false;
+        }
 
-      return hasValue || (customState?.visible && customState.verified === true);
+        const hasValue =
+          val !== undefined &&
+          val !== null &&
+          (typeof val !== "string" || val.trim() !== "");
+
+        return hasValue || (customState?.visible && customState.verified === true);
+      });
     });
-  });
 
   const handleSubmit = () => {
     const formattedData: IUpdateAndSaveEntriesRequest = {
