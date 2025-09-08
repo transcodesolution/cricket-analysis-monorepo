@@ -1,9 +1,12 @@
 import { DataTableColumn } from 'mantine-datatable';
 import { Flex, Text } from '@mantine/core';
 import { ITeamPerformanceMatch, ITableHeader, ITeamStats } from '@/libs/types-api/src';
+import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 
 export const teamPerformanceColumns = (
-  tableHeader: ITableHeader[]
+  tableHeader: ITableHeader[],
+  expandedHeaders: Set<string>,
+  toggleHeader: (accessor: string) => void
 ): DataTableColumn<ITeamPerformanceMatch>[] => {
   return [
     {
@@ -15,12 +18,43 @@ export const teamPerformanceColumns = (
     },
     {
       accessor: tableHeader?.[1]?.value,
-      title: tableHeader?.[1]?.label ?? 'Competition',
-      width: 100,
-      render: ({ tournament }) => tournament ?? '-',
-      ellipsis: true,
+      title: (
+        <Flex align="center" gap='sm' style={{ cursor: 'pointer' }} onClick={() => toggleHeader(tableHeader?.[1]?.value)}>
+          <Text fw={600}>{tableHeader?.[1]?.label ?? 'Competition'}</Text>
+          {expandedHeaders.has(tableHeader?.[1]?.value) ? <IconCaretDownFilled size={16} /> : <IconCaretRightFilled size={16} />}
+        </Flex>
+      ),
+      width: expandedHeaders.has(tableHeader?.[1]?.value) ? 200 : 140,
+      render: ({ tournament }) => (
+        <Text size="sm" lineClamp={expandedHeaders.has(tableHeader?.[1]?.value) ? 3 : 1}>
+          {tournament ?? '-'}
+        </Text>
+      ),
     },
-    ...tableHeader.slice(2).map((header) => ({
+    {
+      accessor: 'teams',
+      title: (
+        <Flex align="center" gap='sm' style={{ cursor: 'pointer' }} onClick={() => toggleHeader(tableHeader?.[2]?.value)}>
+          <Text fw={600}>{tableHeader?.[2]?.label ?? 'Team'}</Text>
+          {expandedHeaders.has(tableHeader?.[2]?.value) ? <IconCaretDownFilled size={16} /> : <IconCaretRightFilled size={16} />}
+        </Flex>
+      ),
+      width: expandedHeaders.has(tableHeader?.[2]?.value) ? 200 : 100,
+      render: ({ teams }: ITeamPerformanceMatch) => (
+        <Flex direction="column" gap={4}>
+          {teams.map((team: ITeamStats, i: number) => (
+            <Text
+              key={i}
+              size="sm"
+              lineClamp={expandedHeaders.has(tableHeader?.[2]?.value) ? 3 : 1}
+            >
+              {team[tableHeader[2].value as keyof ITeamStats] ?? '-'}
+            </Text>
+          ))}
+        </Flex>
+      ),
+    },
+    ...tableHeader.slice(3).map((header) => ({
       accessor: header.value as keyof ITeamPerformanceMatch,
       title: header.label,
       ellipsis: true,
