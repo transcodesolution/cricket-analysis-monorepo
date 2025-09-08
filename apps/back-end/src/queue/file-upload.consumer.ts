@@ -6,6 +6,7 @@ import { SocketGateway } from '../socket/socket.service';
 import { RedisService } from '../redis/redis.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { responseMessage } from '../helper/response-message.helper';
 
 interface IFileProcessToDatabase {
     requestUniqueId: string;
@@ -13,7 +14,7 @@ interface IFileProcessToDatabase {
     fileData: IMatchSheetFormat;
     userId: string;
     totalFiles: number;
-    extension:string;
+    extension: string;
 }
 
 @Injectable()
@@ -68,6 +69,7 @@ export class FileUploadConsumer implements OnModuleInit {
                 totalAlreadyUploadedFiles = totalAlreadyUploadedFiles || "0";
                 this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { totalFilesProcessed, totalErroredFiles, totalAlreadyUploadedFiles, totalFiles, requestUniqueId });
                 if (+totalFilesProcessed + +totalErroredFiles + +totalAlreadyUploadedFiles === +totalFiles) {
+                    this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { success: true, message: responseMessage.customMessage(+totalErroredFiles ? "files processed successfully but some files exit with an error" : "all files are processed successfully"), data: { totalFilesProcessed, totalErroredFiles, totalAlreadyUploadedFiles, totalFiles, requestUniqueId } });
                     this.redisService.del(alreadyUploadCountRedisKey);
                     this.redisService.del(processCountRedisKey);
                     this.redisService.del(errorCountRedisKey);
