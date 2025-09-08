@@ -984,7 +984,8 @@ export class DataIngestionService {
         })
         const names = await this.redisService.lrange(RedisKey.TOURNAMENT_NAMES);
         names.push(input.typedValue);
-        await this.redisService.rpush(RedisKey.TOURNAMENT_NAMES, names);
+        await this.redisService.del(RedisKey.TOURNAMENT_NAMES);
+        await this.redisService.setList(RedisKey.TOURNAMENT_NAMES, names);
       }
 
       bulkInputOps.push({
