@@ -1,6 +1,6 @@
 'use client';
 import { Paper, Title, Grid, ScrollArea, Flex, Loader } from '@mantine/core';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useGetReportById, useGetReportFilters } from '@/libs/react-query-hooks/src';
 
@@ -63,6 +63,19 @@ const TeamPerformanceReport = () => {
   const reportFilters = getFiltersResponse?.data?.report?.filters || [];
   const totalData = getReportResponse?.data?.totalData || 0;
   const reportName = getFiltersResponse?.data?.report?.name
+  const [expandedHeaders, setExpandedHeaders] = useState<Set<string>>(new Set());
+
+  const toggleHeader = (accessor: string) => {
+    setExpandedHeaders((prev) => {
+      const next = new Set(prev);
+      if (next.has(accessor)) {
+        next.delete(accessor);
+      } else {
+        next.add(accessor);
+      }
+      return next;
+    });
+  };
 
   let reportStatus: 'loading' | 'noReportData' | 'hasReportData' = 'loading';
 
@@ -94,7 +107,7 @@ const TeamPerformanceReport = () => {
     case 'hasReportData': {
       const { matches, tableHeader, filterData } =
         reportDetails as ITeamPerformanceData;
-      const columns = teamPerformanceColumns(tableHeader);
+      const columns = teamPerformanceColumns(tableHeader, expandedHeaders, toggleHeader);
 
       reportContent = (
         <React.Fragment>
