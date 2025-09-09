@@ -17,7 +17,7 @@ import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
 import { EntityType, MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
-import { ICachedInput, IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
+import { ICachedInput, IFileProgressData, IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
 import { formatCsvFiles, formatExcelFiles, stripExt } from '@cricket-analysis-monorepo/service';
 import { createReadStream, ReadStream } from 'fs';
 import { join } from 'path';
@@ -963,9 +963,9 @@ export class DataIngestionService {
   }
 
   async updateMappingAndSaveInformationToDB(uploadFileDto: UploadFileDto, @Res() res: Response, requestUniqueId: string, userId: string) {
-    const socketUpdateForProcessStartingObject = { totalFilesProcessed: 0, totalErroredFiles: 0, totalAlreadyUploadedFiles: 0, totalFiles: uploadFileDto.fileNames.length, requestUniqueId };
+    const fileProgressData: IFileProgressData = { totalFilesProcessed: "0", totalErroredFiles: "0", totalAlreadyUploadedFiles: "0", totalFiles: uploadFileDto.fileNames.length, requestUniqueId };
 
-    this.socketGateway.server.to(userId.toString()).emit("file-progress-update", socketUpdateForProcessStartingObject);
+    this.socketGateway.sendSocketMessage(userId, false, fileProgressData);
 
     const bulkInputOps = [];
     for (const userInput of uploadFileDto.userInputs) {
@@ -1004,7 +1004,6 @@ export class DataIngestionService {
       const ext = this.getExtension(fileName);
 
       const extractedSheetInfoString: string = await this.redisService.get(`${name}:data`);
-
 
       const extractedSheetInfo: Record<string, IMatchSheetFormat> = JSON.parse(extractedSheetInfoString);
 

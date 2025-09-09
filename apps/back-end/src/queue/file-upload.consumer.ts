@@ -1,12 +1,11 @@
 import { Job, Worker } from 'bullmq';
 import { QUEUES, TASKS } from '../helper/constant.helper';
 import { DataIngestionService } from '../data-ingestion/data-ingestion.service';
-import { IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
+import { IFileProgressData, IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
 import { SocketGateway } from '../socket/socket.service';
 import { RedisService } from '../redis/redis.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { responseMessage } from '../helper/response-message.helper';
 
 interface IFileProcessToDatabase {
     requestUniqueId: string;
@@ -67,9 +66,10 @@ export class FileUploadConsumer implements OnModuleInit {
                 }
                 let totalAlreadyUploadedFiles = await this.redisService.get(alreadyUploadCountRedisKey);
                 totalAlreadyUploadedFiles = totalAlreadyUploadedFiles || "0";
-                this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { totalFilesProcessed, totalErroredFiles, totalAlreadyUploadedFiles, totalFiles, requestUniqueId });
+                const resData: IFileProgressData = { requestUniqueId, totalAlreadyUploadedFiles, totalErroredFiles, totalFiles, totalFilesProcessed };
+                this.socketGateway.sendSocketMessage(userId, false, resData);
                 if (+totalFilesProcessed + +totalErroredFiles + +totalAlreadyUploadedFiles === +totalFiles) {
-                    this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { success: true, message: responseMessage.customMessage(+totalErroredFiles ? "files processed successfully but some files exit with an error" : "all files are processed successfully"), data: { totalFilesProcessed, totalErroredFiles, totalAlreadyUploadedFiles, totalFiles, requestUniqueId } });
+                    this.socketGateway.sendSocketMessage(userId, true, resData);
                     this.redisService.del(alreadyUploadCountRedisKey);
                     this.redisService.del(processCountRedisKey);
                     this.redisService.del(errorCountRedisKey);
