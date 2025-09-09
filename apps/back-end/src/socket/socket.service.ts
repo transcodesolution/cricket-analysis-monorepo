@@ -4,6 +4,8 @@ import { Server, Socket } from "socket.io"
 import { ConfigService } from "@nestjs/config";
 import { SocketJwtMiddleware } from "./socket.middleware";
 import { NextFunction } from "express";
+import { IFileProgressData } from "@cricket-analysis-monorepo/interfaces";
+import { responseMessage } from "../helper/response-message.helper";
 
 @WebSocketGateway({
     namespace: 'event',
@@ -32,5 +34,14 @@ export class SocketGateway {
 
     handleDisconnect(socket: Socket) {
         this.logger.log(`Socket disconnected: ${socket.id}`);
+    }
+
+    sendSocketMessage(userId: string, isFileProcessedSuccessfully: boolean, { totalErroredFiles, totalFilesProcessed, totalAlreadyUploadedFiles, totalFiles, requestUniqueId }: IFileProgressData) {
+        const fileProgressData: IFileProgressData = { totalFilesProcessed, totalErroredFiles, totalAlreadyUploadedFiles, totalFiles, requestUniqueId };
+        const socketEventName = "file-progress-update";
+        if (isFileProcessedSuccessfully) {
+            return this.server.to(userId).emit(socketEventName, { success: true, message: responseMessage.customMessage(+totalErroredFiles ? "files processed successfully but some files exit with an error" : "all files are processed successfully"), data: fileProgressData });
+        }
+        return this.server.to(userId).emit(socketEventName, { success: false, message: responseMessage.customMessage("files are currently in queue and processing sequentially"), data: fileProgressData });
     }
 }
