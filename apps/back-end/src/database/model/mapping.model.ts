@@ -5,7 +5,7 @@ import { Document } from 'mongoose';
 
 export interface IMappingData extends MappingData, Document { }
 
-@Schema({ strict: true })
+@Schema({ _id: false, strict: true })
 export class CachedInput {
     @Prop()
     @IsNotEmpty()

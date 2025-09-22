@@ -1,9 +1,10 @@
 import * as XLSX from 'xlsx';
 import * as Papa from 'papaparse';
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
+import { FileFormatType } from '@cricket-analysis-monorepo/constants';
 
-export function stripExt(name: string): string {
-  return name.replace(/\.[^/.]+$/, '');
+export function stripExt(name: string): FileFormatType {
+  return name.replace(/\.[^/.]+$/, '') as FileFormatType;
 }
 
 export function parseHeaderFormatSheetToJson(rows: string[][]) {
@@ -86,4 +87,44 @@ export const formatExcelFiles = <T>(results: Record<string, IMatchSheetFormat>, 
   } else {
     results[baseName] = parseHeaderFormatSheetToJson(rows);
   }
+}
+
+export const formatJsonFiles = <T>(json: IMatchSheetFormat) => {
+  const columns = new Set<string>();
+
+  // Paths where recursion should stop
+  const stopRecursionPaths = new Set([
+    "info.players",
+    "info.registry.people",
+  ]);
+
+  function traverse(obj: any, prefix = "") {
+    if (obj && typeof obj === "object") {
+      if (Array.isArray(obj)) {
+        obj.forEach((item, index) => {
+          // If array contains primitives → add key with index
+          if (item === null || typeof item !== "object") {
+            const newPrefix = `${prefix}[${index}]`;
+            columns.add(newPrefix);
+          } else {
+            const newPrefix = `${prefix}[?]`;
+            traverse(item, newPrefix);
+          }
+        });
+      } else {
+        for (const key of Object.keys(obj)) {
+          const newPrefix = prefix ? `${prefix}.${key}` : key;
+          columns.add(newPrefix);
+
+          // 🚫 If this path is in stopRecursionPaths, do not go deeper
+          if (!stopRecursionPaths.has(newPrefix)) {
+            traverse(obj[key], newPrefix);
+          }
+        }
+      }
+    }
+  }
+
+  traverse(json);
+  return Array.from(columns);
 }

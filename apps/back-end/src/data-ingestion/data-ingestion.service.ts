@@ -15,12 +15,12 @@ import { Referee } from '../database/model/referee.model';
 import { Venue } from '../database/model/venue.model';
 import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
-import { EntityType, MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
+import { EntityType, FileFormatType, MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
 import { ICachedInput, IFileProgressData, IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
-import { formatCsvFiles, formatExcelFiles, stripExt } from '@cricket-analysis-monorepo/service';
-import { createReadStream, ReadStream } from 'fs';
-import { join } from 'path';
+import { formatCsvFiles, formatExcelFiles, formatJsonFiles, stripExt } from '@cricket-analysis-monorepo/service';
+import { createReadStream, readFileSync, ReadStream } from 'fs';
+import { extname, join } from 'path';
 import { ReportFilter } from '../database/model/report-filters.model';
 import { Report } from '../database/model/report.model';
 import { User } from '../database/model/user.model';
@@ -33,8 +33,20 @@ import { QUEUES, TASKS } from '../helper/constant.helper';
 import { InjectQueue } from '@nestjs/bullmq';
 import { RedisService } from '../redis/redis.service';
 import { SocketGateway } from '../socket/socket.service';
+import get from "lodash/get";
 
 export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string | string[] };
+
+type JSONValue = string | number | boolean | null | JSONObject | JSONArray;
+interface JSONObject { [key: string]: JSONValue }
+interface JSONArray extends Array<JSONValue> { readonly }
+
+interface IterateResult<T> {
+  inning: number | null;
+  over: number | null;
+  ball: number | null;
+  delivery: T;
+}
 
 @Injectable()
 export class DataIngestionService {
@@ -45,14 +57,13 @@ export class DataIngestionService {
   };
   private readonly infoFileMatchingRegex = /info/i;
 
-  private readonly missingInputs: Record<string, { [keyname: string]: { type: EntityType, keys: string[] } }> = {
-    [MatchInfo.name]: {
-      event: {
-        type: EntityType.tournament,
-        keys: ["matchFormat", "type", "event"]
-      }
-    },
+  private readonly missingInputs: Record<string, { type: EntityType, key: string }[]> = {
+    [MatchInfo.name]: [{ key: "event", type: EntityType.tournament }, { key: "matchFormat", type: EntityType.tournament }, { key: "type", type: EntityType.tournament }],
   }
+
+  private readonly requiredInputKeys = {
+    [EntityType.tournament]: 'event'
+  };
 
   private readonly enumValues: { [keyname: string]: string | null | object } = {
     [MatchInfo.name]: {
@@ -84,6 +95,159 @@ export class DataIngestionService {
     private readonly redisService: RedisService,
     private readonly analyticService: AnalyticsService,
     private readonly commonHelperService: CommonHelperService) { }
+
+  identifyInfoAndScoreboardFile({ fileName, fileData }: {
+    fileName: string, fileData: IMatchSheetFormat,
+  }) {
+    const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+
+    if (isInfoFile) {
+      return {
+        isInfoFile: true,
+        sheetKeys: Object.keys(fileData),
+      };
+    } else if (fileName.includes("json")) {
+      return {
+        isInfoFile: true,
+        sheetKeys: formatJsonFiles(fileData)
+      };
+    }
+
+    return {
+      isInfoFile: false,
+      sheetKeys: []
+    };
+  }
+
+  getValueFromInfoSheetData({ fileName, fileData, mappingKey }: {
+    fileName: string, fileData: IMatchSheetFormat, mappingKey: string
+  }) {
+    const extension = extname(fileName);
+
+    switch (extension) {
+      case FileFormatType.csv:
+        {
+          return fileData[mappingKey]?.[0];
+        }
+      case FileFormatType.json:
+        {
+          return get(fileData, mappingKey);
+        }
+      case FileFormatType.xlsx:
+        {
+          return fileData[mappingKey]?.[0];
+        }
+      default:
+        return "";
+    }
+  }
+
+  getValueFromScoreboardSheetData({ fileName, fileData, mappingKey }: {
+    fileName: string, fileData: IMatchSheetFormat, mappingKey: string
+  }) {
+    const extension = extname(fileName);
+
+    switch (extension) {
+      case FileFormatType.csv:
+        {
+          return fileData[mappingKey]?.[0];
+        }
+      case FileFormatType.json:
+        {
+          return get(fileData, mappingKey);
+        }
+      case FileFormatType.xlsx:
+        {
+          return fileData[mappingKey]?.[0];
+        }
+      default:
+        return "";
+    }
+  }
+
+  async fetchScoreboardBasedFileExtension(sheet_match_id: string,
+    sheetScoreboardData: IMatchSheetFormat,
+    fields: Record<string, string[]>,
+    fileName: string,
+    extension: string
+  ) {
+    switch ('.' + extension) {
+      case FileFormatType.csv:
+        {
+          const scoreboardCount = await this.matchScoreboardModel.countDocuments({ sheet_match_id });
+          if (scoreboardCount !== 0) {
+            return this.fetchScoreboardDetailFromSheet(sheet_match_id,
+              sheetScoreboardData,
+              fields,
+              fileName,
+              extension);
+          }
+          return [];
+        }
+      case FileFormatType.json:
+        {
+          return this.fetchScoreboardDetailFromJSON(sheet_match_id,
+            sheetScoreboardData,
+            fields,
+            fileName,
+            extension);
+        }
+      case FileFormatType.xlsx:
+        {
+          const scoreboardCount = await this.matchScoreboardModel.countDocuments({ sheet_match_id });
+          if (scoreboardCount !== 0) {
+            return this.fetchScoreboardDetailFromSheet(sheet_match_id,
+              sheetScoreboardData,
+              fields,
+              fileName,
+              extension);
+          }
+          return [];
+        }
+      default:
+        return [];
+    }
+  }
+
+  extractEntityValueFromData(extension: string, dataToUpdate: IMatchSheetFormat) {
+    switch ('.' + extension) {
+      case FileFormatType.csv:
+        {
+          return this.extractEntitiesFromSheetFile(dataToUpdate);
+        }
+      case FileFormatType.json:
+        {
+          return this.extractEntitiesFromJSONFile(dataToUpdate);
+        }
+      case FileFormatType.xlsx:
+        {
+          return this.extractEntitiesFromSheetFile(dataToUpdate);
+        }
+      default:
+        return { playerOfMatches: [], player: { allPlayers: [], team1PlayingEleven: [], team2PlayingEleven: [] }, umpire: { allUmpires: [], thirdUmpireIds: [], fourthUmpireIds: [], legUmpireIds: [], bowledEndUmpireIds: [] }, referee: { name: "", uniqueId: "" } };
+    }
+  }
+
+  processMappingAgainstDatabase({ fileName, fileData, alreadyUploadCountRedisKey, extension }: {
+    fileName: string, fileData: IMatchSheetFormat, alreadyUploadCountRedisKey: string, extension: string
+  }) {
+    switch ('.' + extension) {
+      case FileFormatType.csv:
+        {
+          return this.processMappingSheetDataWithDatabaseKeys(fileName, fileData, alreadyUploadCountRedisKey, extension);
+        }
+      case FileFormatType.json:
+        {
+          return this.processMappingJSONDataWithDatabaseKeys(fileName, fileData, alreadyUploadCountRedisKey, extension);
+        }
+      case FileFormatType.xlsx:
+        {
+          return this.processMappingSheetDataWithDatabaseKeys(fileName, fileData, alreadyUploadCountRedisKey, extension);
+        }
+      default:
+        return { isFileProcessedSuccessfully: false };
+    }
+  }
 
   extractNumbers(str: string) {
     const matches = str.match(/\d+/g);
@@ -166,7 +330,7 @@ export class DataIngestionService {
     }
   }
 
-  extractEntitiesFromCombineFields(dataToUpdate: IMatchSheetFormat) {
+  extractEntitiesFromSheetFile(dataToUpdate: IMatchSheetFormat) {
     dataToUpdate["team1.playingEleven"] = dataToUpdate["team1.playingEleven"] || [];
     dataToUpdate["team2.playingEleven"] = dataToUpdate["team2.playingEleven"] || [];
     dataToUpdate["result.playerOfMatch"] = dataToUpdate["result.playerOfMatch"] || [];
@@ -185,6 +349,69 @@ export class DataIngestionService {
     // handling extract all player of matches from team2.playingEleven
 
     const playerOfMatches = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (dataToUpdate["result.playerOfMatch"] as string[]).find((k) => i.includes(k[0])) ? i[1] : []);
+
+    // handling extract all umpires from team2.playingEleven
+
+    const bowledEndUmpireNames: string[] = (dataToUpdate["umpire.onFieldBowlerEndUmpire"] as string[]) ?? [];
+    const legUmpireNames: string[] = (dataToUpdate["umpire.onFieldLegUmpire"] as string[]) ?? [];
+    const fourthUmpireNames: string[] = (dataToUpdate["umpire.fourthUmpire"] as string[]) ?? [];
+    const thirdUmpireNames: string[] = (dataToUpdate["umpire.thirdUmpire"] as string[]) ?? [];
+
+    const allUmpiresNames = [...bowledEndUmpireNames, ...legUmpireNames, ...fourthUmpireNames, ...thirdUmpireNames];
+
+    const bowledEndUmpireIds: string[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => bowledEndUmpireNames.includes(i[0]) ? i[1] : []);
+    const legUmpireIds: string[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => legUmpireNames.includes(i[0]) ? i[1] : []);
+    const fourthUmpireIds: string[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => fourthUmpireNames.includes(i[0]) ? i[1] : []);
+    const thirdUmpireIds: string[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => thirdUmpireNames.includes(i[0]) ? i[1] : []);
+
+    const onFieldUmpires = [...bowledEndUmpireIds, ...legUmpireIds];
+
+    const umpires = (dataToUpdate["team2.playingEleven"] as Pick<Umpire, "name" | "uniqueId" | "type" | "subType">[]).flatMap<Pick<Umpire, "name" | "uniqueId" | "type" | "subType">>((i) => allUmpiresNames.includes(i[0]) ? { name: i[0], uniqueId: i[1], type: onFieldUmpires.includes(i[1]) ? UmpireType.onfield : thirdUmpireIds.includes(i[1]) ? UmpireType.reserve : fourthUmpireIds.includes(i[1]) ? UmpireType.offfield : UmpireType.none, subType: bowledEndUmpireIds.includes(i[1]) ? UmpireSubType.BOWLER_END : legUmpireIds.includes(i[1]) ? UmpireSubType.SQUARE_LEG : UmpireSubType.NONE } : []);
+
+    // handling extract referee from team2.playingEleven
+
+    const refereeName = dataToUpdate["referee"];
+    const refereeObj = (dataToUpdate["team2.playingEleven"] as Pick<Referee, "name" | "uniqueId">[]).find((i) => refereeName === i[0]);
+
+    return {
+      playerOfMatches,
+      player: {
+        team1PlayingEleven,
+        team2PlayingEleven,
+        allPlayers: [...team1Players, ...team2Players],
+      },
+      umpire: {
+        bowledEndUmpireIds,
+        legUmpireIds,
+        fourthUmpireIds,
+        thirdUmpireIds,
+        allUmpires: umpires,
+      },
+      referee: {
+        name: refereeObj?.[0], uniqueId: refereeObj?.[1]
+      },
+    }
+  }
+
+  extractEntitiesFromJSONFile(dataToUpdate: IMatchSheetFormat) {
+    dataToUpdate["team1.playingEleven"] = dataToUpdate["team1.playingEleven"] || [];
+    dataToUpdate["team2.playingEleven"] = dataToUpdate["team2.playingEleven"] || [];
+    dataToUpdate["result.playerOfMatch"] = dataToUpdate["result.playerOfMatch"] || [];
+
+    // handling extract all players from team1.playingEleven and team2.playingEleven
+
+    let team1PlayingEleven: string[] = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[0] === dataToUpdate["team1.team"] ? i[1] : []));
+    let team2PlayingEleven: string[] = (dataToUpdate["team1.playingEleven"] as string[]).flatMap((i) => (i[0] === dataToUpdate["team2.team"] ? i[1] : []));
+    team1PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[0]) ? i[1] : []));
+    team2PlayingEleven = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[0]) ? i[1] : []));
+
+    const team1Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team1PlayingEleven.includes(i[1]) ? { name: i[0], uniqueId: i[1] } : []))
+
+    const team2Players: Pick<Player, "name" | "uniqueId">[] = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => (team2PlayingEleven.includes(i[1]) ? { name: i[0], uniqueId: i[1] } : []))
+
+    // handling extract all player of matches from team2.playingEleven
+
+    const playerOfMatches = (dataToUpdate["team2.playingEleven"] as string[]).flatMap((i) => ((dataToUpdate["result.playerOfMatch"] as string[]).includes(i[0]) ? i[1] : []));
 
     // handling extract all umpires from team2.playingEleven
 
@@ -332,7 +559,7 @@ export class DataIngestionService {
         break;
       case MatchInfo.name:
         {
-          const extractedEntities = this.extractEntitiesFromCombineFields(dataToUpdate);
+          const extractedEntities = this.extractEntityValueFromData(extension, dataToUpdate);
           await Promise.all([
             this.saveMappedDataToDb(Team.name, dataToUpdate, match_id, scoreboardMappingFields, fileName),
             this.insertAllPlayers(extractedEntities.player.allPlayers),
@@ -342,9 +569,8 @@ export class DataIngestionService {
             this.refereeModel.updateOne({ uniqueId: extractedEntities.referee.uniqueId }, { $set: extractedEntities.referee }, { upsert: true }),
           ]);
           const matchInfoId = await this.saveMatchInformationToDb(dataToUpdate, match_id, extractedEntities.player.team1PlayingEleven, extractedEntities.player.team2PlayingEleven, extractedEntities.playerOfMatches, extractedEntities.umpire.bowledEndUmpireIds, extractedEntities.umpire.legUmpireIds, extractedEntities.umpire.fourthUmpireIds, extractedEntities.umpire.thirdUmpireIds, extractedEntities.referee);
-          const scoreboardCount = await this.matchScoreboardModel.countDocuments({ sheet_match_id: match_id });
-          if (scoreboardCount !== 0) {
-            const scoreboard = await this.fetchScoreboardDetailFromSheet(match_id, null, scoreboardMappingFields, fileName, extension);
+          const scoreboard = await this.fetchScoreboardBasedFileExtension(match_id, null, scoreboardMappingFields, fileName, extension);
+          if (scoreboard.length) {
             await this.updateScoreboardDataToDb(scoreboard, match_id, matchInfoId.toString());
           }
           break;
@@ -503,16 +729,25 @@ export class DataIngestionService {
   }
 
   readExcelFiles = async <T = string>(
-    file: ({ filename: string, readStream: T }),
-  ): Promise<Record<string, IMatchSheetFormat>> => {
+    file: ({ filename: string, readStream?: T, buffer?: Buffer }),
+  ): Promise<Record<string, IMatchSheetFormat> | { data: any }> => {
     const results: Record<string, IMatchSheetFormat> = {};
 
     const fileName = file.filename;
     const ext = this.getExtension(fileName);
 
+    if (ext !== "json") {
+      file.readStream = createReadStream(join("uploads/", file.filename)) as T;
+    }
+
     try {
       if (ext === 'csv') {
         await formatCsvFiles<T>(results, fileName, file.readStream);
+      } else if (ext === 'json') {
+        const buffer = readFileSync("uploads/" + file.filename);
+        const rawData = buffer.toString("utf-8");
+        const jsonData = JSON.parse(rawData);
+        results[fileName] = jsonData;
       } else {
         // Excel (.xlsx) case
         formatExcelFiles<T>(results, file.readStream, fileName);
@@ -624,6 +859,192 @@ export class DataIngestionService {
     return result;
   }
 
+  * iterateByPath<T extends JSONArray>(
+    obj: T,
+    path: string
+  ): Generator<IterateResult<T>, void, unknown> {
+    const parts = path.split(".");
+
+    // Safe getter (like _.get but faster)
+    function get(obj: JSONObject | null | undefined, key: string, def: JSONValue = undefined): JSONValue {
+      if (!obj) return def;
+      return key in obj ? obj[key] : def;
+    }
+
+    function helper(current: JSONValue, idx: number, indices: number[]): { indices: number[], value: JSONValue }[] {
+      if (idx === parts.length) {
+        return [{ indices, value: current as T }];
+      }
+
+      const part = parts[idx];
+      if (part.includes("[?]")) {
+        const key = part.replace("[?]", "");
+        const arr = get(current as JSONObject, key, [] as JSONValue) as JSONArray;
+        const results: { indices: number[], value: JSONValue }[] = [];
+
+        for (let i = 0; i < arr.length; i++) {
+          results.push(...helper(arr[i], idx + 1, [...indices, i]));
+        }
+        return results;
+      } else {
+        return helper(get(current as JSONObject, part) as JSONValue, idx + 1, indices);
+      }
+    }
+
+    for (const { indices, value } of helper(obj, 0, [])) {
+      yield {
+        inning: indices[0] ?? null,
+        over: indices[1] ?? null,
+        ball: indices[2] ?? null,
+        delivery: value as T
+      };
+    }
+  }
+
+  async fetchScoreboardDetailFromJSON(
+    sheet_match_id: string,
+    sheetScoreboardData: IMatchSheetFormat,
+    fields: Record<string, string[]>,
+    fileName: string,
+    extension: string
+  ) {
+    const result = [];
+
+    const scoreboardFilename = this.extractScoreboardFileName(fileName);
+    if (!sheetScoreboardData) {
+      if (scoreboardFilename) {
+        const extractedSheetInfoString: string = await this.redisService.get(`${scoreboardFilename}:data`);
+        sheetScoreboardData = JSON.parse(extractedSheetInfoString);
+        sheetScoreboardData = sheetScoreboardData[`${scoreboardFilename}.${extension}`] as IMatchSheetFormat;
+      } else {
+        return [];
+      }
+    }
+
+    const rows = sheetScoreboardData;
+
+    if (!rows) {
+      return [];
+    }
+
+    const sheetKeys = formatJsonFiles(rows);
+    const overGroups = new Map<number, Partial<Ball>[]>();
+
+    // const inningKey = fields["innings"].find((k) => sheetKeys.includes(k));
+    const ballKey = fields["balls.ball"].find((k) => sheetKeys.includes(k));
+    // const runKey = fields["balls.runs_off_bat"]?.find((k) => sheetKeys.includes(k));
+    // const overKey = fields["over"]?.find((k) => sheetKeys.includes(k));
+
+    const keyMappings = Object.entries(fields).map(([dbKey, options]) => {
+      const sheetKey = options.find((k) => sheetKeys.includes(k));
+      return sheetKey ? { dbKey: dbKey.replace("balls.", ""), sheetKey } : null;
+    }).filter(Boolean) as { dbKey: string; sheetKey: string }[];
+
+    let currentInning = 1;
+
+    const regex = /\?/g;
+
+    const key = ballKey + "[?]";
+
+    for (const { inning, over, ball, delivery } of this.iterateByPath(rows as unknown as JSONArray, key)) {
+      if ((inning + 1) !== currentInning) {
+        this.flushInnings(overGroups, result, currentInning, sheet_match_id);
+        currentInning += 1;
+      }
+
+      let ballData: Partial<Ball> = {};
+
+      for (const { dbKey, sheetKey } of keyMappings) {
+        if (dbKey === "other") {
+          continue;
+        }
+        if (dbKey === "ball") {
+          ballData = this.deepMerge(ballData, this.createNestedObject(dbKey, String(ball + 1)));
+        } else if (dbKey.includes("wicket")) {
+          let sheetKeyName = sheetKey.replace(key + ".", "").replace(regex, "0");
+          const checkLayers = sheetKeyName?.split(".");
+          let value = get(delivery, sheetKeyName);
+          if (checkLayers.length > 2) {
+            sheetKeyName = sheetKeyName?.slice(0, sheetKeyName?.lastIndexOf("["));
+            value = get(delivery, sheetKeyName);
+            value = value?.map((i) => (i?.name))
+          }
+          ballData = this.deepMerge(ballData, this.createNestedObject(dbKey, value));
+        }
+        else {
+          const sheetKeyName = sheetKey.replace(key + ".", "");
+          const value: string = sheetKeyName.includes(".") ? get(delivery, sheetKeyName) : delivery[sheetKeyName];
+          if (value) {
+            ballData = this.deepMerge(ballData, this.createNestedObject(dbKey, value));
+          }
+
+          ballData.foursHit = dbKey === "runs_off_bat" && value === "4" ? 1 : 0;
+          ballData.sixHit = dbKey === "runs_off_bat" && value === "6" ? 1 : 0;
+        }
+      }
+
+      if (!ballData?.runs_off_bat) {
+        ballData.runs_off_bat = 0;
+      }
+      if (!ballData?.extras?.penalty) {
+        if (!ballData?.extras) {
+          ballData.extras = {};
+        }
+        ballData.extras.penalty = 0;
+      }
+      if (!ballData?.extras?.noballs) {
+        if (!ballData?.extras) {
+          ballData.extras = {};
+        }
+        ballData.extras.noballs = 0;
+      }
+      if (!ballData?.extras?.wides) {
+        if (!ballData?.extras) {
+          ballData.extras = {};
+        }
+        ballData.extras.wides = 0;
+      }
+      if (!ballData?.extras?.total) {
+        if (!ballData?.extras) {
+          ballData.extras = {};
+        }
+        ballData.extras.total = 0;
+      }
+      if (!ballData?.extras?.byes) {
+        if (!ballData?.extras) {
+          ballData.extras = {};
+        }
+        ballData.extras.byes = 0;
+      }
+      if (!ballData?.extras?.legbyes) {
+        if (!ballData?.extras) {
+          ballData.extras = {};
+        }
+        ballData.extras.legbyes = 0;
+      }
+      if (!ballData.wicket) {
+        ballData.wicket = {
+          type: WicketType.empty,
+          dismissedPlayer: null,
+          takenBy: []
+        };
+      }
+
+      if (!overGroups.has(over)) {
+        overGroups.set(over, []);
+      }
+
+      const overGroup = overGroups.get(over);
+      if (overGroup) {
+        overGroup.push(ballData);
+      }
+    }
+
+    this.flushInnings(overGroups, result, currentInning, sheet_match_id);
+
+    return result;
+  }
+
   getFileName(fileName: string) {
     const fileSplitData = fileName.split(".");
 
@@ -640,35 +1061,47 @@ export class DataIngestionService {
     const { files } = mappingDetailDto;
     const { data } = await this.getAllDBSchemaNameWithFields({ isSoftwareCall: true });
 
-    const regex = /info/i;
     const response: { unmappedKeys: string[], fileNames: string[] } = { unmappedKeys: [], fileNames: [] };
 
     await this.commonHelperService.deleteKeysContainingId("REPORTS_");
 
     const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name] } }).lean();
 
+    const mappingDocFields = mappingDocs.map((m) => m.fields);
+
+    const fields = mappingDocFields.reduce((acc, obj) => {
+      for (const [key, value] of Object.entries(obj)) {
+        if (acc[key] !== undefined) {
+          acc[key] = acc[key].concat(value);
+        } else {
+          acc[key] = value;
+        }
+      }
+      return acc;
+    }, {});
+
+    const dbFields = data.map((d) => d.fields).reduce((acc, value) => {
+      acc = acc.concat(value);
+      return acc;
+    }, []);
+
     let mainFileNameRequiredKey = "";
 
     for (const { fileName, columns } of files as ColumnDto[]) {
       const name = this.getFileName(fileName);
 
-      const isInfoFile = regex.test(name);
       const matchedColumns = new Set<string>();
-
-      const mappingDoc = mappingDocs.find((e) => e.collectionName === (isInfoFile ? MatchInfo.name : MatchScoreboard.name));
-
-      const dbFields = data.find((e) => e.name === (isInfoFile ? MatchInfo.name : MatchScoreboard.name));
 
       for (const column of columns) {
         // Direct match
-        if (dbFields.fields.includes(column)) {
+        if (dbFields.includes(column)) {
           matchedColumns.add(column);
           continue;
         }
 
         // Mapped match
-        for (const dbField in mappingDoc.fields) {
-          const mappedSheetCols = mappingDoc.fields?.[dbField] || [];
+        for (const dbField in fields) {
+          const mappedSheetCols = fields?.[dbField] || [];
           if (mappedSheetCols.includes(column)) {
             matchedColumns.add(column);
             break;
@@ -765,47 +1198,50 @@ export class DataIngestionService {
         throw new BadRequestException(responseMessage.customMessage("please pass user mapping detail correctly! files uploaded and mapping detail must be equal length"))
       }
 
-      currentSheetData.readStream = createReadStream(join("uploads/", currentSheetData.filename));
-
       const extractedSheetInfo = await this.readExcelFiles<ReadStream>(currentSheetData);
 
       await this.redisService.set(`${name}:data`, JSON.stringify(extractedSheetInfo));
 
-      const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+      const file = this.identifyInfoAndScoreboardFile({ fileName, fileData: extractedSheetInfo[fileName] });
 
-      if (isInfoFile) {
-        const sheetInformationKeys = Object.keys(extractedSheetInfo[fileName]);
+      if (file.isInfoFile) {
+        const sheetInformationKeys = file.sheetKeys;
         for (const key of missingInputKeys) {
           const obj = {};
           // check input reference key direct found in sheet information
-          Object.keys(this.missingInputs[key]).forEach((k) => {
-            const mappingKey = sheetInformationKeys.find((l) => cachedData[key].fields[k]?.includes(l));
-            obj[mappingKey || k] = extractedSheetInfo[fileName][mappingKey || k]?.[0];
+          this.missingInputs[key].forEach((k) => {
+            const mappingKey = cachedData[key]?.fields[k.key]?.find((l) => sheetInformationKeys?.includes(l));
+            obj[k.key] = this.getValueFromInfoSheetData({ fileName, fileData: extractedSheetInfo[fileName], mappingKey: mappingKey || k.key }) || '';
           });
+
           // check input key value direct found in sheet information
           const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey]?.toLowerCase()?.trim() === inputCache.referenceValue?.toLowerCase()?.trim());
+
           // final prepare user input required fields
-          await Promise.all(Object.keys(obj).map(async (mappedKey) => {
-            if (!hasFoundCached && mappedKey) {
+          for (const mappedKey in obj) {
+            if (!hasFoundCached) {
+              const entityType = this.missingInputs[key].find((m) => m.key === mappedKey)?.type;
 
-              if (!obj[mappedKey]) {
-                return;
-              }
+              const input = await UIInputRequiredFieldConfiguration[mappedKey]({ redisService: this.redisService });
 
-              const inputs = await Promise.all(this.missingInputs[key][mappedKey]?.keys?.map(async (inputKey) => (UIInputRequiredFieldConfiguration[inputKey]({ redisService: this.redisService }))));
-              const isInputExist = userInputRequiredFields?.find((f) => f.collectionName === key && f.referenceKey === mappedKey && f.referenceValue === obj[mappedKey]);
-              if (!isInputExist) {
+              const inputValue = obj[mappedKey] || obj[this.requiredInputKeys[entityType]];
+
+              const existingInput = userInputRequiredFields?.find((f) => f.referenceValue === inputValue);
+
+              if (existingInput && !obj[mappedKey]) {
+                existingInput.inputs.push(input);
+              } else if (!existingInput && inputValue) {
                 userInputRequiredFields.push({
                   referenceKey: mappedKey,
-                  referenceValue: obj[mappedKey],
+                  referenceValue: inputValue,
                   collectionName: key,
-                  inputs,
+                  inputs: [input],
                   fileId: fileName,
-                  entityType: this.missingInputs[key][mappedKey]?.type
+                  entityType
                 });
               }
             }
-          }));
+          }
         }
       }
     }
@@ -853,20 +1289,35 @@ export class DataIngestionService {
     extractedSheetInfo: IMatchSheetFormat,
     inputs: CachedInput[] = [],
     collectionName: string,
-    sheetKey: string
+    sheetKey: string,
+    fileName: string
   ) {
     if (!mappingKey || !collectionName) return;
 
-    const sheetValue = extractedSheetInfo[mappingKey]?.[0] || extractedSheetInfo[sheetKey]?.[0];
-    if (!sheetValue) return;
+    const sheetValue = this.getValueFromInfoSheetData({ fileName, mappingKey: sheetKey, fileData: extractedSheetInfo });
+    if (!sheetValue || typeof sheetValue !== "string") return;
 
     const input = inputs.find(i => i.referenceValue?.toLowerCase()?.trim() === sheetValue?.toLowerCase()?.trim());
-    if (input && this.missingInputs[collectionName]?.[input.referenceKey]) {
-      for (const inputValue of this.missingInputs[collectionName][input.referenceKey]?.keys || []) {
-        dataToUpdate[inputValue] = input[inputValue];
-        if (inputValue === "event") {
-          dataToUpdate["tournamentId"] = input[inputValue];
+    if (input && this.missingInputs[collectionName]?.find((m) => m.key === input.referenceKey)) {
+      for (const inputValue of this.missingInputs[collectionName] || []) {
+        if (input[inputValue.key]) {
+          dataToUpdate[inputValue.key] = input[inputValue.key];
+          if (inputValue.key === "event") {
+            dataToUpdate["tournamentId"] = input[inputValue.key];
+          }
+          if (inputValue.key === "matchFormat") {
+            dataToUpdate["format"] = input[inputValue.key];
+          }
         }
+      }
+    }
+    if (!input) {
+      const getValue = this.getValueFromInfoSheetData({ fileName, mappingKey: sheetKey, fileData: extractedSheetInfo });
+      if (mappingKey === "type" && getValue) {
+        dataToUpdate[mappingKey] = getValue;
+      }
+      if (mappingKey === "matchFormat" && getValue) {
+        dataToUpdate["format"] = getValue;
       }
     }
   }
@@ -882,13 +1333,13 @@ export class DataIngestionService {
     }
 
     // Check if file is info or scoreboard
-    const isInfoFile = this.infoFileMatchingRegex.test(fileName);
+    const file = this.identifyInfoAndScoreboardFile({ fileName, fileData: extractedSheetInfo });
 
     // Check if match info or scoreboard already exists in database
     const [matchInfo, scoreboardCount] = await this.commonHelperService.checkMatchInfoAndScoreboardExists<number>({ sheet_match_id: match_id });
 
     // If info file and match info already exists OR if scoreboard file and scoreboard already exists, skip processing
-    if ((matchInfo && isInfoFile) || (!isInfoFile && scoreboardCount !== 0)) {
+    if ((matchInfo && file.isInfoFile) || (!file.isInfoFile && scoreboardCount !== 0)) {
       await this.updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey);
       await this.commonHelperService.deleteKeysContainingId(match_id);
       return { isFileProcessedSuccessfully: false };
@@ -899,7 +1350,7 @@ export class DataIngestionService {
     const scoreboardMappingDoc = mappingDocs.find((m) => m.collectionName === MatchScoreboard.name); // get scoreboard mapping document
     const sheetKeys = Object.keys(extractedSheetInfo); // get all keys from sheet information
     const collection: string[] = DatabaseFields[mappingDoc.collectionName](); // get all database fields for match info table
-    if (isInfoFile) { // info file
+    if (file.isInfoFile) { // info file
       const dataToUpdate: IDataToUpdate = {};
       const dbMappingKeys = Object.keys(mappingDoc.fields);
       sheetKeys.forEach((value) => {
@@ -931,7 +1382,7 @@ export class DataIngestionService {
               getValue = enumFunction(extractedSheetInfo[value][0]?.replace(/\s/g, "")?.trim());
             }
             dataToUpdate[mappingKey] = getValue;
-            this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value);
+            this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value, `${fileName}.${extension}`);
           }
         }
         else if (collection.includes(value)) { // for match info table normal fields
@@ -942,13 +1393,104 @@ export class DataIngestionService {
             getValue = enumFunction(value);
           }
           dataToUpdate[value] = getValue;
-          this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value);
+          this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value, `${fileName}.${extension}`);
         }
       });
       await this.saveMappedDataToDb(mappingDoc.collectionName, dataToUpdate, match_id, scoreboardMappingDoc.fields, fileName, extension);
     }
     else { // scoreboard file
       await this.saveMappedDataToDb(scoreboardMappingDoc.collectionName, extractedSheetInfo, match_id, scoreboardMappingDoc.fields, fileName, extension);
+    }
+    // After processing file delete redis key and generate analytics for match
+    await this.analyticService.generateAnalyticsForMatch(match_id);
+    return { isFileProcessedSuccessfully: true }
+  }
+
+  async processMappingJSONDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat, alreadyUploadCountRedisKey: string, extension: string) {
+    // Extract unique number value from filename
+    const match_id = this.extractNumbers(fileName);
+
+    // If couldn't extract unique number value from filename, throw error
+    if (!match_id) {
+      throw new Error("couldn't get unique number value from filename");
+    }
+
+    fileName = `${fileName}.${extension}`;
+
+    // Check if file is info or scoreboard
+    const file = this.identifyInfoAndScoreboardFile({ fileName, fileData: extractedSheetInfo });
+
+    // Check if match info or scoreboard already exists in database
+    const [matchInfo] = await this.commonHelperService.checkMatchInfoAndScoreboardExists<number>({ sheet_match_id: match_id });
+
+    // If info file and match info already exists OR if scoreboard file and scoreboard already exists, skip processing
+    if (matchInfo) {
+      await this.updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey);
+      await this.commonHelperService.deleteKeysContainingId(match_id);
+      return { isFileProcessedSuccessfully: false };
+    }
+
+    const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name] } }); // get mapping documents for match info and scoreboard
+    const mappingDoc = mappingDocs.find((m) => m.collectionName === MatchInfo.name); // get match info mapping document
+    const scoreboardMappingDoc = mappingDocs.find((m) => m.collectionName === MatchScoreboard.name); // get scoreboard mapping document
+    const collection: string[] = DatabaseFields[mappingDoc.collectionName](); // get all database fields for match info table
+    if (file.isInfoFile) { // info file
+      const dataToUpdate: IDataToUpdate = {};
+      const dbMappingKeys = Object.keys(mappingDoc.fields);
+      file.sheetKeys.forEach((value) => {
+        let mappingKey = dbMappingKeys.find((k) => mappingDoc.fields[k]?.includes(value));
+        if (mappingKey === "other") {
+          return;
+        }
+        if (mappingKey) {
+          if (mappingKey === "team1.team" || mappingKey === "team2.team") { // for team table
+            const getValue = this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo });
+            dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { name: getValue }] as Record<string, string>[];
+            dataToUpdate[mappingKey] = getValue;
+          } else if (mappingKey === "umpire.fourthUmpire" || mappingKey === "umpire.thirdUmpire" || mappingKey === "umpire.onFieldBowlerEndUmpire" || mappingKey === "umpire.onFieldLegUmpire") { // for umpire table
+            dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo })];
+          } else if (mappingKey === "team2.playingEleven") { // for player table
+            mappingKey = mappingKey.replace(".$", "");
+            const peoples = Object.entries(this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo }));
+            dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), ...peoples] as string[];
+          } else if (mappingKey === "team1.playingEleven") { // for match info table
+            mappingKey = mappingKey.replace(".$", "");
+            const playingElevens = Object.entries(this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo }));
+            dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), ...playingElevens] as string[];
+          } else if (mappingKey === "result.playerOfMatch") {
+            mappingKey = mappingKey.replace(".$", "");
+            const playerOfMatch = this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo });
+            dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), playerOfMatch] as string[];
+          } else { // for match info table enum and normal fields
+            let getValue = this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo });
+            const enumValue = this.enumValues[mappingDoc.collectionName];
+            if (mappingKey === "result.winBy") {
+              const enumField = "result.status";
+              const enumFunction = (enumValue)[enumField];
+              dataToUpdate[enumField] = enumFunction(value);
+            } else if (mappingKey === "method") {
+              const enumFunction = (enumValue)[mappingKey];
+              getValue = enumFunction(value);
+            } else if (mappingKey === "result.status") {
+              const enumFunction = (enumValue)[mappingKey];
+              getValue = enumFunction(getValue?.replace(/\s/g, "")?.trim());
+            }
+            dataToUpdate[mappingKey] = getValue;
+            this.updateInputToSaveInDatabase(dataToUpdate, mappingKey, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value, fileName);
+          }
+        }
+        else if (collection.includes(value)) { // for match info table normal fields
+          let getValue = this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo });
+          const enumValue = this.enumValues[mappingDoc.collectionName];
+          if (value === "method") {
+            const enumFunction = (enumValue)[value];
+            getValue = enumFunction(value);
+          }
+          dataToUpdate[value] = getValue;
+          this.updateInputToSaveInDatabase(dataToUpdate, value, extractedSheetInfo, mappingDoc.inputs, mappingDoc.collectionName, value, fileName);
+        }
+      });
+      await this.saveMappedDataToDb(mappingDoc.collectionName, dataToUpdate, match_id, scoreboardMappingDoc.fields, fileName, extension);
     }
     // After processing file delete redis key and generate analytics for match
     await this.analyticService.generateAnalyticsForMatch(match_id);
@@ -969,11 +1511,11 @@ export class DataIngestionService {
 
     const bulkInputOps = [];
     for (const userInput of uploadFileDto.userInputs) {
-      const { collectionName, inputs, ...input } = userInput;
+      const { collectionName, inputObject, ...input } = userInput;
 
       Object.keys(this.missingInputs[collectionName])
 
-      const update: UpdateQuery<IMappingData> = { $addToSet: { inputs: { ...input, ...inputs } } };
+      const update: UpdateQuery<IMappingData> = { $addToSet: { inputs: { ...input, ...inputObject } } };
 
       if (input.isUserTypedValue) {
         bulkInputOps.push({

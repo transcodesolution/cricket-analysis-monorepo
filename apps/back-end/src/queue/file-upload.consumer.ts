@@ -53,7 +53,7 @@ export class FileUploadConsumer implements OnModuleInit {
                 const errorCount = await this.redisService.get(errorCountRedisKey);
                 let totalFilesProcessed: string = processingCount || "0", totalErroredFiles = errorCount || "0";
                 try {
-                    const response = await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData, alreadyUploadCountRedisKey, extension);
+                    const response = await this.dataIngestionService.processMappingAgainstDatabase({ fileName, fileData, alreadyUploadCountRedisKey, extension });
                     if (response.isFileProcessedSuccessfully) {
                         totalFilesProcessed = (+(processingCount || 0) + 1).toString();
                         this.redisService.set(processCountRedisKey, totalFilesProcessed);

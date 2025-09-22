@@ -11,6 +11,7 @@ export enum WicketType {
     handledball = 'handled ball',
     timedout = 'timed out',
     caughtandbowled = 'caught and bowled',
+    empty = '',
 }
 
 export enum SubstituteReasonType {
