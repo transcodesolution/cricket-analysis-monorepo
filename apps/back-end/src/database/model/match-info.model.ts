@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes, Types } from 'mongoose';
-import { TossResult, WinnerTeamDecision, MatchStatus, MatchMethod } from '@cricket-analysis-monorepo/constants';
+import { TossResult, WinnerTeamDecision, MatchStatus, MatchMethod, MatchFormat } from '@cricket-analysis-monorepo/constants';
 import { BallType, Brand, Color } from '@cricket-analysis-monorepo/constants';
 import { Tournament } from './tournament.model';
 import { Team } from './team.model';
@@ -77,6 +77,12 @@ export class MatchInfo {
 
     @Prop()
     summary: string;
+
+    @Prop({ type: String, enum: MatchFormat })
+    format: MatchFormat;
+
+    @Prop({ type: Number })
+    totalOvers: number;
 
     @Prop({
         type: {
@@ -173,6 +179,8 @@ export class MatchInfo {
         this.match_number = 0;
         this.match_id = "";
         this.summary = '';
+        this.totalOvers = 50;
+        this.format = MatchFormat.ODI;
         this.team2 = {
             impactPlayerIn: '',
             impactPlayerOut: '',

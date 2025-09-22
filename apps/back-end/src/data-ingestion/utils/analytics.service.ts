@@ -343,7 +343,7 @@ export class AnalyticsService {
         if (ball.extras?.noballs) stat.totalNoBall++;
         if (ball.extras?.wides) stat.totalWide++;
 
-        if (ball.wicket.dismissedPlayer && ball.wicket.takenBy.find((i) => i.toString() === bowlerId)) stat.totalWicketTaken++;
+        if (ball.wicket.dismissedPlayer && ball.wicket.takenBy.find((i) => i?.toString() === bowlerId)) stat.totalWicketTaken++;
 
         if (+ball.runs_off_bat === 4) stat.totalFourConceded++;
         if (+ball.runs_off_bat === 6) stat.totalSixConceded++;

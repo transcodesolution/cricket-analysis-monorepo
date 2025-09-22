@@ -150,7 +150,7 @@ export const UploadFile = () => {
           <Dropzone
             onDrop={handleDrop}
             radius="lg"
-            accept={[MIME_TYPES.csv, MIME_TYPES.xlsx]}
+            accept={[MIME_TYPES.csv, MIME_TYPES.xlsx, "application/json"]}
             multiple
             loading={loading}
           >
@@ -172,7 +172,7 @@ export const UploadFile = () => {
 
       <MappingModal
         keysToMapByFile={fileColumnData}
-        onClose={() => setShowMappingModal(false)}
+        onClose={() => {setShowMappingModal(false);setLoading(false);}}
         onSubmit={handleMappingSubmit}
         showMappingModal={showMappingModal}
         loading={isCheckMapping}
@@ -180,7 +180,7 @@ export const UploadFile = () => {
 
       <RequiredInputModal
         data={requirements}
-        onClose={() => setShowRequiredInputModal(false)}
+        onClose={() => {setShowRequiredInputModal(false);setLoading(false);}}
         onSubmit={handleRequirementSubmit}
         showRequiredInputModal={showRequiredInputModal}
         loading={isUpdateAndSaveEntries}
