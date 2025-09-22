@@ -90,7 +90,6 @@ export class CommonHelperService {
             page: paginationDto.page,
             limit: paginationDto.limit,
         };
-        console.log(keyBase)
         const keyStr = JSON.stringify(keyBase);
         const hash = createHash('md5').update(keyStr).digest('hex');
         return `${prefix}:${hash}`;

@@ -39,10 +39,3 @@ export type TFileCachedInput = ICachedInput & {
 export interface IUpdateAndSaveEntriesRequest {
   [fileName: string]: TFileCachedInput[];
 }
-export interface IFileProgressEvent {
-  totalFiles: number;
-  totalFilesProcessed: string;
-  totalErroredFiles: string;
-  requestUniqueId: string;
-  totalAlreadyUploadedFiles: string;
-}

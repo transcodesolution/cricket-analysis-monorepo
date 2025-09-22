@@ -1,9 +1,9 @@
+import { IFileProgressData } from '@cricket-analysis-monorepo/interfaces';
 import { Stack, Text, Group, Progress, Paper } from '@mantine/core';
 import { IconUpload } from '@tabler/icons-react';
-import { IFileProgressEvent } from '@/libs/types-api/src';
 
 interface IUploadProgressCard {
-  uploadState: IFileProgressEvent;
+  uploadState: IFileProgressData;
   onUploadComplete: (id: string) => void;
 }
 

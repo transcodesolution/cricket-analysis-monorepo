@@ -1,11 +1,12 @@
-import { IFileProgressEvent } from '@/libs/types-api/src';
+import { IFileProgressData, IFileProgressResponse } from '@cricket-analysis-monorepo/interfaces';
+import { notifications } from '@mantine/notifications';
 import { io, Socket } from 'socket.io-client';
 import { create } from 'zustand';
 
 interface ISocketStore {
   socket: Socket | null;
-  fileUploadStates: Record<string, IFileProgressEvent>;
-  connectSocket(opts: { token: string; onProgress?: (d: IFileProgressEvent) => void }): void;
+  fileUploadStates: Record<string, IFileProgressData>;
+  connectSocket(opts: { token: string; onProgress?: (d: IFileProgressData) => void }): void;
   disconnectSocket(): void;
   clearSession(id: string): void;
 }
@@ -33,15 +34,22 @@ export const useSocketStore = create<ISocketStore>((set, get) => ({
       set({ socket: null });
     });
 
-    socket.on('file-progress-update', (d: IFileProgressEvent) => {
+    socket.on('file-progress-update', (response: IFileProgressResponse) => {
+      const { success, message, data } = response;
+
       set((state) => ({
         fileUploadStates: {
           ...state.fileUploadStates,
-          [d.requestUniqueId]: d,
+          [data.requestUniqueId]: data,
         },
       }));
-
-      onProgress?.(d);
+      onProgress?.(data);
+      if (success) {
+        notifications.show({
+          message: message || `File ${data.requestUniqueId} finished`,
+          color: success === true ? 'green' : 'red',
+        });
+      }
     });
   },
 

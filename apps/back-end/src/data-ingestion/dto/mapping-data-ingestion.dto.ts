@@ -40,7 +40,7 @@ class CachedInputDto {
 export class InputUpdateDto extends PickType(CachedInput, ["collectionName", "referenceKey", "referenceValue"]) {
     @ValidateNested()
     @Type(() => CachedInputDto)
-    inputs: CachedInputDto;
+    inputObject: CachedInputDto;
 
     @IsBoolean()
     isUserTypedValue: boolean;

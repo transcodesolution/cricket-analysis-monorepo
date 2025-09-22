@@ -13,6 +13,7 @@ export interface ICachedInput {
     referenceValue: string;
     collectionName: string;
     entityType: EntityType;
+    inputs: IFormInput[];
     fileId: string;
     [keyname: string]: string | boolean | IFormInput[] | Record<string, string>;
 }

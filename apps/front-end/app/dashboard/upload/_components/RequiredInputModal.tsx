@@ -200,7 +200,7 @@ export const RequiredInputModal = ({
 
         return {
           ...entry,
-          inputs: inputsObject,
+          inputObject: inputsObject,
           entityType: entry.entityType,
           typedValue,
           isUserTypedValue,

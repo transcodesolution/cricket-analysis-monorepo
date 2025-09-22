@@ -1,6 +1,8 @@
-import { formatCsvFiles, formatExcelFiles } from "@cricket-analysis-monorepo/service";
+import { formatCsvFiles, formatExcelFiles, formatJsonFiles } from "@cricket-analysis-monorepo/service";
 import { IMatchSheetFormat } from "@cricket-analysis-monorepo/interfaces";
 import { IBatsmanStatsData, IBowlerStatsData, TReportDetails, IVenueStatsData, IStatTileItem, ITeamPerformanceData } from "../types-api/src";
+import { extname } from "path";
+import { FileFormatType } from "@cricket-analysis-monorepo/constants";
 
 export const readExcelFiles = async (
   files: File[]
@@ -10,27 +12,36 @@ export const readExcelFiles = async (
 
   for (const file of files) {
     const baseName = file.name;
-    const ext = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() ?? '' : '';
+    const ext = baseName.includes('.') ? extname(baseName) : '';
 
     try {
-      if (ext === 'csv') {
+      if (ext === FileFormatType.csv) {
         await formatCsvFiles(parsedResults, baseName, file);
-      } else {
+      } else if (ext === FileFormatType.json) {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const jsonData = JSON.parse(buffer.toString("utf-8"));
+        const columns = formatJsonFiles(jsonData as unknown as IMatchSheetFormat);
+        columnResults[baseName] = columns;
+      } else if (ext === FileFormatType.xlsx) {
         const fileArrayBuffer = await file.arrayBuffer();
         formatExcelFiles(parsedResults, fileArrayBuffer, baseName);
       }
-      const fileData = parsedResults[baseName];
-      const allColumns = new Set<string>();
-      if (Array.isArray(fileData)) {
-        const firstItem = fileData[0];
-        if (firstItem && typeof firstItem === 'object') {
-          Object.keys(firstItem).forEach(key => allColumns.add(key));
+
+      if (ext !== FileFormatType.json) {
+        const fileData = parsedResults[baseName];
+        const allColumns = new Set<string>();
+        if (Array.isArray(fileData)) {
+          const firstItem = fileData[0];
+          if (firstItem && typeof firstItem === 'object') {
+            Object.keys(firstItem).forEach(key => allColumns.add(key));
+          }
+        } else if (fileData && typeof fileData === 'object') {
+          Object.keys(fileData).forEach(key => allColumns.add(key));
         }
-      } else if (fileData && typeof fileData === 'object') {
-        Object.keys(fileData).forEach(key => allColumns.add(key));
+        columnResults[baseName] = Array.from(allColumns);
       }
 
-      columnResults[baseName] = Array.from(allColumns);
     } catch (err) {
       console.error(`Error reading ${file.name}:`, err);
       columnResults[baseName] = [];

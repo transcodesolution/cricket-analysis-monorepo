@@ -1,7 +1,7 @@
 import { Job, Worker } from 'bullmq';
 import { QUEUES, TASKS } from '../helper/constant.helper';
 import { DataIngestionService } from '../data-ingestion/data-ingestion.service';
-import { IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
+import { IFileProgressData, IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
 import { SocketGateway } from '../socket/socket.service';
 import { RedisService } from '../redis/redis.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
@@ -13,7 +13,7 @@ interface IFileProcessToDatabase {
     fileData: IMatchSheetFormat;
     userId: string;
     totalFiles: number;
-    extension:string;
+    extension: string;
 }
 
 @Injectable()
@@ -53,7 +53,7 @@ export class FileUploadConsumer implements OnModuleInit {
                 const errorCount = await this.redisService.get(errorCountRedisKey);
                 let totalFilesProcessed: string = processingCount || "0", totalErroredFiles = errorCount || "0";
                 try {
-                    const response = await this.dataIngestionService.processMappingSheetDataWithDatabaseKeys(fileName, fileData, alreadyUploadCountRedisKey, extension);
+                    const response = await this.dataIngestionService.processMappingAgainstDatabase({ fileName, fileData, alreadyUploadCountRedisKey, extension });
                     if (response.isFileProcessedSuccessfully) {
                         totalFilesProcessed = (+(processingCount || 0) + 1).toString();
                         this.redisService.set(processCountRedisKey, totalFilesProcessed);
@@ -66,8 +66,10 @@ export class FileUploadConsumer implements OnModuleInit {
                 }
                 let totalAlreadyUploadedFiles = await this.redisService.get(alreadyUploadCountRedisKey);
                 totalAlreadyUploadedFiles = totalAlreadyUploadedFiles || "0";
-                this.socketGateway.server.to(userId.toString()).emit("file-progress-update", { totalFilesProcessed, totalErroredFiles, totalAlreadyUploadedFiles, totalFiles, requestUniqueId });
+                const resData: IFileProgressData = { requestUniqueId, totalAlreadyUploadedFiles, totalErroredFiles, totalFiles, totalFilesProcessed };
+                this.socketGateway.sendSocketMessage(userId, false, resData);
                 if (+totalFilesProcessed + +totalErroredFiles + +totalAlreadyUploadedFiles === +totalFiles) {
+                    this.socketGateway.sendSocketMessage(userId, true, resData);
                     this.redisService.del(alreadyUploadCountRedisKey);
                     this.redisService.del(processCountRedisKey);
                     this.redisService.del(errorCountRedisKey);
