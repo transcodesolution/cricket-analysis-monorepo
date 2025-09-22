@@ -554,7 +554,7 @@ export class DataIngestionService {
     switch (collectionName) {
       case Tournament.name:
         if (dataToUpdate?.event) {
-          await this.tournamentModel.updateOne({ event: dataToUpdate.event }, { $set: dataToUpdate }, { upsert: true });
+          await this.tournamentModel.updateOne({ event: (dataToUpdate.event as string)?.trim() }, { $set: dataToUpdate }, { upsert: true });
         }
         break;
       case MatchInfo.name:
@@ -575,36 +575,14 @@ export class DataIngestionService {
           }
           break;
         }
-      case Player.name: {
-
-        break;
-      }
-      case Umpire.name: {
-        const bulkOperations = (dataToUpdate?.umpires as unknown as Pick<Umpire, "name" | "type" | "subType">[])?.flatMap((umpire: { name: string, type: UmpireType, subType?: UmpireSubType }) => {
-          if (!umpire.name) {
-            return [];
-          }
-          return {
-            updateOne: {
-              filter: { name: umpire.name },
-              update: { $set: umpire },
-              upsert: true,
-            },
-          };
-        });
-        if ((bulkOperations?.length || 0) !== 0) {
-          await this.umpireModel.bulkWrite(bulkOperations);
-        }
-        break;
-      }
       case Referee.name:
         if (dataToUpdate?.referee) {
-          await this.refereeModel.updateOne({ name: dataToUpdate.referee }, { $set: { name: dataToUpdate.referee } }, { upsert: true });
+          await this.refereeModel.updateOne({ name: (dataToUpdate.referee as string)?.trim() }, { $set: { name: dataToUpdate.referee } }, { upsert: true });
         }
         break;
       case Venue.name:
         if (dataToUpdate?.venue) {
-          await this.venueModel.updateOne({ name: dataToUpdate.venue }, { $set: { name: dataToUpdate.venue, city: dataToUpdate.city } }, { upsert: true });
+          await this.venueModel.updateOne({ name: (dataToUpdate.venue as string)?.trim() }, { $set: { name: dataToUpdate.venue, city: dataToUpdate.city } }, { upsert: true });
         }
         break;
       case Team.name: {
@@ -614,7 +592,7 @@ export class DataIngestionService {
           }
           return {
             updateOne: {
-              filter: { name: team.name },
+              filter: { name: (team.name as string)?.trim() },
               update: { $set: team },
               upsert: true,
             },
@@ -1214,11 +1192,11 @@ export class DataIngestionService {
             obj[k.key] = this.getValueFromInfoSheetData({ fileName, fileData: extractedSheetInfo[fileName], mappingKey: mappingKey || k.key }) || '';
           });
 
-          // check input key value direct found in sheet information
-          const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[inputCache.referenceKey]?.toLowerCase()?.trim() === inputCache.referenceValue?.toLowerCase()?.trim());
-
           // final prepare user input required fields
           for (const mappedKey in obj) {
+            // check input key value direct found in sheet information
+            const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[mappedKey]?.toLowerCase()?.trim() === inputCache.referenceValue?.toLowerCase()?.trim());
+
             if (!hasFoundCached) {
               const entityType = this.missingInputs[key].find((m) => m.key === mappedKey)?.type;
 
