@@ -34,6 +34,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { RedisService } from '../redis/redis.service';
 import { SocketGateway } from '../socket/socket.service';
 import get from "lodash/get";
+import { randomUUID } from 'crypto';
 
 export interface IDataToUpdate { [keyname: string]: Record<string, string>[] | string | string[] };
 
@@ -58,11 +59,11 @@ export class DataIngestionService {
   private readonly infoFileMatchingRegex = /info/i;
 
   private readonly missingInputs: Record<string, { type: EntityType, key: string }[]> = {
-    [MatchInfo.name]: [{ key: "event", type: EntityType.tournament }, { key: "matchFormat", type: EntityType.tournament }, { key: "type", type: EntityType.tournament }],
+    [MatchInfo.name]: [{ key: "event", type: EntityType.tournament }, { key: "matchFormat", type: EntityType.tournament }, { key: "type", type: EntityType.tournament }, { key: "team1.team", type: EntityType.team }, { key: "team2.team", type: EntityType.team }, { key: "venue", type: EntityType.venue }],
   }
 
   private readonly requiredInputKeys = {
-    [EntityType.tournament]: 'event'
+    [EntityType.tournament]: 'event',
   };
 
   private readonly enumValues: { [keyname: string]: string | null | object } = {
@@ -457,12 +458,12 @@ export class DataIngestionService {
   }
 
   async saveMatchInformationToDb(dataToUpdate: IMatchSheetFormat, sheet_match_id: string, team1PlayingElevenIds: string[] = [], team2PlayingElevenIds: string[] = [], playerOfMatchIds: string[] = [], onFieldBowlerEndUmpires: string[] = [], onFieldLegUmpires: string[] = [], fourthUmpires: string[] = [], thirdUmpires: string[] = [], referee?: Pick<Referee, "name" | "uniqueId">) {
-    const teams = await this.teamModel.find({ name: { $in: [dataToUpdate["team1.team"], dataToUpdate["team2.team"]] } });
-    const team1 = teams.find((team) => team.name === dataToUpdate["team1.team"]);
-    const team2 = teams.find((team) => team.name === dataToUpdate["team2.team"]);
-    const eliminator = teams.find((team) => team.name === dataToUpdate["result.eliminator"]);
-    const winningTeam = teams.find((team) => team.name === dataToUpdate["result.winningTeam"]);
-    const tossWinningTeam = teams.find((team) => team.name === dataToUpdate["toss.winnerTeam"]);
+    const teams = await this.teamModel.find({ fullName: { $in: [dataToUpdate["team1.team"], dataToUpdate["team2.team"]] } });
+    const team1 = teams.find((team) => team.fullName === dataToUpdate["team1.team"]);
+    const team2 = teams.find((team) => team.fullName === dataToUpdate["team2.team"]);
+    const eliminator = teams.find((team) => team.fullName === dataToUpdate["result.eliminator"]);
+    const winningTeam = teams.find((team) => team.fullName === dataToUpdate["result.winningTeam"]);
+    const tossWinningTeam = teams.find((team) => team.fullName === dataToUpdate["toss.winnerTeam"]);
 
     // handling referee
     const refereeObj = await this.refereeModel.findOne({ uniqueId: referee?.uniqueId }, "_id");
@@ -586,13 +587,13 @@ export class DataIngestionService {
         }
         break;
       case Team.name: {
-        const bulkOperations = (dataToUpdate?.teams as unknown as Pick<Team, "name">[])?.flatMap((team: { name: string }) => {
-          if (!team.name) {
+        const bulkOperations = (dataToUpdate?.teams as unknown as Pick<Team, "fullName">[])?.flatMap((team: { fullName: string }) => {
+          if (!team.fullName) {
             return [];
           }
           return {
             updateOne: {
-              filter: { name: (team.name as string)?.trim() },
+              filter: { fullName: (team.fullName as string)?.trim() },
               update: { $set: team },
               upsert: true,
             },
@@ -1194,21 +1195,28 @@ export class DataIngestionService {
 
           // final prepare user input required fields
           for (const mappedKey in obj) {
+            const entityType = this.missingInputs[key].find((m) => m.key === mappedKey)?.type;
+
+            const inputValue = obj[mappedKey] || obj[this.requiredInputKeys[entityType]];
+
             // check input key value direct found in sheet information
-            const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => obj[mappedKey]?.toLowerCase()?.trim() === inputCache.referenceValue?.toLowerCase()?.trim());
+            const hasFoundCached = cachedData[key].inputs.some((inputCache: CachedInput) => {
+              return inputValue?.toLowerCase()?.trim() === inputCache.referenceValue?.toLowerCase()?.trim();
+            });
 
             if (!hasFoundCached) {
-              const entityType = this.missingInputs[key].find((m) => m.key === mappedKey)?.type;
-
               const input = await UIInputRequiredFieldConfiguration[mappedKey]({ redisService: this.redisService });
 
-              const inputValue = obj[mappedKey] || obj[this.requiredInputKeys[entityType]];
+              const existingInputData = userInputRequiredFields?.find((f) => f.referenceValue === inputValue);
 
-              const existingInput = userInputRequiredFields?.find((f) => f.referenceValue === inputValue);
+              input.id = randomUUID();
 
-              if (existingInput && !obj[mappedKey]) {
-                existingInput.inputs.push(input);
-              } else if (!existingInput && inputValue) {
+              if (existingInputData && !obj[mappedKey]) {
+                const existingInput = existingInputData.inputs.find((i) => i.key === input.key);
+                if (!existingInput) {
+                  existingInputData.inputs.push(input);
+                }
+              } else if (!existingInputData && inputValue) {
                 userInputRequiredFields.push({
                   referenceKey: mappedKey,
                   referenceValue: inputValue,
@@ -1278,13 +1286,17 @@ export class DataIngestionService {
     const input = inputs.find(i => i.referenceValue?.toLowerCase()?.trim() === sheetValue?.toLowerCase()?.trim());
     if (input && this.missingInputs[collectionName]?.find((m) => m.key === input.referenceKey)) {
       for (const inputValue of this.missingInputs[collectionName] || []) {
-        if (input[inputValue.key]) {
-          dataToUpdate[inputValue.key] = input[inputValue.key];
+        const getValue = get(input, inputValue.key);
+        if (getValue) {
+          dataToUpdate[inputValue.key] = getValue;
           if (inputValue.key === "event") {
-            dataToUpdate["tournamentId"] = input[inputValue.key];
+            dataToUpdate["tournamentId"] = getValue;
           }
           if (inputValue.key === "matchFormat") {
-            dataToUpdate["format"] = input[inputValue.key];
+            dataToUpdate["format"] = getValue;
+          }
+          if (dataToUpdate["teams"]?.length < 2 && inputValue.key === "team1.team" || inputValue.key === "team2.team") { // for team table
+            dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { fullName: getValue }] as Record<string, string>[];
           }
         }
       }
@@ -1334,10 +1346,7 @@ export class DataIngestionService {
       sheetKeys.forEach((value) => {
         let mappingKey = dbMappingKeys.find((k) => mappingDoc.fields[k]?.includes(value));
         if (mappingKey) {
-          if (mappingKey === "team1.team" || mappingKey === "team2.team") { // for team table
-            dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { name: extractedSheetInfo[value][0] }] as Record<string, string>[];
-            dataToUpdate[mappingKey] = extractedSheetInfo[value][0];
-          } else if (mappingKey === "umpire.fourthUmpire" || mappingKey === "umpire.thirdUmpire" || mappingKey === "umpire.onFieldBowlerEndUmpire" || mappingKey === "umpire.onFieldLegUmpire") { // for umpire table
+          if (mappingKey === "umpire.fourthUmpire" || mappingKey === "umpire.thirdUmpire" || mappingKey === "umpire.onFieldBowlerEndUmpire" || mappingKey === "umpire.onFieldLegUmpire") { // for umpire table
             dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), extractedSheetInfo[value][0]];
           } else if (mappingKey === "team2.playingEleven") { // for player table
             mappingKey = mappingKey.replace(".$", "");
@@ -1421,11 +1430,7 @@ export class DataIngestionService {
           return;
         }
         if (mappingKey) {
-          if (mappingKey === "team1.team" || mappingKey === "team2.team") { // for team table
-            const getValue = this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo });
-            dataToUpdate["teams"] = [...(dataToUpdate["teams"] || []), { name: getValue }] as Record<string, string>[];
-            dataToUpdate[mappingKey] = getValue;
-          } else if (mappingKey === "umpire.fourthUmpire" || mappingKey === "umpire.thirdUmpire" || mappingKey === "umpire.onFieldBowlerEndUmpire" || mappingKey === "umpire.onFieldLegUmpire") { // for umpire table
+          if (mappingKey === "umpire.fourthUmpire" || mappingKey === "umpire.thirdUmpire" || mappingKey === "umpire.onFieldBowlerEndUmpire" || mappingKey === "umpire.onFieldLegUmpire") { // for umpire table
             dataToUpdate[mappingKey] = [...(dataToUpdate[mappingKey] || []), this.getValueFromInfoSheetData({ fileName, mappingKey: value, fileData: extractedSheetInfo })];
           } else if (mappingKey === "team2.playingEleven") { // for player table
             mappingKey = mappingKey.replace(".$", "");

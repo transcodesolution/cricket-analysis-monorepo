@@ -4,7 +4,7 @@ export enum TournamentType {
 }
 
 export enum TournamentName {
-  // Club / domestic leagues:
+  // Club / domestic leagues
   bbl = "Big Bash League",
   westIndiesWomenT20Blaze = "Cricket West Indies Women's Twenty20 Blaze",
   bpl = "Bangladesh Premier League",
@@ -37,14 +37,14 @@ export enum TournamentName {
   ssh = "Sheffield Shield",
   ssm = "Super Smash",
 
-  // Women's competitions:
+  // Women's competitions
   wbb = "Women's Big Bash League",
   wcpl = "Women's Caribbean Premier League",
   wpl = "Women's Premier League",
   superSmashWomen = "Women's Super Smash",
   metroBankOneDayCupWomen = "Metro Bank One Day Cup Women",
 
-  // ICC competitions:
+  // ICC competitions
   championsTrophy = "ICC Champions Trophy",
   mensCricketWorldCup = "ICC Men's Cricket World Cup",
   womensCricketWorldCup = "ICC Women's Cricket World Cup",
@@ -57,31 +57,26 @@ export enum TournamentName {
   majorClubT20SriLanka = "Major Clubs T20 Sri Lanka",
   majorLeagueTournament = "Major League Tournament",
 
-  // Test series:
-
-  // ICC Global
+  // ICC Test & named series
   ICCWorldTestChampionship = "ICC World Test Championship",
-
-  // Major Named Test Series / Trophies
-  TheAshes = "The Ashes", // Eng vs Aus
-  BorderGavaskarTrophy = "Border–Gavaskar Trophy", // Ind vs Aus
-  FrankWorrellTrophy = "Frank Worrell Trophy", // WI vs Aus
-  BasilDOliveiraTrophy = "Basil D'Oliveira Trophy", // Eng vs SA
-  PataudiTrophy = "Pataudi Trophy", // Ind vs Eng (in Eng)
-  AnthonyDeMelloTrophy = "Anthony de Mello Trophy", // Ind vs Eng (in Ind)
-  WisdenTrophy = "Wisden Trophy", // Eng vs WI (historic)
-  RichardsBothamTrophy = "Richards–Botham Trophy", // Eng vs WI (current)
-  TransTasmanTrophy = "Trans-Tasman Trophy", // Aus vs NZ
-  WarneMuralitharanTrophy = "Warne–Muralitharan Trophy", // Aus vs SL
-  SobersTisseraTrophy = "Sobers–Tissera Trophy", // WI vs SL
-  BenaudQadirTrophy = "Benaud–Qadir Trophy", // Aus vs Pak
-  FreedomTrophy = "Freedom Trophy", // Ind vs SA
-  SirVivianRichardsTrophy = "Sir Vivian Richards Trophy", // WI vs SA
+  TheAshes = "The Ashes",
+  BorderGavaskarTrophy = "Border–Gavaskar Trophy",
+  FrankWorrellTrophy = "Frank Worrell Trophy",
+  BasilDOliveiraTrophy = "Basil D'Oliveira Trophy",
+  PataudiTrophy = "Pataudi Trophy",
+  AnthonyDeMelloTrophy = "Anthony de Mello Trophy",
+  WisdenTrophy = "Wisden Trophy",
+  RichardsBothamTrophy = "Richards–Botham Trophy",
+  TransTasmanTrophy = "Trans-Tasman Trophy",
+  WarneMuralitharanTrophy = "Warne–Muralitharan Trophy",
+  SobersTisseraTrophy = "Sobers–Tissera Trophy",
+  BenaudQadirTrophy = "Benaud–Qadir Trophy",
+  FreedomTrophy = "Freedom Trophy",
+  SirVivianRichardsTrophy = "Sir Vivian Richards Trophy",
   cyprusTourOfCroatia = "Cyprus tour of Croatia",
   switzerlandTourOfEstonia = "Switzerland tour of Estonia",
 
-  // ---- Bilateral Tours (12 ICC Full Members) ----
-  // Afghanistan tours
+  // Bilateral Tours (full expanded list)
   AfghanistanTourOfAustralia = "Afghanistan Tour of Australia",
   AfghanistanTourOfBangladesh = "Afghanistan Tour of Bangladesh",
   AfghanistanTourOfEngland = "Afghanistan Tour of England",
@@ -94,7 +89,6 @@ export enum TournamentName {
   AfghanistanTourOfWestIndies = "Afghanistan Tour of West Indies",
   AfghanistanTourOfZimbabwe = "Afghanistan Tour of Zimbabwe",
 
-  // Australia tours
   AustraliaTourOfAfghanistan = "Australia Tour of Afghanistan",
   AustraliaTourOfBangladesh = "Australia Tour of Bangladesh",
   AustraliaTourOfEngland = "Australia Tour of England",
@@ -107,7 +101,6 @@ export enum TournamentName {
   AustraliaTourOfWestIndies = "Australia Tour of West Indies",
   AustraliaTourOfZimbabwe = "Australia Tour of Zimbabwe",
 
-  // Bangladesh tours
   BangladeshTourOfAfghanistan = "Bangladesh Tour of Afghanistan",
   BangladeshTourOfAustralia = "Bangladesh Tour of Australia",
   BangladeshTourOfEngland = "Bangladesh Tour of England",
@@ -120,7 +113,6 @@ export enum TournamentName {
   BangladeshTourOfWestIndies = "Bangladesh Tour of West Indies",
   BangladeshTourOfZimbabwe = "Bangladesh Tour of Zimbabwe",
 
-  // England tours
   EnglandTourOfAfghanistan = "England Tour of Afghanistan",
   EnglandTourOfAustralia = "England Tour of Australia",
   EnglandTourOfBangladesh = "England Tour of Bangladesh",
@@ -133,7 +125,6 @@ export enum TournamentName {
   EnglandTourOfWestIndies = "England Tour of West Indies",
   EnglandTourOfZimbabwe = "England Tour of Zimbabwe",
 
-  // India tours
   IndiaTourOfAfghanistan = "India Tour of Afghanistan",
   IndiaTourOfAustralia = "India Tour of Australia",
   IndiaTourOfBangladesh = "India Tour of Bangladesh",
@@ -146,7 +137,6 @@ export enum TournamentName {
   IndiaTourOfWestIndies = "India Tour of West Indies",
   IndiaTourOfZimbabwe = "India Tour of Zimbabwe",
 
-  // Ireland tours
   IrelandTourOfAfghanistan = "Ireland Tour of Afghanistan",
   IrelandTourOfAustralia = "Ireland Tour of Australia",
   IrelandTourOfBangladesh = "Ireland Tour of Bangladesh",
@@ -159,7 +149,6 @@ export enum TournamentName {
   IrelandTourOfWestIndies = "Ireland Tour of West Indies",
   IrelandTourOfZimbabwe = "Ireland Tour of Zimbabwe",
 
-  // New Zealand tours
   NewZealandTourOfAfghanistan = "New Zealand Tour of Afghanistan",
   NewZealandTourOfAustralia = "New Zealand Tour of Australia",
   NewZealandTourOfBangladesh = "New Zealand Tour of Bangladesh",
@@ -172,7 +161,6 @@ export enum TournamentName {
   NewZealandTourOfWestIndies = "New Zealand Tour of West Indies",
   NewZealandTourOfZimbabwe = "New Zealand Tour of Zimbabwe",
 
-  // Pakistan tours
   PakistanTourOfAfghanistan = "Pakistan Tour of Afghanistan",
   PakistanTourOfAustralia = "Pakistan Tour of Australia",
   PakistanTourOfBangladesh = "Pakistan Tour of Bangladesh",
@@ -185,7 +173,6 @@ export enum TournamentName {
   PakistanTourOfWestIndies = "Pakistan Tour of West Indies",
   PakistanTourOfZimbabwe = "Pakistan Tour of Zimbabwe",
 
-  // South Africa tours
   SouthAfricaTourOfAfghanistan = "South Africa Tour of Afghanistan",
   SouthAfricaTourOfAustralia = "South Africa Tour of Australia",
   SouthAfricaTourOfBangladesh = "South Africa Tour of Bangladesh",
@@ -198,7 +185,6 @@ export enum TournamentName {
   SouthAfricaTourOfWestIndies = "South Africa Tour of West Indies",
   SouthAfricaTourOfZimbabwe = "South Africa Tour of Zimbabwe",
 
-  // Sri Lanka tours
   SriLankaTourOfAfghanistan = "Sri Lanka Tour of Afghanistan",
   SriLankaTourOfAustralia = "Sri Lanka Tour of Australia",
   SriLankaTourOfBangladesh = "Sri Lanka Tour of Bangladesh",
@@ -211,7 +197,6 @@ export enum TournamentName {
   SriLankaTourOfWestIndies = "Sri Lanka Tour of West Indies",
   SriLankaTourOfZimbabwe = "Sri Lanka Tour of Zimbabwe",
 
-  // West Indies tours
   WestIndiesTourOfAfghanistan = "West Indies Tour of Afghanistan",
   WestIndiesTourOfAustralia = "West Indies Tour of Australia",
   WestIndiesTourOfBangladesh = "West Indies Tour of Bangladesh",
@@ -224,7 +209,6 @@ export enum TournamentName {
   WestIndiesTourOfSriLanka = "West Indies Tour of Sri Lanka",
   WestIndiesTourOfZimbabwe = "West Indies Tour of Zimbabwe",
 
-  // Zimbabwe tours
   ZimbabweTourOfAfghanistan = "Zimbabwe Tour of Afghanistan",
   ZimbabweTourOfAustralia = "Zimbabwe Tour of Australia",
   ZimbabweTourOfBangladesh = "Zimbabwe Tour of Bangladesh",
@@ -240,4 +224,15 @@ export enum TournamentName {
   unitedArabEmiratesT20ITriSeries = "United Arab Emirates T20I Tri-Series",
   iccCricketWorldCupChallengeLeagueA = "ICC Cricket World Cup Challenge League A",
   iccWomenT20TriSeries = "ICC Women's T20 Tri-Series",
+  czechRepublicTourOfRomania = "Czech Republic tour of Romania",
+  iccMensCricketWorldCupLeague2 = "ICC Men's Cricket World Cup League 2",
+  cwcChallengeLeague = "CWC Challenge League",
+  iccWomenT20WorldCupEuropeDivision1Qualifier = "ICC Women's T20 World Cup Europe Division 1 Qualifier",
+  oneDayCupAustralia = "One-Day Cup (Australia)",
+  asiaCup = "Asia Cup",
+  southAfricaWomenTourOfPakistan = "South Africa Women tour of Pakistan",
+  namibiaTourOfZimbabwe = "Namibia tour of Zimbabwe",
+  australiaWomenTourOfIndia = "Australia Women tour of India",
+  iccWomenT20WorldCupEastAsiaPacificQualifier = "ICC Women's T20 World Cup East Asia Pacific Qualifier",
+  luxembourgWomenT20ITriSeries = "Luxembourg Women's T20I Tri-Series"
 }

@@ -2,7 +2,7 @@ import { MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constant
 
 export interface ITeam {
     _id?: string;
-    name: string;
+    fullName: string;
     membersCount: number;
     captainId: string;
     shortName: string;
