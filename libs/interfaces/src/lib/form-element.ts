@@ -6,6 +6,7 @@ export interface IFormInput {
     elementType: FormInputElement;
     isShowCreateOption: boolean;
     options: string[];
+    id?: string;
 }
 
 export interface ICachedInput {

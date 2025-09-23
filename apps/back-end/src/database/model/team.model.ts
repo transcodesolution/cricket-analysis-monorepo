@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
-import { MatchFormat, TournamentType } from "@cricket-analysis-monorepo/constants";
+import { MatchFormat, TeamName, TournamentType } from "@cricket-analysis-monorepo/constants";
 import { ITeam } from '@cricket-analysis-monorepo/interfaces';
 
 @Schema({ timestamps: true, versionKey: false })
 export class Team implements ITeam {
-    @Prop({ default: '' })
-    name: string;
+    @Prop({ type: String, enum: TeamName })
+    fullName: TeamName;
 
     @Prop({})
     membersCount: number;
@@ -30,7 +30,7 @@ export class Team implements ITeam {
     logoUrl: string;
 
     constructor() {
-        this.name = '';
+        this.fullName = TeamName.INDIA;
         this.membersCount = 0;
         this.captainId = null;
         this.shortName = '';

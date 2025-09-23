@@ -1,13 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { City, Country, PitchType } from '@cricket-analysis-monorepo/constants';
+import { City, Country, PitchType, VenueName } from '@cricket-analysis-monorepo/constants';
 
 @Schema({ timestamps: true, versionKey: false })
 export class Venue {
     @Prop({ default: '' })
     location: string;
 
-    @Prop({ default: '' })
-    name: string;
+    @Prop({ type: String, enum: VenueName })
+    name: VenueName;
 
     @Prop({
         type: String,
@@ -23,7 +23,7 @@ export class Venue {
 
     constructor() {
         this.location = '';
-        this.name = '';
+        this.name = VenueName.Arun_Jaitley_Stadium;
         this.pitchType = PitchType.Wet;
         this.country = Country.India;
         this.city = City.Mumbai;

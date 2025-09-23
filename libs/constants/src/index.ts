@@ -14,3 +14,5 @@ export * from './lib/report-filter';
 export * from './lib/form-element';
 export * from "./lib/entity";
 export * from "./lib/file-format";
+export * from "./lib/team";
+export * from "./lib/venue";
