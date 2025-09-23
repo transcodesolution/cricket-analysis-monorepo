@@ -6,7 +6,7 @@ export interface IFormInput {
     elementType: FormInputElement;
     isShowCreateOption: boolean;
     options: string[];
-    id?: string;
+    id: string;
 }
 
 export interface ICachedInput {
@@ -14,7 +14,7 @@ export interface ICachedInput {
     referenceValue: string;
     collectionName: string;
     entityType: EntityType;
-    inputs: IFormInput[];
+    inputs?: IFormInput[];
     fileId: string;
-    [keyname: string]: string | boolean | IFormInput[] | Record<string, string>;
+    [keyname: string]: string | boolean | IFormInput[] | Record<string, string> | undefined;
 }
