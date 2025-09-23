@@ -11,7 +11,9 @@ import { IFormInput } from "@cricket-analysis-monorepo/interfaces";
 import { RedisService } from "../../redis/redis.service";
 
 export enum RedisKey {
-    TOURNAMENT_NAMES = "TOURNAMENT_NAMES"
+    TOURNAMENT_NAMES = "TOURNAMENT_NAMES",
+    TEAM_NAMES = "TEAM_NAMES",
+    VENUE_NAMES = "VENUE_NAMES",
 }
 
 export interface IUIInputFieldParam { redisService: RedisService }
@@ -94,7 +96,10 @@ export const DatabaseFields = {
 }
 
 export const UIInputRequiredFieldConfiguration: Record<string, (obj: IUIInputFieldParam) => Promise<IFormInput>> = {
-    matchFormat: async () => (Promise.resolve({ label: "Match Format", key: "matchFormat", elementType: FormInputElement.dropdown, options: Object.values(MatchFormat), isShowCreateOption: false })),
-    type: async () => (Promise.resolve({ label: "Tournament Type", key: "type", elementType: FormInputElement.dropdown, options: Object.values(TournamentType), isShowCreateOption: false })),
-    event: async ({ redisService }: IUIInputFieldParam) => (Promise.resolve({ label: "Tournament Name", key: "event", elementType: FormInputElement.dropdown, options: (await redisService.lrange(RedisKey.TOURNAMENT_NAMES)) as unknown as string[], isShowCreateOption: true })),
+    matchFormat: async () => (Promise.resolve({ id: "", label: "Match Format", key: "matchFormat", elementType: FormInputElement.dropdown, options: Object.values(MatchFormat), isShowCreateOption: false })),
+    type: async () => (Promise.resolve({ id: "", label: "Tournament Type", key: "type", elementType: FormInputElement.dropdown, options: Object.values(TournamentType), isShowCreateOption: false })),
+    event: async ({ redisService }: IUIInputFieldParam) => (Promise.resolve({ id: "", label: "Tournament Name", key: "event", elementType: FormInputElement.dropdown, options: (await redisService.lrange(RedisKey.TOURNAMENT_NAMES)) as unknown as string[], isShowCreateOption: true })),
+    "team1.team": async ({ redisService }: IUIInputFieldParam) => (Promise.resolve({ id: "", label: "Team Name", key: "team1.team", elementType: FormInputElement.dropdown, options: (await redisService.lrange(RedisKey.TEAM_NAMES)) as unknown as string[], isShowCreateOption: true })),
+    "team2.team": async ({ redisService }: IUIInputFieldParam) => (Promise.resolve({ id: "", label: "Team Name", key: "team2.team", elementType: FormInputElement.dropdown, options: (await redisService.lrange(RedisKey.TEAM_NAMES)) as unknown as string[], isShowCreateOption: true })),
+    venue: async ({ redisService }: IUIInputFieldParam) => (Promise.resolve({ id: "", label: "Venue Name", key: "venue", elementType: FormInputElement.dropdown, options: (await redisService.lrange(RedisKey.VENUE_NAMES)) as unknown as string[], isShowCreateOption: true })),
 }

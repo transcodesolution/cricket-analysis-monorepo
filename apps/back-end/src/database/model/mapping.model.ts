@@ -1,4 +1,4 @@
-import { MatchFormat, TournamentName, TournamentType } from '@cricket-analysis-monorepo/constants';
+import { MatchFormat, TeamName, TournamentName, TournamentType, VenueName } from '@cricket-analysis-monorepo/constants';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
@@ -34,6 +34,18 @@ export class CachedInput {
 
     @IsString()
     collectionName?: string;
+
+    @Prop({ type: String, enum: TeamName })
+    @IsString()
+    "team1.team"?: TeamName;
+
+    @Prop({ type: String, enum: TeamName })
+    @IsString()
+    "team2.team"?: TeamName;
+
+    @Prop({ type: String, enum: VenueName })
+    @IsString()
+    venue?: VenueName;
 }
 
 @Schema({ timestamps: true, versionKey: false, strict: true })
