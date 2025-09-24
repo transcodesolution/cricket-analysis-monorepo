@@ -501,13 +501,15 @@ export class DataIngestionService {
       "toss.winnerTeam": tossWinningTeam?._id,
       match_id: sheet_match_id,
       tournamentId: tournament?._id,
-      referee: refereeObj?._id,
+      referee: refereeObj?._id
     }
 
     let matchInfo = await this.matchInfoModel.findOne({ match_id: sheet_match_id });
 
     if (!matchInfo) {
       matchInfo = new this.matchInfoModel(matchInfoObj);
+    } else {
+      matchInfo.set(matchInfoObj);
     }
 
     // save match info data in database and update player team reference
