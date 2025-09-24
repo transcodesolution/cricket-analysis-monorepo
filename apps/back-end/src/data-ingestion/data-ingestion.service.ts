@@ -504,8 +504,13 @@ export class DataIngestionService {
       referee: refereeObj?._id,
     }
 
+    let matchInfo = await this.matchInfoModel.findOne({ match_id: sheet_match_id });
+
+    if (!matchInfo) {
+      matchInfo = new this.matchInfoModel(matchInfoObj);
+    }
+
     // save match info data in database and update player team reference
-    const matchInfo = new this.matchInfoModel(matchInfoObj);
     await Promise.all([
       matchInfo.save(),
       this.playerModel.updateMany({ _id: { $in: team1PlayerIds }, "teams.id": { $ne: team1?._id } }, { $push: { teams: { id: team1?._id } } }),
@@ -753,7 +758,9 @@ export class DataIngestionService {
       if (scoreboardFilename) {
         const extractedSheetInfoString: string = await this.redisService.get(`${scoreboardFilename}:data`);
         sheetScoreboardData = JSON.parse(extractedSheetInfoString);
-        sheetScoreboardData = sheetScoreboardData[`${scoreboardFilename}.${extension}`] as IMatchSheetFormat;
+        if (sheetScoreboardData) {
+          sheetScoreboardData = sheetScoreboardData[`${scoreboardFilename}.${extension}`] as IMatchSheetFormat;
+        }
       } else {
         return [];
       }
@@ -1314,6 +1321,8 @@ export class DataIngestionService {
 
   // Process mapping sheet data with database keys and save to database
   async processMappingSheetDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat, alreadyUploadCountRedisKey: string, extension: string) {
+    let isFileProcessedSuccessfully = true;
+
     // Extract unique number value from filename
     const match_id = this.extractNumbers(fileName);
 
@@ -1331,8 +1340,7 @@ export class DataIngestionService {
     // If info file and match info already exists OR if scoreboard file and scoreboard already exists, skip processing
     if ((matchInfo && file.isInfoFile) || (!file.isInfoFile && scoreboardCount !== 0)) {
       await this.updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey);
-      await this.commonHelperService.deleteKeysContainingId(match_id);
-      return { isFileProcessedSuccessfully: false };
+      isFileProcessedSuccessfully = false;
     }
 
     const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name] } }); // get mapping documents for match info and scoreboard
@@ -1390,10 +1398,12 @@ export class DataIngestionService {
     }
     // After processing file delete redis key and generate analytics for match
     await this.analyticService.generateAnalyticsForMatch(match_id);
-    return { isFileProcessedSuccessfully: true }
+    return { isFileProcessedSuccessfully }
   }
 
   async processMappingJSONDataWithDatabaseKeys(fileName: string, extractedSheetInfo: IMatchSheetFormat, alreadyUploadCountRedisKey: string, extension: string) {
+    let isFileProcessedSuccessfully = true;
+
     // Extract unique number value from filename
     const match_id = this.extractNumbers(fileName);
 
@@ -1413,8 +1423,7 @@ export class DataIngestionService {
     // If info file and match info already exists OR if scoreboard file and scoreboard already exists, skip processing
     if (matchInfo) {
       await this.updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey);
-      await this.commonHelperService.deleteKeysContainingId(match_id);
-      return { isFileProcessedSuccessfully: false };
+      isFileProcessedSuccessfully = false;
     }
 
     const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name] } }); // get mapping documents for match info and scoreboard
@@ -1477,7 +1486,7 @@ export class DataIngestionService {
     }
     // After processing file delete redis key and generate analytics for match
     await this.analyticService.generateAnalyticsForMatch(match_id);
-    return { isFileProcessedSuccessfully: true }
+    return { isFileProcessedSuccessfully }
   }
 
   async updateAlreadyUploadedFileCount(alreadyUploadCountRedisKey: string) {
