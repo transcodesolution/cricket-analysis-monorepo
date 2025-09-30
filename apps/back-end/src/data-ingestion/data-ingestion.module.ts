@@ -17,6 +17,6 @@ import { SocketModule } from '../socket/socket.module';
   }), RedisModule, SocketModule],
   controllers: [DataIngestionController],
   providers: [DataIngestionService, AnalyticsService, AuthenticateUserRequest, CommonHelperService],
-  exports: [DataIngestionService]
+  exports: [DataIngestionService, AnalyticsService]
 })
 export class DataIngestionModule { }
