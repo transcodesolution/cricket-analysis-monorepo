@@ -4,12 +4,14 @@ import mongoose, { Model } from 'mongoose';
 import { BattingStats, BowlingStats, FallOfWickets, MatchAnalytics, PlayerStats, TeamAnalytics } from '../../database/model/match-analytics.model';
 import { Ball } from '../../database/model/match-scoreboard.model';
 import { CommonHelperService } from '../../helper/common.helper';
-import { MatchFormat } from '@cricket-analysis-monorepo/constants';
+import { MatchFormat, WicketType } from '@cricket-analysis-monorepo/constants';
 
 export const FORMAT_WISE_OVERS = { T20: [1, 4, 6, 8, 10, 12, 15, 16, 18, 20], ODI: [1, 5, 10, 15, 20, 25, 35, 40, 45, 50], T10: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], TheHundred: [1, 4, 6, 8, 10, 12, 15, 16, 17, 20] };
 
 @Injectable()
 export class AnalyticsService {
+    private readonly WICKETS_REQUIRED_FOR_BOWLER = [WicketType.bowled, WicketType.caught, WicketType.lbw, WicketType.stumped, WicketType.caughtandbowled, WicketType.hitwicket];
+
     constructor(
         @InjectModel(MatchAnalytics.name) private readonly analyticsModel: Model<MatchAnalytics>,
         private readonly commonHelperService: CommonHelperService,
@@ -169,7 +171,7 @@ export class AnalyticsService {
                 if (!bowlingStats.has(bowlerId)) {
                     bowlingStats.set(bowlerId, this.initializeBowlingStat());
                 }
-                this.updateBowlingStat(bowlingStats.get(bowlerId), ball, bowlerId);
+                this.updateBowlingStat(bowlingStats.get(bowlerId), ball);
             }
 
             // Wickets
@@ -331,7 +333,7 @@ export class AnalyticsService {
         };
     }
 
-    private updateBowlingStat(stat: BowlingStats, ball: Ball, bowlerId: string) {
+    private updateBowlingStat(stat: BowlingStats, ball: Ball) {
         ball.runs_off_bat = +ball.runs_off_bat;
         const checklegalDelivery = !(+(ball.extras?.wides ?? 0) || +(ball.extras?.noballs ?? 0));
         const hasDotBall = ball.runs_off_bat === 0;
@@ -343,7 +345,7 @@ export class AnalyticsService {
         if (ball.extras?.noballs) stat.totalNoBall++;
         if (ball.extras?.wides) stat.totalWide++;
 
-        if (ball.wicket.dismissedPlayer && ball.wicket.takenBy.find((i) => i?.toString() === bowlerId)) stat.totalWicketTaken++;
+        if (ball.wicket.dismissedPlayer && this.WICKETS_REQUIRED_FOR_BOWLER.includes(ball.wicket.type)) stat.totalWicketTaken++;
 
         if (+ball.runs_off_bat === 4) stat.totalFourConceded++;
         if (+ball.runs_off_bat === 6) stat.totalSixConceded++;
