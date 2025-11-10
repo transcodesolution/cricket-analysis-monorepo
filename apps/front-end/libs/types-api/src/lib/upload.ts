@@ -1,7 +1,7 @@
-import { ICachedInput } from "@cricket-analysis-monorepo/interfaces";
+import { ICachedInput, IUnmappedKey } from "@cricket-analysis-monorepo/interfaces";
 
 export interface IFileColumnDataResponse {
-  unmappedKeys: string[];
+  unmappedKeys: IUnmappedKey[];
   fileNames: string[];
 }
 export interface IFileColumns {
