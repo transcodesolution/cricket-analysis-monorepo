@@ -5,7 +5,7 @@ import { IconCloudUpload } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { MappingModal } from './MappingModal';
 import { showNotification } from '@mantine/notifications';
-import { IApiResponse } from '@cricket-analysis-monorepo/interfaces';
+import { IApiResponse, IUnmappedKey } from '@cricket-analysis-monorepo/interfaces';
 import { readExcelFiles } from '@/libs/utils/ui-helper';
 import { IFileColumnDataResponse, IFileColumns, IUpdateAndSaveEntriesRequest, IUserMappingDetail } from '@/libs/types-api/src';
 import { useCheckMappingAndUpdate } from '@/libs/react-query-hooks/src';
@@ -18,7 +18,7 @@ import { UploadProgressList } from './UploadProgressList';
 export const UploadFile = () => {
   const [showMappingModal, setShowMappingModal] = useState(false);
   const [showRequiredInputModal, setShowRequiredInputModal] = useState(false);
-  const [fileColumnData, setFileColumnData] = useState<IFileColumns[]>([]);
+  const [unmappedKeys, setUnmappedKeys] = useState<IUnmappedKey[]>([]);
   const [droppedFiles, setDroppedFiles] = useState<FileWithPath[]>([]);
   const [loading, setLoading] = useState(false);
   const { mutate: checkMappingAndUpdate, isPending: isCheckMapping } = useCheckMappingAndUpdate();
@@ -57,7 +57,7 @@ export const UploadFile = () => {
 
           if (hasMissingMappings) {
             setFileNames(data?.fileNames ?? []);
-            setFileColumnData([{ columns: data?.unmappedKeys ?? [] }]);
+            setUnmappedKeys(data?.unmappedKeys ?? []);
             setShowMappingModal(true);
           } else {
             const userMappingDetail: IUserMappingDetail =
@@ -83,7 +83,7 @@ export const UploadFile = () => {
     updateMappingAndCheckRequiredInputs({ formData })
       .then((response) => {
         setShowMappingModal(false);
-        setFileColumnData([]);
+        setUnmappedKeys([]);
         setFileNames([]);
         setDroppedFiles([]);
         if (response.statusCode === 200) {
@@ -171,7 +171,7 @@ export const UploadFile = () => {
       </Center>
 
       <MappingModal
-        keysToMapByFile={fileColumnData}
+        keysToMapByFile={unmappedKeys}
         onClose={() => {setShowMappingModal(false);setLoading(false);}}
         onSubmit={handleMappingSubmit}
         showMappingModal={showMappingModal}

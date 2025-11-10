@@ -63,6 +63,7 @@
     "@mantine/hooks": "^8.1.0",
     "@mantine/modals": "^8.1.0",
     "@mantine/notifications": "^8.1.0",
+    "@mongodb-js/zstd": "^2.0.1",
     "@nestjs/bullmq": "^11.0.2",
     "@nestjs/common": "^10.0.2",
     "@nestjs/config": "^4.0.2",
