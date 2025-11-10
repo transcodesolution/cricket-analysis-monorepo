@@ -17,7 +17,7 @@ import { Team } from '../database/model/team.model';
 import { Umpire } from '../database/model/umpire.model';
 import { EntityType, FileFormatType, MatchMethod, MatchStatus, UmpireSubType, UmpireType, WicketType } from '@cricket-analysis-monorepo/constants';
 import { AnalyticsService } from './utils/analytics.service';
-import { ICachedInput, IFileProgressData, IMatchSheetFormat } from '@cricket-analysis-monorepo/interfaces';
+import { ICachedInput, IFileProgressData, IMatchSheetFormat, IUnmappedKey } from '@cricket-analysis-monorepo/interfaces';
 import { formatCsvFiles, formatExcelFiles, formatJsonFiles, stripExt } from '@cricket-analysis-monorepo/service';
 import { createReadStream, readFileSync, ReadStream } from 'fs';
 import { extname, join } from 'path';
@@ -1047,69 +1047,55 @@ export class DataIngestionService {
 
   async checkMappingAndUpdate(mappingDetailDto: MappingDetailDto) {
     const { files } = mappingDetailDto;
-    const { data } = await this.getAllDBSchemaNameWithFields({ isSoftwareCall: true });
-
-    const response: { unmappedKeys: string[], fileNames: string[] } = { unmappedKeys: [], fileNames: [] };
+    const { data } = await this.getAllDBSchemaNameWithFields({ isFunctionCall: true });
 
     await this.commonHelperService.deleteKeysContainingId("REPORTS_");
 
     const mappingDocs = await this.mappedDataModel.find({ collectionName: { $in: [MatchInfo.name, MatchScoreboard.name] } }).lean();
 
-    const mappingDocFields = mappingDocs.map((m) => m.fields);
+    // 1. Optimize dbFields lookup
+    const dbFieldsSet = new Set(data.flatMap((d) => d.fields));
 
-    const fields = mappingDocFields.reduce((acc, obj) => {
-      for (const [key, value] of Object.entries(obj)) {
-        if (acc[key] !== undefined) {
-          acc[key] = acc[key].concat(value);
-        } else {
-          acc[key] = value;
+    // 2. Optimize mapped fields lookup
+    const sheetColToDbFieldMap = new Map<string, string>();
+    for (const doc of mappingDocs) {
+      if (!doc.fields) continue;
+      for (const [dbField, sheetCols] of Object.entries(doc.fields)) {
+        for (const sheetCol of sheetCols as string[]) {
+          sheetColToDbFieldMap.set(sheetCol, dbField);
         }
       }
-      return acc;
-    }, {});
+    }
 
-    const dbFields = data.map((d) => d.fields).reduce((acc, value) => {
-      acc = acc.concat(value);
-      return acc;
-    }, []);
-
-    let mainFileNameRequiredKey = "";
+    const allUnmappedKeys = new Map<string, { fileName: string }>();
+    const allFileNames = new Set<string>();
 
     for (const { fileName, columns } of files as ColumnDto[]) {
-      const name = this.getFileName(fileName);
-
-      const matchedColumns = new Set<string>();
+      allFileNames.add(fileName);
 
       for (const column of columns) {
-        // Direct match
-        if (dbFields.includes(column)) {
-          matchedColumns.add(column);
-          continue;
-        }
+        const isDirectMatch = dbFieldsSet.has(column);
+        const isMappedMatch = sheetColToDbFieldMap.has(column);
 
-        // Mapped match
-        for (const dbField in fields) {
-          const mappedSheetCols = fields?.[dbField] || [];
-          if (mappedSheetCols.includes(column)) {
-            matchedColumns.add(column);
-            break;
+        if (!isDirectMatch && !isMappedMatch) {
+          if (!allUnmappedKeys.has(column)) {
+            allUnmappedKeys.set(column, { fileName });
           }
         }
       }
-
-      const requiredMappingColumns = columns.filter((col) => !matchedColumns.has(col));
-
-      if (!mainFileNameRequiredKey && requiredMappingColumns.length !== 0) {
-        mainFileNameRequiredKey = name;
-      }
-
-      response.unmappedKeys = [...new Set([...response.unmappedKeys, ...new Set(requiredMappingColumns)])];
-      response.fileNames.push(fileName);
     }
+
+    const unmappedKeys: IUnmappedKey[] = Array.from(allUnmappedKeys.entries()).map(([keyName, { fileName }]) => ({
+      keyName,
+      fileName,
+    }));
 
     return {
       message: responseMessage.customMessage("mapping performed successfully"),
-      data: response,
+      data: {
+        unmappedKeys,
+        fileNames: Array.from(allFileNames),
+      },
     };
   }
 
@@ -1247,7 +1233,7 @@ export class DataIngestionService {
     };
   }
 
-  async getAllDBSchemaNameWithFields({ isSoftwareCall }: { isSoftwareCall: boolean }) {
+  async getAllDBSchemaNameWithFields({ isFunctionCall }: { isFunctionCall: boolean }) {
     const excludedNames = [
       MappingData.name,
       MatchAnalytics.name,
@@ -1259,7 +1245,7 @@ export class DataIngestionService {
 
     const Query: mongoose.mongo.BSON.Document = {};
 
-    if (isSoftwareCall) {
+    if (isFunctionCall) {
       Query.name = { $nin: excludedNames }
     } else {
       Query.name = { $in: [MatchInfo.name, MatchScoreboard.name] }

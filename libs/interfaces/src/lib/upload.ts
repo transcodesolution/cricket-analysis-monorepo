@@ -3,3 +3,8 @@ export interface IUploadResult {
     fileName: string;
     message: string;
 }
+
+export interface IUnmappedKey {
+    keyName: string
+    fileName: string
+}

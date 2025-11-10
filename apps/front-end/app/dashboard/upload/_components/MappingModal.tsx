@@ -1,7 +1,8 @@
 'use client';
 
 import { useGetDatabaseTablesAndFields } from '@/libs/react-query-hooks/src';
-import { IFileColumns, IMappingByUser, ITableField, IUserMappingDetail } from '@/libs/types-api/src';
+import { IMappingByUser, ITableField, IUserMappingDetail } from '@/libs/types-api/src';
+import { IUnmappedKey } from '@cricket-analysis-monorepo/interfaces';
 import {
   Modal,
   Button,
@@ -14,7 +15,7 @@ import {
 import { useState } from 'react';
 
 interface IMappingModalData {
-  keysToMapByFile: IFileColumns[];
+  keysToMapByFile: IUnmappedKey[];
   onClose: () => void;
   onSubmit: (userMappingDetail: IUserMappingDetail[]) => Promise<void>;
   showMappingModal: boolean;
@@ -37,10 +38,10 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingMo
     label: table.name,
   }));
 
-  const renderRows = (columns: string[]) =>
-    columns.map((originalKey) => {
-      const selectedTable = mapping[originalKey]?.table || '';
-      const selectedKey = mapping[originalKey]?.key || '';
+  const renderRows = (unmappedKeys: IUnmappedKey[]) =>
+    unmappedKeys.map((unmappedKey) => {
+      const selectedTable = mapping[unmappedKey.keyName]?.table || '';
+      const selectedKey = mapping[unmappedKey.keyName]?.key || '';
 
       const fieldOptions =
         tablesAndFields.find((t) => t.name === selectedTable)?.fields.map((f) => ({
@@ -49,16 +50,19 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingMo
         })) || [];
 
       return (
-        <Table.Tr key={originalKey}>
+        <Table.Tr key={unmappedKey.keyName}>
           <Table.Td>
-            <Text size="sm">{originalKey}</Text>
+            <Text size="sm">{unmappedKey.keyName}</Text>
+          </Table.Td>
+          <Table.Td>
+            <Text size="sm">{unmappedKey.fileName}</Text>
           </Table.Td>
           <Table.Td>
             <Select
               placeholder="Select table"
               value={selectedTable}
               data={tableOptions}
-              onChange={(table) => handleChange(originalKey, table || '', '')}
+              onChange={(table) => handleChange(unmappedKey.keyName, table || '', '')}
               size="xs"
             />
           </Table.Td>
@@ -67,7 +71,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingMo
               placeholder="Select field"
               value={selectedKey}
               data={fieldOptions}
-              onChange={(key) => handleChange(originalKey, selectedTable, key || '')}
+              onChange={(key) => handleChange(unmappedKey.keyName, selectedTable, key || '')}
               disabled={!selectedTable}
               searchable
               size="xs"
@@ -77,10 +81,10 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingMo
       );
     });
 
-  const allColumns = keysToMapByFile.flatMap((file) => file.columns);
+  const allColumns = keysToMapByFile;
 
   const isMappingComplete = allColumns.every(
-    (col) => mapping[col]?.table && mapping[col]?.key
+    (col) => mapping[col.keyName]?.table && mapping[col.keyName]?.key
   );
 
   const handleSubmit = () => {
@@ -121,6 +125,7 @@ export const MappingModal = ({ keysToMapByFile, onClose, onSubmit, showMappingMo
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Column</Table.Th>
+                  <Table.Th>File Name</Table.Th>
                   <Table.Th>Table</Table.Th>
                   <Table.Th>Field</Table.Th>
                 </Table.Tr>
