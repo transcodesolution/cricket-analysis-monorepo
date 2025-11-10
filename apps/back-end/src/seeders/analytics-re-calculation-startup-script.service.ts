@@ -8,9 +8,9 @@ import { InjectModel } from "@nestjs/mongoose";
 @Injectable()
 export class AnalyticsReCalculationStartupScriptService {
     constructor(private readonly analyticService: AnalyticsService, @InjectModel(MatchInfo.name) private readonly matchInfoModel: Model<MatchInfo>, private readonly configService: ConfigService) {
-        const runOnStartup = this.configService.get<boolean>('RUN_ANALYTICS_RECALCULATION_ON_STARTUP');
+        const runOnStartup = this.configService.get('RUN_ANALYTICS_RECALCULATION_ON_STARTUP');
 
-        if (runOnStartup) {
+        if (runOnStartup === "true") {
             this.runScript().catch((error) => {
                 Logger.error("Error running startup script:", error);
             });

@@ -44,7 +44,7 @@ export class DataIngestionController {
   @HttpCode(HttpStatus.OK)
   @SetMetadata(ROUTE_PERMISSION_KEY_NAME, uploadFilePermissions)
   getDatabaseSchema() {
-    return this.dataIngestionService.getAllDBSchemaNameWithFields({ isSoftwareCall: false });
+    return this.dataIngestionService.getAllDBSchemaNameWithFields({ isFunctionCall: false });
   }
 
   @Post(`${ROUTE_PREFIX}/update-and-validate-inputs`)
