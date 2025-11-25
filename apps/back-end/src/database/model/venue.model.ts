@@ -3,6 +3,8 @@ import { City, Country, PitchType, VenueName } from '@cricket-analysis-monorepo/
 
 @Schema({ timestamps: true, versionKey: false })
 export class Venue {
+    _id: string;
+
     @Prop({ default: '' })
     location: string;
 

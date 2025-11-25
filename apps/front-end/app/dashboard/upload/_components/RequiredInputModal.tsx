@@ -173,9 +173,9 @@ export const RequiredInputModal = ({
 
           acc[input.key] =
             mainValue.trim() !== ''
-              ? mainValue
+              ? mainValue.trim()
               : customState?.visible && customState?.verified
-                ? customValue
+                ? customValue.trim()
                 : '';
 
           return acc;
@@ -191,10 +191,10 @@ export const RequiredInputModal = ({
           const customState = showCustomInput[`${fileId}-${inputId}`];
 
           if (customState?.visible && customState?.verified) {
-            typedValue = customValue;
+            typedValue = customValue.trim();
             isUserTypedValue = true;
           } else if (mainValue.trim() !== '') {
-            typedValue = mainValue;
+            typedValue = mainValue.trim();
             isUserTypedValue = false;
           }
         });

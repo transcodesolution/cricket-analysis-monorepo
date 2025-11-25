@@ -4,6 +4,8 @@ import { Gender } from '@cricket-analysis-monorepo/constants';
 
 @Schema({ timestamps: true, versionKey: false })
 export class Tournament {
+    _id: string;
+
     @Prop({ type: String, enum: TournamentName })
     event: TournamentName;
 
